@@ -2,7 +2,7 @@
 #include <iostream>
 
 Messenger::Messenger(int port):
-  fPort(port), fSocketId(-1)
+  fPort(port), fSocketId(-1), fAcceptId(-1)
 {
   memset(buf, 0, 1000);
   std::cout << __PRETTY_FUNCTION__ << " new Messenger at port " << fPort << std::endl;
@@ -11,6 +11,7 @@ Messenger::Messenger(int port):
 Messenger::~Messenger()
 {
   if (fSocketId!=-1) close(fSocketId);
+  if (fAcceptId!=-1) close(fSocketId);
 }
 
 bool
@@ -55,19 +56,7 @@ Messenger::Connect()
     return false;
   }
 
-  struct sockaddr_in client;
-  memset(&client, 0, sizeof(client));
-  socklen_t len = sizeof(client);
-
   listen(fSocketId, 5);
-
-  // now we can start accepting connections from clients
-  int accept_result = accept(fSocketId, (struct sockaddr*)&client, &len);
-  if (accept_result<0) {
-    std::cout << __PRETTY_FUNCTION__ << " cannot accept client (result=" << accept_result << ")!" << std::endl;
-    close(fSocketId);
-    return false;
-  }
 
   // return a true iff everything went fine !
   return true;
@@ -76,18 +65,31 @@ Messenger::Connect()
 bool
 Messenger::Receive()
 {
-  int receive_status = recv(fSocketId, buf, 1000, 0);
+  struct sockaddr_in client;
+  memset(&client, 0, sizeof(client));
+  socklen_t len = sizeof(client);
+
+  // now we can start accepting connections from clients
+  fAcceptId = accept(fSocketId, (struct sockaddr*)&client, &len);
+  if (fAcceptId<0) {
+    std::cout << __PRETTY_FUNCTION__ << " cannot accept client (result=" << fAcceptId << ")!" << std::endl;
+    close(fSocketId);
+    return false;
+  }
+
+  int receive_status = recv(fAcceptId, buf, 1000, 0);
   switch (receive_status) {
     case -1:
-      //std::cout << __PRETTY_FUNCTION__ << " cannot read from client !" << std::endl;
+      std::cout << __PRETTY_FUNCTION__ << " cannot read from client !" << std::endl;
       return false;
     case 0:
-      std::cout << __PRETTY_FUNCTION__ << " client disconnected !" << std::endl;
+      //std::cout << __PRETTY_FUNCTION__ << " client disconnected !" << std::endl;
       return false;
     default:
       break;
   }
   
   std::cout << __PRETTY_FUNCTION__ << " received \"" << buf << "\"" << std::endl;
+  memset(buf, 0, 1000);
   return true;
 }

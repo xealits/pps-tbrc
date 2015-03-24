@@ -26,6 +26,7 @@ class Messenger
   char buf[1000];
   int fPort;
   int fSocketId;
+  int fAcceptId;
 };
 
 #endif

@@ -36,13 +36,13 @@ Listener::Connect()
 
   int connect_result = connect(fSocketId, (struct sockaddr*)&fAddr, sizeof(fAddr));
   if (connect_result!=0) {
-    std::cout << __PRETTY_FUNCTION__ << " cannot connect to  socket (result=" << connect_result << ")!" << std::endl;
+    std::cout << __PRETTY_FUNCTION__ << " cannot connect to socket (result=" << connect_result << ")!" << std::endl;
     close(fSocketId);
     return false;
   }
 
-  std::string s("connect");
-  int send_status = send(fSocketId, s.c_str(), s.size(), MSG_NOSIGNAL);
+  std::ostringstream s; s << "client_" << fAddr.sin_addr.s_addr;
+  int send_status = send(fSocketId, s.str().c_str(), s.str().size(), MSG_NOSIGNAL);
   if (send_status==-1) return false;
 
   std::cout << __PRETTY_FUNCTION__ << " connected to socket at port " << fPort << std::endl;
