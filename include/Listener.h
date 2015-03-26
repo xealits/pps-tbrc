@@ -7,18 +7,21 @@
 
 class Listener : public Socket
 {
- public:
-  Listener(int port);
-  ~Listener();
+  public:
+    inline Listener() {;}
+    Listener(int port);
+    ~Listener();
 
-  bool Connect();
-  bool Disconnect();
+    bool Connect();
+    void Disconnect();
   
- private:
-  bool Announce();
+    void Receive();
   
-  std::string fListenerId;
-  bool fIsConnected;
+  private:
+    bool Announce();
+  
+    std::string fListenerId;
+    bool fIsConnected;
 };
 
 #endif

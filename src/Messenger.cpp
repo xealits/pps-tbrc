@@ -25,21 +25,43 @@ Messenger::Connect()
   return true;
 }
 
-bool
+message_t
 Messenger::Receive()
 {
+  message_t message_type = INVALID;
   try {
-    std::string message = FetchMessage();
-    if (!message.empty()) {
-      std::cout << __PRETTY_FUNCTION__ << " received \"" << message << "\"" << std::endl;
-    }
+    Message message = FetchMessage();
+    if (message.ToString().empty()) return INVALID;
     
-    SendMessage("haha");
+    //std::cout << __PRETTY_FUNCTION__ << " received \"" << message.GetKey() << "\" -> \"" << message.GetValue() << "\"" << std::endl;
+    
+    // We determine the message type
+    if (message.GetKey()=="new_client") {
+      message_type = NEW_LISTENER;
+      std::cout << "New client !" << std::endl;
+      SendMessage(Message("huhu", "aaah"));
+    }
+    if (message.GetKey()=="terminate_client") {
+      message_type = DEL_LISTENER;
+      std::cout << "Delete client !" << std::endl;
+      //SendMessage(Message("huhu", "aaah"));
+    }
+    //else if (message=="")
+    
   } catch (Exception& e) {
     e.Dump();
-    return false;
+    return INVALID;
   }
   
-  return true;
+  return message_type;
 }
 
+void
+Messenger::Broadcast(std::string message)
+{
+  try {
+    SendMessage(Message("info", message.c_str()));
+  } catch (Exception& e) {
+    e.Dump();
+  }
+}

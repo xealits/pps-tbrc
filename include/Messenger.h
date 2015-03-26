@@ -5,6 +5,14 @@
 
 #include <list>
 
+typedef enum
+{
+  INVALID,
+  NEW_LISTENER,
+  DEL_LISTENER,
+  LISTENER_MESSAGE
+} message_t;
+
 /**
  * Messenger/broadcaster object used by the server to send/receive commands from
  * the clients/listeners.
@@ -20,7 +28,8 @@ class Messenger : public Socket
     ~Messenger();
 
     bool Connect();
-    bool Receive();
+    message_t Receive();
+    void Broadcast(std::string message);
 
   private:
     std::list<int> fListeners;

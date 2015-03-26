@@ -1,5 +1,5 @@
-//#include "Exception.h"
 #include "Messenger.h"
+
 #include <iostream>
 
 using namespace std;
@@ -14,9 +14,14 @@ int main(int argc, char* argv[])
   }
 
   while (true) {
+    // This part looks at new clients connections
     Messenger mm;
     m.AcceptConnections(mm);
-    mm.Receive();    
+    mm.Receive();
+    
+    //m.Broadcast("prout");
+    //sleep(1);
+
   }
 
   return 0;

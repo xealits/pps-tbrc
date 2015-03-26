@@ -5,7 +5,9 @@ Listener::Listener(int port) :
 {}
 
 Listener::~Listener()
-{}
+{
+  if (fIsConnected) Disconnect();
+}
 
 bool
 Listener::Connect()
@@ -20,7 +22,6 @@ Listener::Connect()
   }
 
   fIsConnected = true;
-  //return Announce();
   return true;
 }
   
@@ -29,10 +30,10 @@ Listener::Announce()
 {
   try {
     // Once connected we announce our presence to the server
-    SendMessage("new_client");
+    SendMessage(Message("new_client", ""));
     
     // Then we wait for it to send us a connection acknowledgement + an id
-    fListenerId = FetchMessage();
+    fListenerId = FetchMessage().GetValue();
     
     if (fListenerId.empty()) return false;
     
@@ -45,8 +46,25 @@ Listener::Announce()
   return true;
 }
 
-bool
+void
 Listener::Disconnect()
 {
-  if (!fIsConnected) return false;  
+  std::cout << "->-> Disconnecting" << std::endl;
+  //if (!fIsConnected) return;
+  try {
+    SendMessage(Message("terminate_client", fListenerId.c_str()));
+  } catch (Exception& e) {
+    e.Dump();
+  }
+}
+
+void
+Listener::Receive()
+{
+  try {
+    //Listen(5);
+    FetchMessage();
+  } catch (Exception& e) {
+    e.Dump();
+  }
 }

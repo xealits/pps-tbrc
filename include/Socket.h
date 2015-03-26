@@ -9,17 +9,20 @@
 #include <arpa/inet.h> // definitions for internet operations
 #include <netdb.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <errno.h>
 #include <fcntl.h>
 
+#include <vector>
 #include <sstream>
 #include <iostream>
 
 #include "Exception.h"
+#include "Message.h"
 
 #define SOCKET_ERROR(x) 10000+x
-#define MAX_WORD_LENGTH 1000
+#define MAX_WORD_LENGTH 10000
 
 /**
  * General object providing all useful method to connect/bind/send/receive
@@ -68,12 +71,12 @@ class Socket
     /**
      * \brief Send a message on a socket
      */
-    void SendMessage(std::string command);
+    void SendMessage(Message message);
     /**
      * \brief Receive a message from a socket
      * \return Received message as a std::string
      */
-    std::string FetchMessage();
+    Message FetchMessage();
     
     /**
      * A file descriptor for this socket, if \a Create was performed beforehand.

@@ -71,9 +71,7 @@ Socket::Bind()
 void
 Socket::PrepareConnection()
 {
-  // binding the socket
   fAddress.sin6_family = AF_INET6;
-  //fAddress.sin6_addr = in6addr_any;
   fAddress.sin6_port = htons(fPort);
 
   if (connect(fSocketId, (struct sockaddr*)&fAddress, sizeof(fAddress))!=0) {
@@ -88,7 +86,7 @@ Socket::AcceptConnections(Socket& socket) const
   // now we can start accepting connections from clients
   socklen_t len = sizeof(fAddress);
   socket.fSocketId = accept(fSocketId, (struct sockaddr*)&fAddress, &len);
-  if (socket.fSocketId<=0) {
+  if (socket.fSocketId<0) {
     throw Exception(__PRETTY_FUNCTION__, "Cannot accept client !", SOCKET_ERROR(errno));
   }
 }
@@ -96,7 +94,6 @@ Socket::AcceptConnections(Socket& socket) const
 void
 Socket::Listen(int maxconn)
 {
-  // listening...
   if (listen(fSocketId, maxconn)!=0) {
     Stop();
     throw Exception(__PRETTY_FUNCTION__, "Cannot listen on socket !", SOCKET_ERROR(errno));
@@ -104,15 +101,15 @@ Socket::Listen(int maxconn)
 }
 
 void
-Socket::SendMessage(std::string message)
+Socket::SendMessage(Message message)
 {
-  std::cout << __PRETTY_FUNCTION__ << " message \"" << message << "\" to be sent on the socket " << fSocketId << std::endl;
-  if (send(fSocketId, message.c_str(), message.size(), MSG_NOSIGNAL)<=0) {
+  std::string message_s = message.ToString();
+  if (send(fSocketId, message_s.c_str(), message_s.size(), MSG_NOSIGNAL)<=0) {
     throw Exception(__PRETTY_FUNCTION__, "Cannot send message !", SOCKET_ERROR(errno));
   }
 }
 
-std::string
+Message
 Socket::FetchMessage()
 {
   // at first we prepare the buffer to be filled
@@ -129,5 +126,5 @@ Socket::FetchMessage()
       break;
   }
   
-  return std::string(buf);
+  return Message(buf).ToObject();
 }
