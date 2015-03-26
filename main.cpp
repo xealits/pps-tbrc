@@ -6,17 +6,18 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-  Messenger* m = new Messenger(1987);
+  Messenger m(1987);
 
-  if (!m->Connect()) {
+  if (!m.Connect()) {
     cout << "Error while trying to connect the messenger!" << endl;
     return -1;
   }
 
   while (true) {
-    m->Receive();
+    Messenger mm;
+    m.AcceptConnections(mm);
+    mm.Receive();    
   }
 
-  delete m;
   return 0;
 }

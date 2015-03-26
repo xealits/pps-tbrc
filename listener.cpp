@@ -11,15 +11,15 @@ int main(int argc, char* argv[])
   const int port = atoi(argv[1]);
   cout << "Starting to listen on port " << port << endl;
 
-  Listener* l = new Listener(port);
-  if (!l->Connect()) {
+  Listener l(port);
+  if (!l.Connect()) {
+    cout << "Failed to connect the listener" << endl;
     return -1;
   }
 
-  while (true) {
+  //while (true) {
     //cout << "Listening" << endl;
-  }
+  //}
 
-  delete l;
   return 0;
 }

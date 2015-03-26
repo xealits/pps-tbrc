@@ -1,32 +1,29 @@
 #ifndef Messenger_h
 #define Messenger_h
 
-#include <cstdlib>
-#include <cstring>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <unistd.h>
+#include "Socket.h"
 
-#include <errno.h>
-#include <fcntl.h>
+#include <list>
 
-class Messenger
+/**
+ * Messenger/broadcaster object used by the server to send/receive commands from
+ * the clients/listeners.
+ *
+ * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+ * \date 23 Mar 2015
+ */
+class Messenger : public Socket
 {
- public:
-  Messenger(int port);
-  ~Messenger();
+  public:
+    inline Messenger() {;}
+    Messenger(int port);
+    ~Messenger();
 
-  bool Connect();
-  bool Receive();
+    bool Connect();
+    bool Receive();
 
- private:
-  char buf[1000];
-  int fPort;
-  int fSocketId;
-  int fAcceptId;
+  private:
+    std::list<int> fListeners;
 };
 
 #endif
