@@ -32,6 +32,7 @@ Messenger::Receive()
   try {
     Message message = FetchMessage();
     if (message.ToString().empty()) return INVALID;
+    message.Dump();
     
     //std::cout << __PRETTY_FUNCTION__ << " received \"" << message.GetKey() << "\" -> \"" << message.GetValue() << "\"" << std::endl;
     
@@ -39,7 +40,7 @@ Messenger::Receive()
     if (message.GetKey()=="new_client") {
       message_type = NEW_LISTENER;
       std::cout << "New client !" << std::endl;
-      SendMessage(Message("huhu", "aaah"));
+      SendMessage(Message("client_id", "aaah"));
     }
     if (message.GetKey()=="terminate_client") {
       message_type = DEL_LISTENER;

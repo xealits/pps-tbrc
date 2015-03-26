@@ -6,6 +6,11 @@
 
 typedef std::vector<std::string> MessageMap;
 
+/**
+ * \brief Socket-passed message type
+ * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+ * \date 26 Mar 2015
+ */
 class Message
 {
   public:
@@ -15,14 +20,34 @@ class Message
       fMessage = ToObject();
     }
     inline Message(const char* key, const char* value) { SetKeyValue(key, value); }
+    inline Message(const char* key, const int value) { SetKeyValue(key, value); }
+    inline Message(const char* key, const float value) { SetKeyValue(key, value); }
+    inline Message(const char* key, const double value) { SetKeyValue(key, value); }
     inline Message(std::string msg_s) { fMessageS = msg_s; }
     inline Message(MessageMap msg_m) { fMessage = msg_m; }
     inline ~Message() {;}
     
+    /// Send a string-valued message
     inline void SetKeyValue(const char* key, const char* value) {
+      fMessage.clear();
       fMessage.push_back(std::string(key));
       fMessage.push_back(std::string(value));
       fMessageS = ToString();
+    }
+    /// Send an integer-valued message
+    inline void SetKeyValue(const char* key, int int_value) {
+      std::ostringstream ss; ss << int_value;
+      SetKeyValue(key, ss.str().c_str());
+    }
+    /// Send an float-valued message
+    inline void SetKeyValue(const char* key, float float_value) {
+      std::ostringstream ss; ss << float_value;
+      SetKeyValue(key, ss.str().c_str());
+    }
+    /// Send an double-valued message
+    inline void SetKeyValue(const char* key, double double_value) {
+      std::ostringstream ss; ss << double_value;
+      SetKeyValue(key, ss.str().c_str());
     }
 
     inline std::string GetKey() const { return (fMessage.size()>0) ? fMessage.at(0) : ""; }

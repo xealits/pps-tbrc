@@ -17,9 +17,11 @@ int main(int argc, char* argv[])
     // This part looks at new clients connections
     Messenger mm;
     m.AcceptConnections(mm);
+    //while (true) {
     mm.Receive();
+    //}
     
-    //m.Broadcast("prout");
+    mm.Broadcast("prout");
     //sleep(1);
 
   }

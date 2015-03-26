@@ -33,9 +33,15 @@ Listener::Announce()
     SendMessage(Message("new_client", ""));
     
     // Then we wait for it to send us a connection acknowledgement + an id
-    fListenerId = FetchMessage().GetValue();
-    
-    if (fListenerId.empty()) return false;
+    Message ack = FetchMessage();
+    //if (ack.GetKey().empty()) return false;
+    if (ack.GetKey()=="client_id") {
+      fListenerId = ack.GetValue();
+    }
+    else {
+      std::cout << __PRETTY_FUNCTION__ << " WARNING: received an invalid answer from server!" << std::endl;
+      ack.Dump();
+    }
     
   } catch (Exception& e) {
     e.Dump();
@@ -53,6 +59,7 @@ Listener::Disconnect()
   //if (!fIsConnected) return;
   try {
     SendMessage(Message("terminate_client", fListenerId.c_str()));
+    Message ack = FetchMessage();
   } catch (Exception& e) {
     e.Dump();
   }

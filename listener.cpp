@@ -5,16 +5,17 @@
 
 using namespace std;
 
-Listener* l;
+Listener* l = 0;
 int gEnd=0;
 
 void CtrlC(int aSig) {
   if (gEnd==0) {
-    cout << endl << "Ctrl-C detected... trying clean exit!" << endl;
-    l->Disconnect();
+    cout << endl << "[C-c] Trying a clean exit!" << endl;
+    if (l) l->Disconnect();
+    exit(0);
   }
   else if (gEnd>=5) {
-    cout << endl << "Ctrl-C detected more than five times... forcing exit!" << endl;
+    cout << endl << "[C-c > 5 times] ... Forcing exit!" << endl;
     exit(0);
   }
   gEnd++;
@@ -34,15 +35,15 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  /*while (true) {
-    Listener ll;
+  while (true) {
+    //Listener ll;
     try {
-      l.AcceptConnections(ll);
-      ll.Receive();
+      //l.AcceptConnections(ll);
+      l->Receive();
     } catch (Exception& e) {
       e.Dump();
     }
-  }*/
+  }
 
   delete l;
   return 0;
