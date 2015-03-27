@@ -5,6 +5,13 @@
 
 #include "Socket.h"
 
+/**
+ * Listener/client object used by the server to send/receive commands from
+ * the messenger/broadcaster.
+ *
+ * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+ * \date 24 Mar 2015
+ */
 class Listener : public Socket
 {
   public:

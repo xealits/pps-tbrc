@@ -6,12 +6,15 @@
 using namespace std;
 
 Listener* l = 0;
-int gEnd=0;
+int gEnd = 0;
 
 void CtrlC(int aSig) {
   if (gEnd==0) {
     cout << endl << "[C-c] Trying a clean exit!" << endl;
-    if (l) l->Disconnect();
+    if (l) {
+      l->Disconnect();
+      delete l;
+    }
     exit(0);
   }
   else if (gEnd>=5) {

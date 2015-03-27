@@ -22,7 +22,7 @@
 #include "Message.h"
 
 #define SOCKET_ERROR(x) 10000+x
-#define MAX_WORD_LENGTH 10000
+#define MAX_WORD_LENGTH 500
 
 /**
  * General object providing all useful method to connect/bind/send/receive

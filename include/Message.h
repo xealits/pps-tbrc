@@ -1,10 +1,13 @@
 #ifndef Message_h
 #define Message_h
 
-#include <vector>
+#include <utility>
+#include <map>
 #include <string>
 
-typedef std::vector<std::string> MessageMap;
+#include "MessageKeys.h"
+
+typedef std::pair<MessageKey, std::string> MessageMap;
 
 /**
  * \brief Socket-passed message type
@@ -15,67 +18,65 @@ class Message
 {
   public:
     inline Message() {;}
-    inline Message(const char* msg_s) { 
+    inline Message(char* msg_s) { 
       fMessageS = std::string(msg_s);
-      fMessage = ToObject();
+      fMessage = Object();
     }
-    inline Message(const char* key, const char* value) { SetKeyValue(key, value); }
-    inline Message(const char* key, const int value) { SetKeyValue(key, value); }
-    inline Message(const char* key, const float value) { SetKeyValue(key, value); }
-    inline Message(const char* key, const double value) { SetKeyValue(key, value); }
+    inline Message(MessageKey key, const char* value) { SetKeyValue(key, value); }
+    inline Message(MessageKey key, const int value) { SetKeyValue(key, value); }
+    inline Message(MessageKey key, const float value) { SetKeyValue(key, value); }
+    inline Message(MessageKey key, const double value) { SetKeyValue(key, value); }
     inline Message(std::string msg_s) { fMessageS = msg_s; }
     inline Message(MessageMap msg_m) { fMessage = msg_m; }
     inline ~Message() {;}
     
     /// Send a string-valued message
-    inline void SetKeyValue(const char* key, const char* value) {
-      fMessage.clear();
-      fMessage.push_back(std::string(key));
-      fMessage.push_back(std::string(value));
-      fMessageS = ToString();
+    inline void SetKeyValue(MessageKey key, const char* value) {
+      fMessage = make_pair(key, std::string(value));
+      fMessageS = String();
     }
     /// Send an integer-valued message
-    inline void SetKeyValue(const char* key, int int_value) {
+    inline void SetKeyValue(MessageKey key, int int_value) {
       std::ostringstream ss; ss << int_value;
       SetKeyValue(key, ss.str().c_str());
     }
     /// Send an float-valued message
-    inline void SetKeyValue(const char* key, float float_value) {
+    inline void SetKeyValue(MessageKey key, float float_value) {
       std::ostringstream ss; ss << float_value;
       SetKeyValue(key, ss.str().c_str());
     }
     /// Send an double-valued message
-    inline void SetKeyValue(const char* key, double double_value) {
+    inline void SetKeyValue(MessageKey key, double double_value) {
       std::ostringstream ss; ss << double_value;
       SetKeyValue(key, ss.str().c_str());
     }
 
-    inline std::string GetKey() const { return (fMessage.size()>0) ? fMessage.at(0) : ""; }
-    inline std::string GetValue() const { return (fMessage.size()>1) ? fMessage.at(1) : ""; }
+    inline MessageKey GetKey() const { return fMessage.first; }
+    inline std::string GetValue() const { return fMessage.second; }
     
-    inline MessageMap ToObject() const {
+    inline MessageMap Object() const {
       MessageMap out;
-      int start = 0, end = 0;
+      MessageKey key;
+      std::string value;
+      int start = 0, end = 0, idx = 0;
       while ((end=fMessageS.find(':', start))!=std::string::npos) {
-        out.push_back(fMessageS.substr(start, end-start));
+        if (idx==0) key = MessageKeyToObject(fMessageS.substr(start, end-start).c_str());
+        else value = fMessageS.substr(start, end-start);
         start = end + 1;
+        idx++;
       }
-      out.push_back(fMessageS.substr(start));
-      return out;
+      return make_pair(key, value);
     }
-    inline std::string ToString() const {
-      std::string out("");
-      int i = 0;
-      for (MessageMap::const_iterator m=fMessage.begin(); m!=fMessage.end(); m++, i++) {
-        if (i>0) out += ":";
-        out += (*m);
-      }
+    inline std::string String() const {
+      std::string out = MessageKeyToString(fMessage.first);
+      out += ':';
+      out += fMessage.second;
       return out;
     }
     
     inline void Dump() const {
       std::cout << "================== Message dump ===================" << std::endl
-                << "  Key:   " << GetKey() << std::endl
+                << "  Key:   " << MessageKeyToString(GetKey()) << " (" << GetKey() << ")" << std::endl
                 << "  Value: " << GetValue() << std::endl
                 << "===================================================" << std::endl;      
     }

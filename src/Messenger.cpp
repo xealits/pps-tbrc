@@ -1,9 +1,10 @@
 #include "Messenger.h"
 
 Messenger::Messenger(int port) :
-  Socket(port)
+  Socket(port), fLastListenerAdded(-1)
 {
   std::cout << __PRETTY_FUNCTION__ << " new Messenger at port " << GetPort() << std::endl;
+  std::cout << "!!!!!!!!!!!!!!! " << fLastListenerAdded << std::endl;
 }
 
 Messenger::~Messenger()
@@ -16,7 +17,7 @@ Messenger::Connect()
     Start();
     Bind();
     Listen(5);
-  } catch (Exception& e) { 
+  } catch (Exception& e) {
     e.Dump();
     return false;
   }
@@ -25,43 +26,67 @@ Messenger::Connect()
   return true;
 }
 
-message_t
+void
+Messenger::Disconnect()
+{
+  if (fListeners.size()) {
+    try {
+      Broadcast("disconnect_server");
+    } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to broadcast the server disconnection status!", JustWarning, SOCKET_ERROR(errno));
+    }
+  }
+}
+
+MessageKey
 Messenger::Receive()
 {
-  message_t message_type = INVALID;
+  MessageKey key = INVALID_KEY;
   try {
     Message message = FetchMessage();
-    if (message.ToString().empty()) return INVALID;
     message.Dump();
+    
+    if (message.String().empty()) return INVALID_KEY;
     
     //std::cout << __PRETTY_FUNCTION__ << " received \"" << message.GetKey() << "\" -> \"" << message.GetValue() << "\"" << std::endl;
     
     // We determine the message type
-    if (message.GetKey()=="new_client") {
-      message_type = NEW_LISTENER;
+    key = message.GetKey();
+    
+    if (key==ADD_LISTENER) {
       std::cout << "New client !" << std::endl;
-      SendMessage(Message("client_id", "aaah"));
+      
+      std::cout << "--> " << fLastListenerAdded << " added" << std::endl;
+      if (fLastListenerAdded<0) fLastListenerAdded = 0; // first listener added!
+      else fLastListenerAdded += 1;
+      
+      std::cout << "--> " << fLastListenerAdded << " added" << std::endl;
+      fListeners.push_back(fLastListenerAdded);
+      //SendMessage(Message(SET_LISTENER_ID, fLastListenerAdded));
+      //std::cout << MessageKeyToString(SET_LISTENER_ID) << std::endl;
+      SendMessage(Message(SET_LISTENER_ID, "huhu"));
     }
-    if (message.GetKey()=="terminate_client") {
-      message_type = DEL_LISTENER;
+    if (key==REMOVE_LISTENER) {
       std::cout << "Delete client !" << std::endl;
       //SendMessage(Message("huhu", "aaah"));
     }
     //else if (message=="")
     
   } catch (Exception& e) {
+    throw Exception(__PRETTY_FUNCTION__, "Message with invalid key received!", JustWarning, SOCKET_ERROR(errno));
     e.Dump();
-    return INVALID;
+    return INVALID_KEY;
   }
   
-  return message_type;
+  return key;
 }
 
 void
 Messenger::Broadcast(std::string message)
 {
   try {
-    SendMessage(Message("info", message.c_str()));
+    SendMessage(Message(MASTER_BROADCAST, message.c_str()));
   } catch (Exception& e) {
     e.Dump();
   }

@@ -30,12 +30,12 @@ Listener::Announce()
 {
   try {
     // Once connected we announce our presence to the server
-    SendMessage(Message("new_client", ""));
+    SendMessage(Message(ADD_LISTENER, ""));
     
     // Then we wait for it to send us a connection acknowledgement + an id
     Message ack = FetchMessage();
-    //if (ack.GetKey().empty()) return false;
-    if (ack.GetKey()=="client_id") {
+    ack.Dump();
+    if (ack.GetKey()==SET_LISTENER_ID) {
       fListenerId = ack.GetValue();
     }
     else {
@@ -55,14 +55,15 @@ Listener::Announce()
 void
 Listener::Disconnect()
 {
-  std::cout << "->-> Disconnecting" << std::endl;
+  std::cout << "===> Disconnecting the client from socket" << std::endl;
   //if (!fIsConnected) return;
   try {
-    SendMessage(Message("terminate_client", fListenerId.c_str()));
+    SendMessage(Message(REMOVE_LISTENER, fListenerId.c_str()));
     Message ack = FetchMessage();
   } catch (Exception& e) {
     e.Dump();
   }
+  fIsConnected = false;
 }
 
 void
