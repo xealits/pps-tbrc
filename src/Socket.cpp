@@ -147,7 +147,7 @@ Socket::SendMessage(Message message, int id)
 {
   if (id<0) id = fSocketId;
   
-  std::string message_s = message.String();
+  std::string message_s = message.GetString();
   //std::cout << "Message to send to " << id << ": \"" << message_s << "\"" << std::endl;
   
   if (send(id, message_s.c_str(), message_s.size(), MSG_NOSIGNAL)<=0) {
@@ -179,10 +179,17 @@ Socket::FetchMessage(int id)
        << "\tRaw message: \"" << buf << "\"";
     throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, SOCKET_ERROR(errno));
   }
-    
-  //std::cout << "---> (" << buf << ") received" << std::endl;
-  Message(buf).Dump();
-  return Message(buf).Object();
+  
+  std::cout << "---> (" << buf << ") received" << std::endl;
+  try {
+    return Message(buf);
+  } catch (Exception& e) {
+    try {
+      return HTTPMessage(buf);
+    } catch (Exception& e) {
+      e.Dump();
+    }
+  }
 }
 
 void

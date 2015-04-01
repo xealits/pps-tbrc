@@ -20,6 +20,7 @@
 
 #include "Exception.h"
 #include "Message.h"
+#include "HTTPMessage.h"
 
 #define SOCKET_ERROR(x) 10000+x
 #define MAX_WORD_LENGTH 500

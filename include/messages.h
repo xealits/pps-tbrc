@@ -41,7 +41,8 @@ inline std::vector<std::string> sar(const char* a, const char* b)
 #define MESSAGES_ENUM(m1, ...)\
     enum MessageKey { m1=0, __VA_ARGS__  };\
     inline const char* MessageKeyToString(MessageKey value) {\
-      return (sar(#m1, #__VA_ARGS__)[value]).c_str(); }\
+      std::vector<std::string> s=sar(#m1, #__VA_ARGS__);\
+      return ((value<s.size())&&(value>=0)) ? s[value].c_str() : s[0].c_str(); } \
     inline const MessageKey MessageKeyToObject(const char* value) {\
       std::vector<std::string> s=sar(#m1, #__VA_ARGS__);\
       for (size_t i=0; i<s.size(); i++) { if (s[i]==std::string(value)) return (MessageKey)i; }\

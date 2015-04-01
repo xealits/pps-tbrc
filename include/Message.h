@@ -29,7 +29,10 @@ class Message
     inline Message(MessageKey key, const int value) { SetKeyValue(key, value); }
     inline Message(MessageKey key, const float value) { SetKeyValue(key, value); }
     inline Message(MessageKey key, const double value) { SetKeyValue(key, value); }
-    inline Message(std::string msg_s) { fMessageS = msg_s; }
+    inline Message(std::string msg_s) {
+      fMessageS = msg_s;
+      fMessage = Object();
+    }
     inline Message(MessageMap msg_m) { fMessage = msg_m; }
     inline ~Message() {;}
     
@@ -57,10 +60,19 @@ class Message
       SetKeyValue(key, ss.str());
     }
 
+    inline std::string GetString() const { return fMessageS; }
     inline MessageKey GetKey() const { return fMessage.first; }
     inline std::string GetValue() const { return fMessage.second; }
     inline int GetIntValue() const { return atoi(fMessage.second.c_str()); }
     
+    inline void Dump(std::ostream& os=std::cout) const {
+      os << "================== Message dump ===================" << std::endl
+         << "  Key:   " << MessageKeyToString(GetKey()) << " (" << GetKey() << ")" << std::endl
+         << "  Value: " << GetValue() << std::endl
+         << "===================================================" << std::endl;      
+    }
+    
+  private:
     inline MessageMap Object() const {
       MessageMap out;
       MessageKey key;
@@ -84,15 +96,7 @@ class Message
       //out += '\0';
       return out;
     }
-    
-    inline void Dump(std::ostream& os=std::cout) const {
-      os << "================== Message dump ===================" << std::endl
-         << "  Key:   " << MessageKeyToString(GetKey()) << " (" << GetKey() << ")" << std::endl
-         << "  Value: " << GetValue() << std::endl
-         << "===================================================" << std::endl;      
-    }
-    
-  private:
+  
     std::string fMessageS;
     MessageMap fMessage;
 };
