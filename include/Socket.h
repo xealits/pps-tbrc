@@ -80,7 +80,7 @@ class Socket
     /**
      * \brief Send a message on a socket
      */
-    void SendMessage(Message message, int id);
+    void SendMessage(Message message, int id=-1);
     /**
      * \brief Receive a message from a socket
      * \return Received message as a std::string

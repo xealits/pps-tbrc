@@ -12,7 +12,6 @@ void CtrlC(int aSig) {
     cout << endl << "[C-c] Trying a clean exit!" << endl;
     if (m) {
       cout << "Trying to disconnect the messenger" << endl;
-      m->Disconnect();
       delete m;
     }
     exit(0);

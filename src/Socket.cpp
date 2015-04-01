@@ -12,9 +12,7 @@ Socket::Socket(int port) :
 }
 
 Socket::~Socket()
-{
-  //Stop();
-}
+{}
 
 bool
 Socket::Start()
@@ -100,7 +98,7 @@ Socket::PrepareConnection()
 void
 Socket::AcceptConnections(Socket& socket)
 {
-  // now we can start accepting connections from clients
+  // Now we can start accepting connections from clients
   socklen_t len = sizeof(fAddress);
   socket.SetSocketId(accept(fSocketId, (struct sockaddr*)&fAddress, &len));
   if (socket.GetSocketId()<0) {
@@ -118,7 +116,6 @@ Socket::SelectConnections()
     throw Exception(__PRETTY_FUNCTION__, "The messenger socket is not registered to the sockets list!", Fatal);
   }
   int highest = *fSocketsConnected.rbegin(); // last one in the set
-  std::cout << "highest:" << highest << std::endl;
   if (select(highest+1, &fReadFds, NULL, NULL, NULL)==-1) {
     throw Exception(__PRETTY_FUNCTION__, "Unable to select the connection!", Fatal, SOCKET_ERROR(errno));
   }
@@ -149,8 +146,10 @@ void
 Socket::SendMessage(Message message, int id)
 {
   if (id<0) id = fSocketId;
+  
   std::string message_s = message.String();
-  std::cout << "Message to send: " << message_s << std::endl;
+  //std::cout << "Message to send to " << id << ": \"" << message_s << "\"" << std::endl;
+  
   if (send(id, message_s.c_str(), message_s.size(), MSG_NOSIGNAL)<=0) {
     throw Exception(__PRETTY_FUNCTION__, "Cannot send message!", JustWarning, SOCKET_ERROR(errno));
   }
@@ -162,6 +161,7 @@ Socket::FetchMessage(int id)
   // At first we prepare the buffer to be filled
   char buf[MAX_WORD_LENGTH];
   memset(buf, 0, MAX_WORD_LENGTH);
+  
   if (id<0) id = fSocketId;
  
   size_t num_bytes = recv(id, buf, MAX_WORD_LENGTH, 0);
@@ -170,7 +170,6 @@ Socket::FetchMessage(int id)
     //...
   }
   else if (num_bytes==0) {
-    std::cout << "socket " << id << " disconnected!" << std::endl;
     return Message(REMOVE_LISTENER, id);
   }
   
@@ -181,7 +180,8 @@ Socket::FetchMessage(int id)
     throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, SOCKET_ERROR(errno));
   }
     
-  std::cout << "---> (" << buf << ") received" << std::endl;
+  //std::cout << "---> (" << buf << ") received" << std::endl;
+  Message(buf).Dump();
   return Message(buf).Object();
 }
 

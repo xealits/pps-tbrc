@@ -29,10 +29,8 @@ bool
 Listener::Announce()
 {
   try {
-    // Once connected we announce our presence to the server
-    //SendMessage(Message(ADD_LISTENER, ""));
-    
-    // Then we wait for it to send us a connection acknowledgement + an id
+    // Once connected we wait for to the server to send us a connection
+    // acknowledgement + an id
     Message ack = FetchMessage();
     
     switch (ack.GetKey()) {
@@ -58,7 +56,7 @@ void
 Listener::Disconnect()
 {
   std::cout << "===> Disconnecting the client from socket" << std::endl;
-  //if (!fIsConnected) return;
+  if (!fIsConnected) return;
   try {
     SendMessage(Message(REMOVE_LISTENER, fListenerId), -1);
   } catch (Exception& e) {
@@ -78,11 +76,15 @@ void
 Listener::Receive()
 {
   try {
-    //Listen(5);
     Message msg = FetchMessage();
-    //msg.Dump();
+    switch (msg.GetKey()) {
+      case MASTER_DISCONNECT:
+        throw Exception(__PRETTY_FUNCTION__, "Master disconnected!", Fatal);
+      
+      default:
+        return;      
+    }
   } catch (Exception& e) {
-    //e.Dump();
-    //exit(0);
+    e.Dump();
   }
 }
