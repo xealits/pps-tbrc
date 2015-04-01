@@ -38,14 +38,14 @@ inline std::vector<std::string> sar(const char* a, const char* b)
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 26 Mar 2015
  */
-#define ENUM(m1, ...)\
+#define MESSAGES_ENUM(m1, ...)\
     enum MessageKey { m1=0, __VA_ARGS__  };\
     inline const char* MessageKeyToString(MessageKey value) {\
       return (sar(#m1, #__VA_ARGS__)[value]).c_str(); }\
     inline const MessageKey MessageKeyToObject(const char* value) {\
-      for (size_t i=0; i<=sizeof(MessageKey); i++) {\
-        if (sar(#m1, #__VA_ARGS__)[i]==std::string(value)) return (MessageKey)i;\
-    } return (MessageKey)(-1); }
+      std::vector<std::string> s=sar(#m1, #__VA_ARGS__);\
+      for (size_t i=0; i<s.size(); i++) { if (s[i]==std::string(value)) return (MessageKey)i; }\
+      return (MessageKey)(-1); }
     
 #endif
 

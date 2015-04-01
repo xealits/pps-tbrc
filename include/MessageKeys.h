@@ -3,15 +3,19 @@
 
 #include "messages.h"
 
-ENUM(\
+/// This is where we define the list of available socket messages to be
+/// sent/received by any actor.
+
+MESSAGES_ENUM(\
   // generic messages
-  INVALID_KEY,                                                                 \
+  INVALID_KEY,                                                         \
   
   // listener messages
-  ADD_LISTENER, REMOVE_LISTENER, SET_LISTENER_ID,                              \
+  REMOVE_LISTENER,                                                     \
   
   // master messages
-  MASTER_BROADCAST                                                             \
+  MASTER_BROADCAST, MASTER_DISCONNECT,                                 \
+  SET_LISTENER_ID, LISTENER_DELETED                                    \
 );  
 
 #endif

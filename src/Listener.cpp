@@ -1,7 +1,7 @@
 #include "Listener.h"
 
 Listener::Listener(int port) :
-  Socket(port), fIsConnected(false), fListenerId("")
+  Socket(port), fIsConnected(false), fListenerId(-1)
 {}
 
 Listener::~Listener()
@@ -30,17 +30,19 @@ Listener::Announce()
 {
   try {
     // Once connected we announce our presence to the server
-    SendMessage(Message(ADD_LISTENER, ""));
+    //SendMessage(Message(ADD_LISTENER, ""));
     
     // Then we wait for it to send us a connection acknowledgement + an id
     Message ack = FetchMessage();
-    ack.Dump();
-    if (ack.GetKey()==SET_LISTENER_ID) {
-      fListenerId = ack.GetValue();
-    }
-    else {
-      std::cout << __PRETTY_FUNCTION__ << " WARNING: received an invalid answer from server!" << std::endl;
-      ack.Dump();
+    
+    switch (ack.GetKey()) {
+    case SET_LISTENER_ID:
+      fListenerId = ack.GetIntValue();
+      break;
+      
+    case INVALID_KEY:
+    default:
+      throw Exception(__PRETTY_FUNCTION__, "Received an invalid answer from server", JustWarning);
     }
     
   } catch (Exception& e) {
@@ -58,12 +60,18 @@ Listener::Disconnect()
   std::cout << "===> Disconnecting the client from socket" << std::endl;
   //if (!fIsConnected) return;
   try {
-    SendMessage(Message(REMOVE_LISTENER, fListenerId.c_str()));
-    Message ack = FetchMessage();
+    SendMessage(Message(REMOVE_LISTENER, fListenerId), -1);
   } catch (Exception& e) {
     e.Dump();
   }
-  fIsConnected = false;
+  try {
+    Message ack = FetchMessage();
+    if (ack.GetKey()==LISTENER_DELETED) {
+      fIsConnected = false;
+    }
+  } catch (Exception& e) {
+    e.Dump();
+  }
 }
 
 void
@@ -71,8 +79,10 @@ Listener::Receive()
 {
   try {
     //Listen(5);
-    FetchMessage();
+    Message msg = FetchMessage();
+    //msg.Dump();
   } catch (Exception& e) {
-    e.Dump();
+    //e.Dump();
+    //exit(0);
   }
 }

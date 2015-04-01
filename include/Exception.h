@@ -1,6 +1,7 @@
 #ifndef Exception_h
 #define Exception_h
 
+#include <iostream>
 #include <string>
 
 /**
@@ -10,7 +11,8 @@
  */
 typedef enum
 {
-  Undefined,
+  Undefined=-1,
+  Info,
   JustWarning,
   Fatal
 } ExceptionType;
@@ -23,13 +25,22 @@ typedef enum
 class Exception
 {
   public:
+    inline Exception(const char* from, std::string desc, ExceptionType type=Undefined, const int id=0) {
+      fFrom = from;
+      fDescription = desc;
+      fType = type;
+      fErrorNumber = id;
+    }
+    
     inline Exception(const char* from, const char* desc, ExceptionType type=Undefined, const int id=0) {
       fFrom = from;
       fDescription = desc;
       fType = type;
       fErrorNumber = id;
     }
+
     inline ~Exception() {
+      // we stop this process' execution on fatal exception
       if (Type()==Fatal) exit(0);
     }
     
@@ -40,23 +51,28 @@ class Exception
     inline std::string TypeString() const {
       switch (Type()) {
         case JustWarning: return "\033[34;1mJustWarning\033[0m";
+        case Info: return "\033[33;1mInfo\033[0m";
         case Fatal: return "\033[31;1mFatal\033[0m";
-        case Undefined:
-        default:
-          return "\33[7;1mUndefined\033[0m";
+        case Undefined: default: return "\33[7;1mUndefined\033[0m";
       }
     }
     
-    inline void Dump() const {
-      std::cerr << "=============== Exception detected! ===============" << std::endl
-                << "  Type:        " << TypeString() << std::endl
-                << "  Raised by:   " << From() << std::endl;
-      std::cerr << "  Description: " << std::endl
-                << "    " << Description() << std::endl;
+    inline void Dump(std::ostream& os=std::cerr) const {
+      if (Type()==Info) {
+        os << "======================= \033[33;1mInformation\033[0m =======================" << std::endl
+           << " From:        " << From() << std::endl;
+      }
+      else {
+        os << "=================== Exception detected! ===================" << std::endl
+           << " Class:       " << TypeString() << std::endl
+           << " Raised by:   " << From() << std::endl;
+      }
+      os << " Description: " << std::endl
+         << "\t" << Description() << std::endl;
       if (ErrorNumber()!=0)
-        std::cerr << "---------------------------------------------------" << std::endl
-                  << "  Error #" << ErrorNumber() << std::endl;
-      std::cerr << "===================================================" << std::endl;
+        os << "-----------------------------------------------------------" << std::endl
+           << " Error #" << ErrorNumber() << std::endl;
+      os << "===========================================================" << std::endl;
     }
     
   private:

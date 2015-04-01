@@ -11,10 +11,7 @@ int gEnd = 0;
 void CtrlC(int aSig) {
   if (gEnd==0) {
     cout << endl << "[C-c] Trying a clean exit!" << endl;
-    if (l) {
-      l->Disconnect();
-      delete l;
-    }
+    if (l) delete l;
     exit(0);
   }
   else if (gEnd>=5) {
@@ -45,6 +42,7 @@ int main(int argc, char* argv[])
       l->Receive();
     } catch (Exception& e) {
       e.Dump();
+      exit(0);
     }
   }
 

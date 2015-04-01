@@ -14,7 +14,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#include <vector>
+#include <set>
 #include <sstream>
 #include <iostream>
 
@@ -24,6 +24,8 @@
 #define SOCKET_ERROR(x) 10000+x
 #define MAX_WORD_LENGTH 500
 
+class Socket;
+typedef std::set<int> SocketCollection;
 /**
  * General object providing all useful method to connect/bind/send/receive
  * information through system sockets.
@@ -38,6 +40,7 @@ class Socket
     Socket(int port);
     virtual ~Socket();
     
+    inline void SetPort(int port) { fPort=port; }
     /// Retrieve the port used for this socket
     inline int GetPort() const { return fPort; }
   
@@ -45,7 +48,13 @@ class Socket
      * Set the socket to accept connections from clients
      * \brief Accept connections from outside
      */
-    void AcceptConnections(Socket& socket) const;
+    void AcceptConnections(Socket& socket);
+    void SelectConnections();
+    
+    inline void SetSocketId(int sid) { fSocketId=sid; }
+    inline int GetSocketId() const { return fSocketId; }
+
+    void DumpConnected() const;
     
   protected:
     /**
@@ -71,19 +80,20 @@ class Socket
     /**
      * \brief Send a message on a socket
      */
-    void SendMessage(Message message);
+    void SendMessage(Message message, int id);
     /**
      * \brief Receive a message from a socket
      * \return Received message as a std::string
      */
-    Message FetchMessage();
+    Message FetchMessage(int id=-1);
     
-    /**
-     * A file descriptor for this socket, if \a Create was performed beforehand.
-     */
-    int fSocketId;
     int fPort;
     char fBuffer[MAX_WORD_LENGTH];
+    SocketCollection fSocketsConnected;
+    /// Master file descriptor list
+    fd_set fMaster;
+    /// Temp file descriptor list for select()
+    fd_set fReadFds;
     
   private:
     /**
@@ -91,8 +101,15 @@ class Socket
      */
     void Create();
     void Configure();
+    void SetNonBlock(bool nb);
     
-    struct sockaddr_in6 fAddress;
+    //struct sockaddr_in6 fAddress;
+    struct sockaddr_in fAddress;
+    
+    /**
+     * A file descriptor for this socket, if \a Create was performed beforehand.
+     */
+    int fSocketId;
 };
 
 #endif

@@ -3,7 +3,9 @@
 
 #include "Socket.h"
 
-#include <list>
+#include <set>
+
+typedef std::set<int> ListenersList;
 
 /**
  * Messenger/broadcaster object used by the server to send/receive commands from
@@ -15,7 +17,7 @@
 class Messenger : public Socket
 {
   public:
-    inline Messenger() {;}
+    Messenger();
     Messenger(int port);
     ~Messenger();
 
@@ -23,11 +25,9 @@ class Messenger : public Socket
     void Disconnect();
     
     MessageKey Receive();
-    void Broadcast(std::string message);
+    void ProcessMessage(Message& m);
+    void Broadcast(Message m);
 
-  private:
-    std::list<int> fListeners;
-    int fLastListenerAdded;
 };
 
 #endif
