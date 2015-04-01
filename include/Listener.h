@@ -27,7 +27,7 @@ class Listener : public Socket
   private:
     bool Announce();
   
-    std::string fListenerId;
+    int fListenerId;
     bool fIsConnected;
 };
 

@@ -1,14 +1,19 @@
 #include "Messenger.h"
 
+Messenger::Messenger() :
+  Socket(-1)
+{}
+
 Messenger::Messenger(int port) :
-  Socket(port), fLastListenerAdded(-1)
+  Socket(port)
 {
   std::cout << __PRETTY_FUNCTION__ << " new Messenger at port " << GetPort() << std::endl;
-  std::cout << "!!!!!!!!!!!!!!! " << fLastListenerAdded << std::endl;
 }
 
 Messenger::~Messenger()
-{}
+{
+  Disconnect();
+}
 
 bool
 Messenger::Connect()
@@ -16,77 +21,97 @@ Messenger::Connect()
   try {
     Start();
     Bind();
-    Listen(5);
+    Listen(10);
   } catch (Exception& e) {
     e.Dump();
     return false;
   }
-
-  // return a true iff everything went fine !
   return true;
 }
 
 void
 Messenger::Disconnect()
 {
-  if (fListeners.size()) {
-    try {
-      Broadcast("disconnect_server");
-    } catch (Exception& e) {
-      e.Dump();
-      throw Exception(__PRETTY_FUNCTION__, "Failed to broadcast the server disconnection status!", JustWarning, SOCKET_ERROR(errno));
-    }
+  if (fPort<0) return; // do not broadcast the death of a secondary messenger!
+  try {
+    Broadcast(Message(MASTER_DISCONNECT, ""));
+  } catch (Exception& e) {
+    e.Dump();
+    throw Exception(__PRETTY_FUNCTION__, "Failed to broadcast the server disconnection status!", JustWarning, SOCKET_ERROR(errno));
   }
+  Stop();
 }
 
 MessageKey
 Messenger::Receive()
 {
-  MessageKey key = INVALID_KEY;
+  // We start by copying the master file descriptors list to the
+  // temporary list for readout
+  fReadFds = fMaster;
+  
   try {
-    Message message = FetchMessage();
-    message.Dump();
-    
-    if (message.String().empty()) return INVALID_KEY;
-    
-    //std::cout << __PRETTY_FUNCTION__ << " received \"" << message.GetKey() << "\" -> \"" << message.GetValue() << "\"" << std::endl;
-    
-    // We determine the message type
-    key = message.GetKey();
-    
-    if (key==ADD_LISTENER) {
-      std::cout << "New client !" << std::endl;
-      
-      std::cout << "--> " << fLastListenerAdded << " added" << std::endl;
-      if (fLastListenerAdded<0) fLastListenerAdded = 0; // first listener added!
-      else fLastListenerAdded += 1;
-      
-      std::cout << "--> " << fLastListenerAdded << " added" << std::endl;
-      fListeners.push_back(fLastListenerAdded);
-      //SendMessage(Message(SET_LISTENER_ID, fLastListenerAdded));
-      //std::cout << MessageKeyToString(SET_LISTENER_ID) << std::endl;
-      SendMessage(Message(SET_LISTENER_ID, "huhu"));
-    }
-    if (key==REMOVE_LISTENER) {
-      std::cout << "Delete client !" << std::endl;
-      //SendMessage(Message("huhu", "aaah"));
-    }
-    //else if (message=="")
-    
+    SelectConnections();
   } catch (Exception& e) {
-    throw Exception(__PRETTY_FUNCTION__, "Message with invalid key received!", JustWarning, SOCKET_ERROR(errno));
     e.Dump();
-    return INVALID_KEY;
+    throw Exception(__PRETTY_FUNCTION__, "Impossible to select the connections!", Fatal);
   }
   
-  return key;
+  // Looking for something to read!
+  for (SocketCollection::const_iterator sid=fSocketsConnected.begin(); sid!=fSocketsConnected.end(); sid++) {
+    
+    if (!FD_ISSET(*sid, &fReadFds)) continue;
+    
+    // First check if we need to handle new connections
+    if (*sid==GetSocketId()) {
+      Messenger mess;
+      try {
+        AcceptConnections(mess);
+        SendMessage(Message(SET_LISTENER_ID, mess.GetSocketId()), mess.GetSocketId());
+      } catch (Exception& e) {
+        e.Dump();
+      }
+      return MessageKey();
+    }
+    
+    // Handle data from a client
+    Message message = FetchMessage(*sid);
+    //message.Dump();
+    try {
+      ProcessMessage(message);
+    } catch (Exception& e) {
+      e.Dump();
+    }
+    return message.GetKey();
+  }
 }
 
 void
-Messenger::Broadcast(std::string message)
+Messenger::ProcessMessage(Message& m)
+{
+  Messenger* mes;
+  switch (m.GetKey()) {
+    case REMOVE_LISTENER:
+      fSocketsConnected.erase(m.GetIntValue());
+      mes = new Messenger;
+      mes->SetSocketId(m.GetIntValue());
+      mes->Stop();
+      FD_CLR(m.GetIntValue(), &fMaster);
+      delete mes;
+      break;
+    
+    default:
+      return;
+  }
+}
+
+void
+Messenger::Broadcast(Message m)
 {
   try {
-    SendMessage(Message(MASTER_BROADCAST, message.c_str()));
+    for (SocketCollection::const_iterator sid=fSocketsConnected.begin(); sid!=fSocketsConnected.end(); sid++) {
+      if (*sid==GetSocketId()) continue;
+      SendMessage(m, *sid);
+    }
   } catch (Exception& e) {
     e.Dump();
   }
