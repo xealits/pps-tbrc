@@ -10,10 +10,7 @@ int gEnd = 0;
 void CtrlC(int aSig) {
   if (gEnd==0) {
     cout << endl << "[C-c] Trying a clean exit!" << endl;
-    if (m) {
-      cout << "Trying to disconnect the messenger" << endl;
-      delete m;
-    }
+    if (m) { cout << "Trying to disconnect the messenger" << endl; delete m; }
     exit(0);
   }
   else if (gEnd>=5) {
@@ -33,26 +30,6 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  /*while (true) {
-    Messenger mm(m->GetListeners());
-    // This part looks at new clients connections
-    m->AcceptConnections(mm);
-    while (true) {
-      try {
-        mm.Receive();
-      } catch (Exception& e) {
-        std::cout << "prout" << std::endl;
-        e.Dump();
-        break;
-      }
-    }
-    m->AddListeners(mm.GetListeners());
-    //mm.DumpListeners();    
-    //mm.Broadcast("prout");
-    //sleep(1);
-    //mm.Disconnect();
-    //delete mm;
-  } */
   while (true) {
     try {
       m->Receive();

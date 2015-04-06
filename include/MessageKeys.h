@@ -8,10 +8,10 @@
 
 MESSAGES_ENUM(\
   // generic messages
-  INVALID_KEY,                                                         \
+  INVALID_KEY, WEBSOCKET_KEY,                                          \
   
   // listener messages
-  REMOVE_LISTENER,                                                     \
+  ADD_LISTENER, REMOVE_LISTENER,                                       \
   
   // master messages
   MASTER_BROADCAST, MASTER_DISCONNECT,                                 \

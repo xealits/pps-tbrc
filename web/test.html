@@ -6,7 +6,7 @@
  <script>
   var connection = new WebSocket('ws://localhost:1987', ['wpcp', 'xmpp']);
   connection.onopen = function () {
-    //connection.send('Ping'); // Send the message 'Ping' to the server
+    connection.send('Ping'); // Send the message 'Ping' to the server
   };
   connection.onmessage = function(event) {
     console.log(event);

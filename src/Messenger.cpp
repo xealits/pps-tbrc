@@ -34,7 +34,7 @@ Messenger::Disconnect()
 {
   if (fPort<0) return; // do not broadcast the death of a secondary messenger!
   try {
-    Broadcast(Message(MASTER_DISCONNECT, ""));
+    Broadcast(SocketMessage(MASTER_DISCONNECT, ""));
   } catch (Exception& e) {
     e.Dump();
     throw Exception(__PRETTY_FUNCTION__, "Failed to broadcast the server disconnection status!", JustWarning, SOCKET_ERROR(errno));
@@ -66,7 +66,18 @@ Messenger::Receive()
       Messenger mess;
       try {
         AcceptConnections(mess);
-        SendMessage(Message(SET_LISTENER_ID, mess.GetSocketId()), mess.GetSocketId());
+        Message message = FetchMessage(mess.GetSocketId());
+        if (message.IsFromWeb()) {
+          // handle a WebSocket connection
+          HTTPMessage m(message, true);
+          SendMessage(m.AnswerHandshake(), mess.GetSocketId());
+          std::cout << "new web connection!" << std::endl;
+          return WEBSOCKET_KEY;
+        }
+        else {
+          // if not a WebSocket connection
+          SendMessage(SocketMessage(SET_LISTENER_ID, mess.GetSocketId()), mess.GetSocketId());
+        }
       } catch (Exception& e) {
         e.Dump();
       }
@@ -83,24 +94,38 @@ Messenger::Receive()
     }
     return message.GetKey();
   }
+  return INVALID_KEY;
 }
 
 void
 Messenger::ProcessMessage(Message& m)
 {
-  Messenger* mes;
-  switch (m.GetKey()) {
-    case REMOVE_LISTENER:
-      fSocketsConnected.erase(m.GetIntValue());
-      mes = new Messenger;
-      mes->SetSocketId(m.GetIntValue());
-      mes->Stop();
-      FD_CLR(m.GetIntValue(), &fMaster);
-      delete mes;
-      break;
-    
-    default:
-      return;
+  if (m.IsFromWeb()) {
+    HTTPMessage mess(m);
+    std::cout << "new message from web!" << std::endl;
+    try {
+      SendMessage(mess.AnswerHandshake());
+    } catch (Exception& e) {
+      e.Dump();
+      cout<<"haha"<<endl;
+    }
+  }
+  else {
+    SocketMessage mess(m);
+    Messenger* mes;
+    switch (mess.GetKey()) {
+      case REMOVE_LISTENER:
+        fSocketsConnected.erase(mess.GetIntValue());
+        mes = new Messenger;
+        mes->SetSocketId(mess.GetIntValue());
+        mes->Stop();
+        FD_CLR(mess.GetIntValue(), &fMaster);
+        delete mes;
+        break;
+      
+      default:
+        return;
+    }
   }
 }
 

@@ -1,7 +1,7 @@
 #include "Listener.h"
 
 Listener::Listener(int port) :
-  Socket(port), fIsConnected(false), fListenerId(-1)
+  Socket(port), fListenerId(-1), fIsConnected(false)
 {}
 
 Listener::~Listener()
@@ -29,10 +29,14 @@ bool
 Listener::Announce()
 {
   try {
-    // Once connected we wait for to the server to send us a connection
-    // acknowledgement + an id
-    Message ack = FetchMessage();
+    // Once connected we send our request for connection
+    SendMessage(SocketMessage(ADD_LISTENER, ""));
     
+    // Then we wait for to the server to send us a connection
+    // acknowledgement + an id
+    SocketMessage ack(FetchMessage());
+    
+    ack.Dump();
     switch (ack.GetKey()) {
     case SET_LISTENER_ID:
       fListenerId = ack.GetIntValue();
@@ -58,12 +62,12 @@ Listener::Disconnect()
   std::cout << "===> Disconnecting the client from socket" << std::endl;
   if (!fIsConnected) return;
   try {
-    SendMessage(Message(REMOVE_LISTENER, fListenerId), -1);
+    SendMessage(SocketMessage(REMOVE_LISTENER, fListenerId), -1);
   } catch (Exception& e) {
     e.Dump();
   }
   try {
-    Message ack = FetchMessage();
+    SocketMessage ack(FetchMessage());
     if (ack.GetKey()==LISTENER_DELETED) {
       fIsConnected = false;
     }
@@ -76,7 +80,7 @@ void
 Listener::Receive()
 {
   try {
-    Message msg = FetchMessage();
+    SocketMessage msg(FetchMessage());
     switch (msg.GetKey()) {
       case MASTER_DISCONNECT:
         throw Exception(__PRETTY_FUNCTION__, "Master disconnected!", Fatal);

@@ -39,7 +39,6 @@ Socket::Stop()
 void
 Socket::Create()
 {
-  //fSocketId = socket(AF_INET6, SOCK_STREAM, 0);
   fSocketId = socket(AF_INET, SOCK_STREAM, 0);
   if (fSocketId==-1) {
     throw Exception(__PRETTY_FUNCTION__, "Cannot create socket!", Fatal, SOCKET_ERROR(errno));
@@ -49,7 +48,7 @@ Socket::Create()
 void
 Socket::Configure()
 {
-  const int on = 1, off = 0;
+  const int on = 1/*, off = 0*/;
   if (setsockopt(fSocketId, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(on))!=0) {
     throw Exception(__PRETTY_FUNCTION__, "Cannot modify socket options", Fatal, SOCKET_ERROR(errno));
   }
@@ -59,13 +58,9 @@ void
 Socket::Bind()
 {
   // binding the socket
-  /*fAddress.sin6_family = AF_INET6;
-  fAddress.sin6_addr = in6addr_any;
-  fAddress.sin6_port = htons(fPort);*/
   fAddress.sin_family = AF_INET;
   fAddress.sin_addr.s_addr = INADDR_ANY;
   fAddress.sin_port = htons(fPort);
-  //memset(&(fAddress.sin_zero), '\0', 8);
 
   int bind_result = bind(fSocketId, (struct sockaddr*)&fAddress, sizeof(fAddress));
   if (bind_result==-1) {
@@ -77,8 +72,6 @@ Socket::Bind()
 void
 Socket::PrepareConnection()
 {
-  /*fAddress.sin6_family = AF_INET6;
-  fAddress.sin6_port = htons(fPort);*/
   fAddress.sin_family = AF_INET;
   fAddress.sin_port = htons(fPort);
 
@@ -101,6 +94,7 @@ Socket::AcceptConnections(Socket& socket)
   // Now we can start accepting connections from clients
   socklen_t len = sizeof(fAddress);
   socket.SetSocketId(accept(fSocketId, (struct sockaddr*)&fAddress, &len));
+  std::cout << "new socket with id=" << socket.GetSocketId() << std::endl;
   if (socket.GetSocketId()<0) {
     throw Exception(__PRETTY_FUNCTION__, "Cannot accept client!", JustWarning, SOCKET_ERROR(errno));
   }
@@ -148,7 +142,7 @@ Socket::SendMessage(Message message, int id)
   if (id<0) id = fSocketId;
   
   std::string message_s = message.GetString();
-  //std::cout << "Message to send to " << id << ": \"" << message_s << "\"" << std::endl;
+  std::cout << "Message to send to " << id << ": \"" << message_s << "\"" << std::endl;
   
   if (send(id, message_s.c_str(), message_s.size(), MSG_NOSIGNAL)<=0) {
     throw Exception(__PRETTY_FUNCTION__, "Cannot send message!", JustWarning, SOCKET_ERROR(errno));
@@ -170,7 +164,7 @@ Socket::FetchMessage(int id)
     //...
   }
   else if (num_bytes==0) {
-    return Message(REMOVE_LISTENER, id);
+    return SocketMessage(REMOVE_LISTENER, id);
   }
   
   if (strchr(buf, ':')==NULL) { // no column -> invalid key:value pattern
@@ -182,14 +176,17 @@ Socket::FetchMessage(int id)
   
   std::cout << "---> (" << buf << ") received" << std::endl;
   try {
-    return Message(buf);
+    return SocketMessage(buf);
   } catch (Exception& e) {
+    e.Dump();
     try {
+      std::cout << "===> Switching to HTTP message" << std::endl;
       return HTTPMessage(buf);
     } catch (Exception& e) {
       e.Dump();
     }
   }
+  return Message();
 }
 
 void

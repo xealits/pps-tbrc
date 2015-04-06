@@ -1,6 +1,5 @@
 #include "Listener.h"
 
-#include <cstdlib>
 #include <iostream>
 
 using namespace std;
@@ -36,9 +35,7 @@ int main(int argc, char* argv[])
   }
 
   while (true) {
-    //Listener ll;
     try {
-      //l.AcceptConnections(ll);
       l->Receive();
     } catch (Exception& e) {
       e.Dump();

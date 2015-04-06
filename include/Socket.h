@@ -19,7 +19,7 @@
 #include <iostream>
 
 #include "Exception.h"
-#include "Message.h"
+#include "SocketMessage.h"
 #include "HTTPMessage.h"
 
 #define SOCKET_ERROR(x) 10000+x
@@ -87,7 +87,14 @@ class Socket
      * \return Received message as a std::string
      */
     Message FetchMessage(int id=-1);
+
+  private:
+    /**
+     * A file descriptor for this socket, if \a Create was performed beforehand.
+     */
+    int fSocketId;
     
+  protected:
     int fPort;
     char fBuffer[MAX_WORD_LENGTH];
     SocketCollection fSocketsConnected;
@@ -103,14 +110,10 @@ class Socket
     void Create();
     void Configure();
     void SetNonBlock(bool nb);
-    
+
     //struct sockaddr_in6 fAddress;
     struct sockaddr_in fAddress;
-    
-    /**
-     * A file descriptor for this socket, if \a Create was performed beforehand.
-     */
-    int fSocketId;
+
 };
 
 #endif
