@@ -26,10 +26,10 @@
 #define MAX_WORD_LENGTH 500
 
 class Socket;
-typedef std::set<int> SocketCollection;
+typedef std::set< std::pair<int,bool> > SocketCollection;
 /**
- * General object providing all useful method to connect/bind/send/receive
- * information through system sockets.
+ * General object providing all useful method to
+ * connect/bind/send/receive information through system sockets.
  *
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 23 Mar 2015
@@ -54,6 +54,14 @@ class Socket
     
     inline void SetSocketId(int sid) { fSocketId=sid; }
     inline int GetSocketId() const { return fSocketId; }
+    
+    inline bool IsWebSocket(int sid) const { 
+      // FIXME need to find a more C++-like method...
+      for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++) {
+        if (it->first==sid) return it->second;
+      }
+      //return fSocketsConnected->
+    }
 
     void DumpConnected() const;
     

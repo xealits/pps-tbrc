@@ -100,7 +100,7 @@ Socket::AcceptConnections(Socket& socket)
   }
   // Add to master set
   FD_SET(socket.GetSocketId(), &fMaster);
-  fSocketsConnected.insert(socket.GetSocketId());
+  fSocketsConnected.insert(std::pair<int,bool>(socket.GetSocketId(), false));
 }
 
 void
@@ -109,7 +109,7 @@ Socket::SelectConnections()
   if (fSocketsConnected.size()==0) {
     throw Exception(__PRETTY_FUNCTION__, "The messenger socket is not registered to the sockets list!", Fatal);
   }
-  int highest = *fSocketsConnected.rbegin(); // last one in the set
+  int highest = fSocketsConnected.rbegin()->first; // last one in the set
   if (select(highest+1, &fReadFds, NULL, NULL, NULL)==-1) {
     throw Exception(__PRETTY_FUNCTION__, "Unable to select the connection!", Fatal, SOCKET_ERROR(errno));
   }
@@ -133,7 +133,7 @@ Socket::Listen(int maxconn)
   }
   // Add the listener to the master set
   FD_SET(fSocketId, &fMaster);
-  fSocketsConnected.insert(fSocketId);
+  fSocketsConnected.insert(std::pair<int,bool>(fSocketId, false));
 }
 
 void
@@ -141,6 +141,7 @@ Socket::SendMessage(Message message, int id)
 {
   if (id<0) id = fSocketId;
   
+  std::cout << "asdfasdfasdfasdf" << std::endl;
   std::string message_s = message.GetString();
   std::cout << "Message to send to " << id << ": \"" << message_s << "\"" << std::endl;
   
@@ -166,27 +167,16 @@ Socket::FetchMessage(int id)
   else if (num_bytes==0) {
     return SocketMessage(REMOVE_LISTENER, id);
   }
-  
+    
   if (strchr(buf, ':')==NULL) { // no column -> invalid key:value pattern
     std::ostringstream os;
     os << "Invalid message received!" << std::endl
        << "\tRaw message: \"" << buf << "\"";
-    throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, SOCKET_ERROR(errno));
+    //throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, SOCKET_ERROR(errno));
   }
-  
-  std::cout << "---> (" << buf << ") received" << std::endl;
-  try {
-    return SocketMessage(buf);
-  } catch (Exception& e) {
-    e.Dump();
-    try {
-      std::cout << "===> Switching to HTTP message" << std::endl;
-      return HTTPMessage(buf);
-    } catch (Exception& e) {
-      e.Dump();
-    }
-  }
-  return Message();
+
+  //std::cout << "---> (" << buf << ") received" << std::endl;
+  return Message(buf);
 }
 
 void
@@ -195,7 +185,8 @@ Socket::DumpConnected() const
   std::ostringstream os;
   os << " List of sockets connected: ";
   for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++) {
-    os << " " << *it;
+    os << " " << it->first;
+    if (it->second) os << " (web)";
   }
   Exception(__PRETTY_FUNCTION__, os.str(), Info).Dump();
 }

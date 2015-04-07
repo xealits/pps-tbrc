@@ -27,7 +27,9 @@ class Messenger : public Socket
     MessageKey Receive();
     void ProcessMessage(Message& m);
     void Broadcast(Message m);
-
+    
+  private:
+    WebSocket* fWS;
 };
 
 #endif

@@ -1,18 +1,20 @@
 #include "Messenger.h"
 
 Messenger::Messenger() :
-  Socket(-1)
+  Socket(-1), fWS(0)
 {}
 
 Messenger::Messenger(int port) :
-  Socket(port)
+  Socket(port), fWS(0)
 {
   std::cout << __PRETTY_FUNCTION__ << " new Messenger at port " << GetPort() << std::endl;
+  fWS = new WebSocket;
 }
 
 Messenger::~Messenger()
 {
   Disconnect();
+  if (fWS) delete fWS;
 }
 
 bool
@@ -59,24 +61,31 @@ Messenger::Receive()
   // Looking for something to read!
   for (SocketCollection::const_iterator sid=fSocketsConnected.begin(); sid!=fSocketsConnected.end(); sid++) {
     
-    if (!FD_ISSET(*sid, &fReadFds)) continue;
+    if (!FD_ISSET(sid->first, &fReadFds)) continue;
     
     // First check if we need to handle new connections
-    if (*sid==GetSocketId()) {
+    if (sid->first==GetSocketId()) {
       Messenger mess;
       try {
         AcceptConnections(mess);
         Message message = FetchMessage(mess.GetSocketId());
+        //message.Dump();
         if (message.IsFromWeb()) {
+          fWS->parseHandshake((unsigned char*)message.GetString().c_str(), message.GetString().size());
           // handle a WebSocket connection
-          HTTPMessage m(message, true);
-          SendMessage(m.AnswerHandshake(), mess.GetSocketId());
-          std::cout << "new web connection!" << std::endl;
+          //FIXME FIXME FIXME
+          /*for (SocketCollection::iterator sid=fSocketsConnected.begin(); sid!=fSocketsConnected.end(); sid++) {
+            if (sid->first==mess.GetSocketId()) sid->second = true; //sid = std::pair<int,bool>(mess.GetSocketId(), true);//
+          }*/
+          fSocketsConnected.erase(std::pair<int,bool>(mess.GetSocketId(), false));
+          fSocketsConnected.insert(std::pair<int,bool>(mess.GetSocketId(), true));
+          SendMessage(Message(fWS->answerHandshake()), mess.GetSocketId());
           return WEBSOCKET_KEY;
         }
         else {
           // if not a WebSocket connection
           SendMessage(SocketMessage(SET_LISTENER_ID, mess.GetSocketId()), mess.GetSocketId());
+          return ADD_LISTENER;
         }
       } catch (Exception& e) {
         e.Dump();
@@ -85,15 +94,21 @@ Messenger::Receive()
     }
     
     // Handle data from a client
-    Message message = FetchMessage(*sid);
-    //message.Dump();
+    std::cout << "receiving message from " << sid->first << " (is websocket? " << sid->second << ")" << std::endl;
+    Message message = FetchMessage(sid->first);
+    Message *m = 0;
+    if (sid->second) m = new HTTPMessage(fWS, message);
+    else m = new SocketMessage(message);
+    std::cout << "haha" << std::endl;
+    m->Dump();
     try {
-      ProcessMessage(message);
+      ProcessMessage(*m);
     } catch (Exception& e) {
       e.Dump();
     }
     return message.GetKey();
   }
+  
   return INVALID_KEY;
 }
 
@@ -101,21 +116,15 @@ void
 Messenger::ProcessMessage(Message& m)
 {
   if (m.IsFromWeb()) {
-    HTTPMessage mess(m);
     std::cout << "new message from web!" << std::endl;
-    try {
-      SendMessage(mess.AnswerHandshake());
-    } catch (Exception& e) {
-      e.Dump();
-      cout<<"haha"<<endl;
-    }
+    HTTPMessage mess(fWS, m);
   }
   else {
     SocketMessage mess(m);
     Messenger* mes;
     switch (mess.GetKey()) {
       case REMOVE_LISTENER:
-        fSocketsConnected.erase(mess.GetIntValue());
+        fSocketsConnected.erase(std::pair<int,bool>(mess.GetIntValue(), false));
         mes = new Messenger;
         mes->SetSocketId(mess.GetIntValue());
         mes->Stop();
@@ -134,8 +143,8 @@ Messenger::Broadcast(Message m)
 {
   try {
     for (SocketCollection::const_iterator sid=fSocketsConnected.begin(); sid!=fSocketsConnected.end(); sid++) {
-      if (*sid==GetSocketId()) continue;
-      SendMessage(m, *sid);
+      if (sid->first==GetSocketId()) continue;
+      SendMessage(m, sid->first);
     }
   } catch (Exception& e) {
     e.Dump();

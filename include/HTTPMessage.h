@@ -2,44 +2,39 @@
 #define HTTPMessage_h
 
 #include "Message.h"
-//#include "libwebsocket.h"
-//#include "websocketpp/http/request.hpp"
 #include "WebSocket/WebSocket.h"
+
+#define MAX_WS_MESSAGE_SIZE 500
 
 class HTTPMessage : public Message
 {
   public:
-    inline HTTPMessage(Message& m, bool init=false): Message(m), fStatus(-1) {
-      if (init) fWS.parseHandshake((unsigned char*)fString.c_str(), fString.size());
+    inline HTTPMessage(WebSocket* ws, Message& m) : Message(m), fWS(ws) {
+      unsigned char outbuf[MAX_WS_MESSAGE_SIZE];
+      memset(outbuf, 0, MAX_WS_MESSAGE_SIZE);
+      int outbufsize;
+      fWS->getFrame((unsigned char*)fString.c_str(), fString.size(), outbuf, MAX_WS_MESSAGE_SIZE, &outbufsize);
     }
-    inline HTTPMessage(std::string msg, bool init=false) : Message(msg) {
-      HTTPMessage(msg.c_str());
-    }
-    inline HTTPMessage(const char* msg, bool init=false) : Message(msg), fStatus(501) {
-      //websocketpp::http::parser::parser p;
-      //websocketpp::http::parser::request req;
-      //std::cout << "--> " << req.consume(msg, sizeof(msg)) << " -> [" << req.get_body() << "]" << std::endl;
-      //std::ostringstream s; s << msg;
-      //std::cout << "-> " << req.parse_complete() << ", " << 
-      if (init) fWS.parseHandshake((unsigned char*)fString.c_str(), fString.size());
+    inline HTTPMessage(WebSocket* ws, const char* msg) : Message(msg), fWS(ws) {
+      unsigned char outbuf[MAX_WS_MESSAGE_SIZE];
+      memset(outbuf, 0, MAX_WS_MESSAGE_SIZE);
+      int outbufsize;
+      fWS->getFrame((unsigned char*)msg, sizeof(msg)/sizeof(const char*), outbuf, MAX_WS_MESSAGE_SIZE, &outbufsize);
     }
     inline MessageKey GetKey() const { return WEBSOCKET_KEY; }
-    
-    inline HTTPMessage AnswerHandshake() { return HTTPMessage(fWS.answerHandshake()); }
-    
+        
     inline void Dump(std::ostream& os=std::cout) const {
       os << "============= Web-socket Message dump =============" << std::endl
-         << " Resource: " << fWS.resource << std::endl
-         << " Host:     " << fWS.host << std::endl
-         << " Origin:   " << fWS.origin << std::endl
-         << " Protocol: " << fWS.protocol << std::endl
-         << " Key:      " << fWS.key << std::endl
+         << " Resource: " << fWS->resource << std::endl
+         << " Host:     " << fWS->host << std::endl
+         << " Origin:   " << fWS->origin << std::endl
+         << " Protocol: " << fWS->protocol << std::endl
+         << " Key:      " << fWS->key << std::endl
          << "===================================================" << std::endl;      
     }
     
   private:
-    int fStatus;
-    WebSocket fWS;
+    WebSocket* fWS;
 };
 
 #endif
