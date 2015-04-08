@@ -136,8 +136,8 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     int i = 0;
     std::ostringstream os;
     for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++, i++) {
-      if (i!=0) os << ",";
-      os << it->first;
+      if (i!=0) os << ";";
+      os << it->first << "," << "socket_" << it->first << "," << it->second;
       //if (it->second) os << " (web)";
     }
     try {
