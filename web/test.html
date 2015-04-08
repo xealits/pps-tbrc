@@ -1,16 +1,50 @@
-<html>
- <head>
-  <title>WebSocket</title>
- </head>
+<!DOCTYPE html>
+<meta charset="utf-8" /> 
+<title>WebSocket</title>
 
- <script>
-  var connection = new WebSocket('ws://localhost:1987', ['wpcp', 'xmpp']);
-  connection.onopen = function () {
-    connection.send('Ping'); // Send the message 'Ping' to the server
-  };
-  connection.onmessage = function(event) {
-    console.log(event);
-  };
- </script>
+<script language="javascript" type="text/javascript">
+  var listener_id, connection, socket_id;
+  
+  function init() {
+    listener_id = -1;
+    connection = 0;
+    socket_id = document.getElementById("socket_id");
+  }
 
-</html>
+  function bind_socket() {
+    //if (connection!==0) return;
+    connection = new WebSocket('ws://localhost:1987');
+    connection.onopen = function (event) {
+      connection.onmessage = function(event) {
+        console.log(event);
+        var d = event.data;
+        if (d.indexOf("SET_LISTENER_ID")>-1) {
+          listener_id = parseInt(d.substr(d.indexOf(":")+1));
+          socket_id.value = listener_id;
+        }
+      };
+    };
+    //connection.onmessage = function(event) {
+    //};
+  }
+  function unbind_socket() {
+    connection.send("REMOVE_LISTENER:"+listener_id);
+    connection.onclose = function (event) {
+      if (listener_id>=0) {
+        connection.send("REMOVE_LISTENER:"+listener_id);
+      }
+    };
+    socket_id.value = "###";
+    delete connection;
+  }
+  
+  window.addEventListener("load", init, false);
+
+</script>
+
+<h2>CT-PPS Run control</h2>
+
+<button onClick="javascript:bind_socket()" value="Connect" name="connect">Connect</button>
+<button onClick="javascript:unbind_socket()" value="Disconnect" name="connect">Disconnect</button>
+<input type="text" id="socket_id" value="###"  style="background-color:yellow;" size=2 disabled />
+<div id="output"></div>

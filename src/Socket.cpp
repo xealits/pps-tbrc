@@ -141,7 +141,6 @@ Socket::SendMessage(Message message, int id)
 {
   if (id<0) id = fSocketId;
   
-  std::cout << "asdfasdfasdfasdf" << std::endl;
   std::string message_s = message.GetString();
   std::cout << "Message to send to " << id << ": \"" << message_s << "\"" << std::endl;
   

@@ -25,7 +25,7 @@ class Messenger : public Socket
     void Disconnect();
     
     MessageKey Receive();
-    void ProcessMessage(Message& m);
+    void ProcessMessage(SocketMessage m);
     void Broadcast(Message m);
     
   private:
