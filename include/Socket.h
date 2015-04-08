@@ -60,7 +60,6 @@ class Socket
       for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++) {
         if (it->first==sid) return it->second;
       }
-      //return fSocketsConnected->
     }
 
     void DumpConnected() const;

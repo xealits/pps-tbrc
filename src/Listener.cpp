@@ -36,7 +36,6 @@ Listener::Announce()
     // acknowledgement + an id
     SocketMessage ack(FetchMessage());
     
-    ack.Dump();
     switch (ack.GetKey()) {
     case SET_LISTENER_ID:
       fListenerId = ack.GetIntValue();

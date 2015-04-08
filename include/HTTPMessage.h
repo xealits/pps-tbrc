@@ -4,22 +4,36 @@
 #include "Message.h"
 #include "WebSocket/WebSocket.h"
 
-#define MAX_WS_MESSAGE_SIZE 500
+#define MAX_WS_MESSAGE_SIZE 5000
 
 class HTTPMessage : public Message
 {
   public:
-    inline HTTPMessage(WebSocket* ws, Message& m) : Message(m), fWS(ws) {
+    inline HTTPMessage(WebSocket* ws, Message m, bool encode) : Message(m), fWS(ws) {
+      if (encode) Encode();
+      else Decode();
+    }
+    inline HTTPMessage(WebSocket* ws, const char* msg, bool encode) : Message(msg), fWS(ws) {
+      if (encode) Encode();
+      else Decode();
+    }
+    
+    inline void Decode() {
       unsigned char outbuf[MAX_WS_MESSAGE_SIZE];
       memset(outbuf, 0, MAX_WS_MESSAGE_SIZE);
       int outbufsize;
       fWS->getFrame((unsigned char*)fString.c_str(), fString.size(), outbuf, MAX_WS_MESSAGE_SIZE, &outbufsize);
+      std::string out((const char*)outbuf);
+      std::cout << "before " << outbufsize << " decoding: " << out << std::endl;
+      fString = out.substr(0, outbufsize);
     }
-    inline HTTPMessage(WebSocket* ws, const char* msg) : Message(msg), fWS(ws) {
+    
+    inline void Encode() {
       unsigned char outbuf[MAX_WS_MESSAGE_SIZE];
       memset(outbuf, 0, MAX_WS_MESSAGE_SIZE);
-      int outbufsize;
-      fWS->getFrame((unsigned char*)msg, sizeof(msg)/sizeof(const char*), outbuf, MAX_WS_MESSAGE_SIZE, &outbufsize);
+      int size = fWS->makeFrame(TEXT_FRAME, (unsigned char*)fString.c_str(), fString.size(), outbuf, MAX_WS_MESSAGE_SIZE);
+      std::string out((const char*)outbuf);
+      fString = out.substr(0, size);
     }
     inline MessageKey GetKey() const { return WEBSOCKET_KEY; }
         
