@@ -142,8 +142,6 @@ Socket::SendMessage(Message message, int id)
   if (id<0) id = fSocketId;
   
   std::string message_s = message.GetString();
-  std::cout << "Message to send to " << id << ": \"" << message_s << "\"" << std::endl;
-  
   if (send(id, message_s.c_str(), message_s.size(), MSG_NOSIGNAL)<=0) {
     throw Exception(__PRETTY_FUNCTION__, "Cannot send message!", JustWarning, SOCKET_ERROR(errno));
   }
@@ -166,15 +164,7 @@ Socket::FetchMessage(int id)
   else if (num_bytes==0) {
     return SocketMessage(REMOVE_LISTENER, id);
   }
-    
-  if (strchr(buf, ':')==NULL) { // no column -> invalid key:value pattern
-    std::ostringstream os;
-    os << "Invalid message received!" << std::endl
-       << "\tRaw message: \"" << buf << "\"";
-    //throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, SOCKET_ERROR(errno));
-  }
-
-  //std::cout << "---> (" << buf << ") received" << std::endl;
+  
   return Message(buf);
 }
 
