@@ -42,7 +42,7 @@
     connection = new WebSocket('ws://localhost:1987');
     connection.onerror = function (event) {
       if (event.originalTarget.readyState!==1) {
-        alert("Server not ready for connection!");
+        console_log.value = "Server not ready ("+event.originalTarget.readyState+") for connection!";
         socket_id.style.backgroundColor = "red";
         connection = 0;
         socket_id = -1;
@@ -53,12 +53,14 @@
     }
     connection.onopen = function () {
       connection.onmessage = function(event) {
+        console_log.value = event.data;
         var d = event.data;
         if (d.indexOf("SET_LISTENER_ID")>-1) {
           listener_id = parseInt(d.substr(d.indexOf(":")+1));
           socket_id.value = listener_id;
-          socket_id.style.backgroundColor = "green";
+          socket_id.style.backgroundColor = "lightgreen";
           enable_connected_buttons();
+          return;
         }
       };
     };
