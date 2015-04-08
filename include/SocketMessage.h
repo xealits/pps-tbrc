@@ -21,10 +21,18 @@ class SocketMessage : public Message
   public:
     inline SocketMessage() : Message("") {;}
     inline SocketMessage(Message msg) : Message(msg) {
-      fMessage = Object();
+      try {
+        fMessage = Object();
+      } catch (Exception& e) {
+        e.Dump();
+      }
     }
     inline SocketMessage(const char* msg_s) : Message(msg_s) { 
-      fMessage = Object();
+      try {
+        fMessage = Object();
+      } catch (Exception& e) {
+        e.Dump();
+      }
     }
     inline SocketMessage(MessageKey key, const char* value) : Message("") { SetKeyValue(key, value); }
     inline SocketMessage(MessageKey key, std::string value) : Message("") { SetKeyValue(key, value.c_str()); }
@@ -32,7 +40,11 @@ class SocketMessage : public Message
     inline SocketMessage(MessageKey key, const float value) : Message("") { SetKeyValue(key, value); }
     inline SocketMessage(MessageKey key, const double value) : Message("") { SetKeyValue(key, value); }
     inline SocketMessage(std::string msg_s) : Message(msg_s) {
-      fMessage = Object();
+      try {
+        fMessage = Object();
+      } catch (Exception& e) {
+        e.Dump();
+      }
     }
     inline SocketMessage(MessageMap msg_m) : Message("") { fMessage = msg_m; }
     inline ~SocketMessage() {;}
@@ -86,8 +98,6 @@ class SocketMessage : public Message
       if ((end=fString.find(':'))==std::string::npos) {
         std::ostringstream s;
         s << "Invalid message built! (\"" << fString << "\")";
-        if (fString.empty()) 
-          throw Exception(__PRETTY_FUNCTION__, s.str().c_str(), Fatal);
         throw Exception(__PRETTY_FUNCTION__, s.str().c_str(), JustWarning);
       }
       key = MessageKeyToObject(fString.substr(0, end).c_str());
