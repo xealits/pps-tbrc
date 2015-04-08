@@ -100,13 +100,11 @@ Messenger::Receive()
     SocketMessage m;
     if (sid->second) {
       HTTPMessage msg(fWS, message, 0);
-      std::cout << "--> " << msg.GetString() << std::endl;
       m = SocketMessage(msg);
-      m.Dump();
     }
     else m = SocketMessage(message.GetString());
     try {
-      ProcessMessage(m);
+      ProcessMessage(m, sid->first);
     } catch (Exception& e) {
       e.Dump();
     }
@@ -117,21 +115,29 @@ Messenger::Receive()
 }
 
 void
-Messenger::ProcessMessage(SocketMessage m)
+Messenger::ProcessMessage(SocketMessage m, int sid)
 {
-  Messenger* mes;
-  switch (m.GetKey()) {
-    case REMOVE_LISTENER:
-      fSocketsConnected.erase(std::pair<int,bool>(m.GetIntValue(), false));
-      mes = new Messenger;
-      mes->SetSocketId(m.GetIntValue());
-      mes->Stop();
-      FD_CLR(m.GetIntValue(), &fMaster);
-      delete mes;
-      break;
-    
-    default:
-      return;
+  if (m.GetKey()==REMOVE_LISTENER) {
+    fSocketsConnected.erase(std::pair<int,bool>(m.GetIntValue(), false));
+    Messenger* mes = new Messenger;
+    mes->SetSocketId(m.GetIntValue());
+    mes->Stop();
+    FD_CLR(m.GetIntValue(), &fMaster);
+    delete mes;
+  }
+  else if (m.GetKey()==WEB_GET_LISTENERS) {
+    int i = 0;
+    std::ostringstream os;
+    for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++, i++) {
+      if (i!=0) os << ",";
+      os << it->first;
+      //if (it->second) os << " (web)";
+    }
+    try {
+      SendMessage(HTTPMessage(fWS, SocketMessage(LISTENERS_LIST, os.str()), true), sid);
+    } catch (Exception& e) {
+      e.Dump();
+    }
   }
 }
 

@@ -15,7 +15,10 @@ MESSAGES_ENUM(\
   
   // master messages
   MASTER_BROADCAST, MASTER_DISCONNECT,                                 \
-  SET_LISTENER_ID, LISTENER_DELETED                                    \
+  SET_LISTENER_ID, LISTENER_DELETED, LISTENERS_LIST,                   \
+  
+  // web socket messages
+  WEB_GET_LISTENERS,                                                   \
 );  
 
 #endif

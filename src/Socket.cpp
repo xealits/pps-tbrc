@@ -162,7 +162,7 @@ Socket::FetchMessage(int id)
     //...
   }
   else if (num_bytes==0) {
-    return SocketMessage(REMOVE_LISTENER, id);
+    return SocketMessage(LISTENER_DELETED, id);
   }
   
   return Message(buf);
