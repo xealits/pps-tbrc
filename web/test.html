@@ -64,11 +64,17 @@
     
   function handle_disconnect() {
     connection.send("REMOVE_LISTENER:"+listener_id);
-    socket_id.value = "###";
-    socket_id.style.backgroundColor = "yellow";
-    disable_connected_buttons();
-    delete connection;
-    connection = 0;
+    connection.onmessage = function(event) {
+      console.log(event);
+      var d = event.data;
+      if (d.indexOf("LISTENER_DELETED")>-1) {
+        socket_id.value = "###";
+        socket_id.style.backgroundColor = "yellow";
+        disable_connected_buttons();
+        delete connection;
+        connection = 0;
+      }
+    }
   }
   function unbind_socket() {
     handle_disconnect();
@@ -81,9 +87,9 @@
   }
   
   function get_socket_listeners() {
+    if (connection===0) return;
     connection.send("WEB_GET_LISTENERS:"+listener_id);
     connection.onmessage = function(event) {
-      console.log(event);
       var d = event.data;
       if (d.indexOf("LISTENERS_LIST")>-1) {
         console_log.value = d.substr(d.indexOf(":")+1);
@@ -93,6 +99,7 @@
   
   window.addEventListener("load", init, false);
   window.addEventListener("unload", close, false);
+  window.setInterval(get_socket_listeners, 5000);
 
 </script>
 

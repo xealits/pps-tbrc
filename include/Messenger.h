@@ -27,6 +27,10 @@ class Messenger : public Socket
     MessageKey Receive();
     void ProcessMessage(SocketMessage m, int sid);
     void Broadcast(Message m);
+    inline void SendHTTPMessage(Message m, int sid) { 
+      if (!fWS) return;
+      SendMessage(HTTPMessage(fWS, m, true), sid);
+    }
     
   private:
     WebSocket* fWS;

@@ -24,7 +24,6 @@ class HTTPMessage : public Message
       int outbufsize;
       fWS->getFrame((unsigned char*)fString.c_str(), fString.size(), outbuf, MAX_WS_MESSAGE_SIZE, &outbufsize);
       std::string out((const char*)outbuf);
-      std::cout << "before " << outbufsize << " decoding: " << out << std::endl;
       fString = out.substr(0, outbufsize);
     }
     

@@ -95,7 +95,7 @@ Messenger::Receive()
     }
     
     // Handle data from a client
-    std::cout << "receiving message from " << sid->first << " (is websocket? " << sid->second << ")" << std::endl;
+    //std::cout << "receiving message from " << sid->first << " (is websocket? " << sid->second << ")" << std::endl;
     Message message = FetchMessage(sid->first);
     SocketMessage m;
     if (sid->second) {
@@ -118,12 +118,19 @@ void
 Messenger::ProcessMessage(SocketMessage m, int sid)
 {
   if (m.GetKey()==REMOVE_LISTENER) {
-    fSocketsConnected.erase(std::pair<int,bool>(m.GetIntValue(), false));
-    Messenger* mes = new Messenger;
-    mes->SetSocketId(m.GetIntValue());
-    mes->Stop();
+    if (fSocketsConnected.erase(std::pair<int,bool>(m.GetIntValue(), false))>0) {
+      std::cout << "removed 'conventional' socket with id=" << m.GetIntValue() << std::endl;
+      Messenger* mes = new Messenger;
+      mes->SetSocketId(m.GetIntValue());
+      mes->Stop();
+      delete mes;
+    }
+    else { // websocket
+      std::cout << "removed web socket with id=" << m.GetIntValue() << std::endl;
+      SendHTTPMessage(SocketMessage(LISTENER_DELETED, ""), m.GetIntValue());
+      fSocketsConnected.erase(std::pair<int,bool>(m.GetIntValue(), true));
+    }
     FD_CLR(m.GetIntValue(), &fMaster);
-    delete mes;
   }
   else if (m.GetKey()==WEB_GET_LISTENERS) {
     int i = 0;
@@ -134,7 +141,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
       //if (it->second) os << " (web)";
     }
     try {
-      SendMessage(HTTPMessage(fWS, SocketMessage(LISTENERS_LIST, os.str()), true), sid);
+      SendHTTPMessage(SocketMessage(LISTENERS_LIST, os.str()), sid);
     } catch (Exception& e) {
       e.Dump();
     }
@@ -147,7 +154,8 @@ Messenger::Broadcast(Message m)
   try {
     for (SocketCollection::const_iterator sid=fSocketsConnected.begin(); sid!=fSocketsConnected.end(); sid++) {
       if (sid->first==GetSocketId()) continue;
-      SendMessage(m, sid->first);
+      if (!sid->second) SendMessage(m, sid->first);
+      else SendHTTPMessage(m, sid->first);
     }
   } catch (Exception& e) {
     e.Dump();
