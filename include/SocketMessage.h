@@ -24,29 +24,29 @@ class SocketMessage : public Message
       try {
         fMessage = Object();
       } catch (Exception& e) {
-        e.Dump();
+        throw e;
       }
     }
     inline SocketMessage(const char* msg_s) : Message(msg_s) { 
       try {
         fMessage = Object();
       } catch (Exception& e) {
-        e.Dump();
+        throw e;
       }
     }
-    inline SocketMessage(MessageKey key, const char* value) : Message("") { SetKeyValue(key, value); }
-    inline SocketMessage(MessageKey key, std::string value) : Message("") { SetKeyValue(key, value.c_str()); }
-    inline SocketMessage(MessageKey key, const int value) : Message("") { SetKeyValue(key, value); }
-    inline SocketMessage(MessageKey key, const float value) : Message("") { SetKeyValue(key, value); }
-    inline SocketMessage(MessageKey key, const double value) : Message("") { SetKeyValue(key, value); }
     inline SocketMessage(std::string msg_s) : Message(msg_s) {
       try {
         fMessage = Object();
       } catch (Exception& e) {
-        e.Dump();
+        throw e;
       }
     }
-    inline SocketMessage(MessageMap msg_m) : Message("") { fMessage = msg_m; }
+    inline SocketMessage(MessageKey key, const char* value) : Message() { SetKeyValue(key, value); }
+    inline SocketMessage(MessageKey key, std::string value) : Message() { SetKeyValue(key, value.c_str()); }
+    inline SocketMessage(MessageKey key, const int value) : Message() { SetKeyValue(key, value); }
+    inline SocketMessage(MessageKey key, const float value) : Message() { SetKeyValue(key, value); }
+    inline SocketMessage(MessageKey key, const double value) : Message() { SetKeyValue(key, value); }
+    inline SocketMessage(MessageMap msg_m) : Message() { fMessage = msg_m; }
     inline ~SocketMessage() {;}
     
     /// Send a string-valued message

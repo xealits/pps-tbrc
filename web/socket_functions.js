@@ -43,7 +43,7 @@ function bind_socket() {
       connection = 0;
       socket_id = -1;
       disable_connected_buttons();
-      return;
+      //return;
     }
     //console.log("Server"+event.originalTarget.readyState);
   }

@@ -35,7 +35,6 @@ class Message
          << "  Value: " << fString << std::endl
          << "===================================================" << std::endl;      
     }
-
     
   protected:
     std::string fString;

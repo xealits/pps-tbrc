@@ -6,16 +6,22 @@
 
 #define MAX_WS_MESSAGE_SIZE 5000
 
+typedef enum
+{
+  DecodeMessage,
+  EncodeMessage
+} MessageAction;
+
 class HTTPMessage : public Message
 {
   public:
-    inline HTTPMessage(WebSocket* ws, Message m, bool encode) : Message(m), fWS(ws) {
-      if (encode) Encode();
-      else Decode();
+    inline HTTPMessage(WebSocket* ws, Message m, MessageAction a) : Message(m), fWS(ws) {
+      if (a==EncodeMessage) Encode();
+      else if (a==DecodeMessage) Decode();
     }
-    inline HTTPMessage(WebSocket* ws, const char* msg, bool encode) : Message(msg), fWS(ws) {
-      if (encode) Encode();
-      else Decode();
+    inline HTTPMessage(WebSocket* ws, const char* msg, MessageAction a) : Message(msg), fWS(ws) {
+      if (a==EncodeMessage) Encode();
+      else if (a==DecodeMessage) Decode();
     }
     
     inline void Decode() {

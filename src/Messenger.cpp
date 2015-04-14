@@ -44,6 +44,35 @@ Messenger::Disconnect()
   Stop();
 }
 
+void
+Messenger::DisconnectClient(int sid)
+{
+  bool ws = IsWebSocket(sid);
+  std::ostringstream o; o << "Disconnecting client # " << sid;
+  if (ws) o << " (web socket)";
+  Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump();
+  if (ws) {
+    Send(SocketMessage(LISTENER_DELETED, ""), sid);
+    std::ostringstream o; o << 0xFF << 0x00;
+    Send(Message(o.str()), sid);
+  }
+  else {
+    Messenger* mes = new Messenger;
+    mes->SetSocketId(sid);
+    mes->Stop();
+    delete mes;
+  }
+  fSocketsConnected.erase(std::pair<int,bool>(sid, ws));
+  FD_CLR(sid, &fMaster);
+}
+
+void
+Messenger::Send(const Message& m, int sid)
+{
+  if (IsWebSocket(sid)) SendMessage(HTTPMessage(fWS, m, EncodeMessage), sid);
+  else SendMessage(m, sid);
+}
+
 MessageKey
 Messenger::Receive()
 {
@@ -69,23 +98,20 @@ Messenger::Receive()
       try {
         AcceptConnections(mess);
         Message message = FetchMessage(mess.GetSocketId());
-        //message.Dump();
         if (message.IsFromWeb()) {
+          // Feed the handshake to the WebSocket object
           fWS->parseHandshake((unsigned char*)message.GetString().c_str(), message.GetString().size());
-          // handle a WebSocket connection
-          //FIXME FIXME FIXME
-          /*for (SocketCollection::iterator sid=fSocketsConnected.begin(); sid!=fSocketsConnected.end(); sid++) {
-            if (sid->first==mess.GetSocketId()) sid->second = true; //sid = std::pair<int,bool>(mess.GetSocketId(), true);//
-          }*/
+          Send(Message(fWS->answerHandshake()), mess.GetSocketId());
+          // From now on handle a WebSocket connection
           fSocketsConnected.erase(std::pair<int,bool>(mess.GetSocketId(), false));
           fSocketsConnected.insert(std::pair<int,bool>(mess.GetSocketId(), true));
-          SendMessage(Message(fWS->answerHandshake()), mess.GetSocketId());
-          SendMessage(HTTPMessage(fWS, SocketMessage(SET_LISTENER_ID, mess.GetSocketId()), 1), mess.GetSocketId());
+          // Send the client's unique identifier
+          Send(SocketMessage(SET_LISTENER_ID, mess.GetSocketId()), mess.GetSocketId());
           return WEBSOCKET_KEY;
         }
         else {
           // if not a WebSocket connection
-          SendMessage(SocketMessage(SET_LISTENER_ID, mess.GetSocketId()), mess.GetSocketId());
+          Send(SocketMessage(SET_LISTENER_ID, mess.GetSocketId()), mess.GetSocketId());
           return ADD_LISTENER;
         }
       } catch (Exception& e) {
@@ -95,12 +121,17 @@ Messenger::Receive()
     }
     
     // Handle data from a client
-    //std::cout << "receiving message from " << sid->first << " (is websocket? " << sid->second << ")" << std::endl;
     Message message = FetchMessage(sid->first);
     SocketMessage m;
     if (sid->second) {
-      HTTPMessage msg(fWS, message, 0);
-      m = SocketMessage(msg);
+      HTTPMessage msg(fWS, message, DecodeMessage);
+      try {
+        m = SocketMessage(msg);
+      } catch (Exception& e) {
+        DisconnectClient(sid->first);
+        e.Dump();
+        throw Exception(__PRETTY_FUNCTION__, "Received an invalid message from websocket!", JustWarning);
+      }
     }
     else m = SocketMessage(message.GetString());
     try {
@@ -117,21 +148,7 @@ Messenger::Receive()
 void
 Messenger::ProcessMessage(SocketMessage m, int sid)
 {
-  if (m.GetKey()==REMOVE_LISTENER) {
-    if (fSocketsConnected.erase(std::pair<int,bool>(m.GetIntValue(), false))>0) {
-      std::cout << "removed 'conventional' socket with id=" << m.GetIntValue() << std::endl;
-      Messenger* mes = new Messenger;
-      mes->SetSocketId(m.GetIntValue());
-      mes->Stop();
-      delete mes;
-    }
-    else { // websocket
-      std::cout << "removed web socket with id=" << m.GetIntValue() << std::endl;
-      SendHTTPMessage(SocketMessage(LISTENER_DELETED, ""), m.GetIntValue());
-      fSocketsConnected.erase(std::pair<int,bool>(m.GetIntValue(), true));
-    }
-    FD_CLR(m.GetIntValue(), &fMaster);
-  }
+  if (m.GetKey()==REMOVE_LISTENER) DisconnectClient(m.GetIntValue());
   else if (m.GetKey()==WEB_GET_LISTENERS) {
     int i = 0;
     std::ostringstream os;
@@ -141,7 +158,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
       //if (it->second) os << " (web)";
     }
     try {
-      SendHTTPMessage(SocketMessage(LISTENERS_LIST, os.str()), sid);
+      Send(SocketMessage(LISTENERS_LIST, os.str()), sid);
     } catch (Exception& e) {
       e.Dump();
     }
@@ -154,8 +171,7 @@ Messenger::Broadcast(Message m)
   try {
     for (SocketCollection::const_iterator sid=fSocketsConnected.begin(); sid!=fSocketsConnected.end(); sid++) {
       if (sid->first==GetSocketId()) continue;
-      if (!sid->second) SendMessage(m, sid->first);
-      else SendHTTPMessage(m, sid->first);
+      Send(m, sid->first);
     }
   } catch (Exception& e) {
     e.Dump();

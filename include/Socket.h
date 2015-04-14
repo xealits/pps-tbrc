@@ -23,7 +23,7 @@
 #include "HTTPMessage.h"
 
 #define SOCKET_ERROR(x) 10000+x
-#define MAX_WORD_LENGTH 500
+#define MAX_WORD_LENGTH 5000
 
 class Socket;
 typedef std::set< std::pair<int,bool> > SocketCollection;
@@ -60,6 +60,7 @@ class Socket
       for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++) {
         if (it->first==sid) return it->second;
       }
+      return false;
     }
 
     void DumpConnected() const;

@@ -23,14 +23,12 @@ class Messenger : public Socket
 
     bool Connect();
     void Disconnect();
+    void DisconnectClient(int sid);
     
     MessageKey Receive();
     void ProcessMessage(SocketMessage m, int sid);
     void Broadcast(Message m);
-    inline void SendHTTPMessage(Message m, int sid) { 
-      if (!fWS) return;
-      SendMessage(HTTPMessage(fWS, m, true), sid);
-    }
+    inline void Send(const Message& m, int sid); 
     
   private:
     WebSocket* fWS;

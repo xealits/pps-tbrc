@@ -35,7 +35,6 @@ int main(int argc, char* argv[])
       m->Receive();
     } catch (Exception& e) {
       e.Dump();
-      break;
     }
   }
   

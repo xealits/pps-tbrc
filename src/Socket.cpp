@@ -94,7 +94,8 @@ Socket::AcceptConnections(Socket& socket)
   // Now we can start accepting connections from clients
   socklen_t len = sizeof(fAddress);
   socket.SetSocketId(accept(fSocketId, (struct sockaddr*)&fAddress, &len));
-  std::cout << "new socket with id=" << socket.GetSocketId() << std::endl;
+  std::ostringstream o; o << "New client with # " << socket.GetSocketId();
+  Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump();
   if (socket.GetSocketId()<0) {
     throw Exception(__PRETTY_FUNCTION__, "Cannot accept client!", JustWarning, SOCKET_ERROR(errno));
   }
@@ -164,8 +165,9 @@ Socket::FetchMessage(int id)
   else if (num_bytes==0) {
     return SocketMessage(LISTENER_DELETED, id);
   }
-  
-  return Message(buf);
+ 
+  std::string out(buf);
+  return Message(out.substr(0, num_bytes));
 }
 
 void
