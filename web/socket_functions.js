@@ -135,6 +135,7 @@ function parse_message(event) {
       var fields = list[i].split(',');
       if (fields.length<3) continue;
       var id = parseInt(fields[0]);
+      if (id===listener_id) continue;
       var name = fields[1];
       var socket_type = parseInt(fields[2]);
       retrieved.push({'id': id, 'name': name, 'type': socket_type});
@@ -157,7 +158,12 @@ function parse_message(event) {
     unbind_socket();
   }
   else if (d.indexOf("OTHER_LISTENER_DELETED")>-1) {
-    console.log("Socket successfully deleted!");
+    var id = parseInt(d.substr(d.indexOf(":")+1));
+    if (id===listener_id) {
+      restore_init_state();
+      unbind_socket();
+    }
+    else console.log("Socket "+id+" successfully deleted!");
   }
   else if (d.indexOf("PING_ANSWER")>-1) {
     alert(d.substr(d.indexOf(":")+1));
@@ -205,17 +211,20 @@ function create_block(obj) {
   button_ping.innerHTML = "Ping";
   block.appendChild(button_ping);
 
-  if (obj.id===listener_id) { // this is us
+  /*if (obj.id===listener_id) { // this is us
     block.style.backgroundColor = "lightblue";
     block.innerHTML += "\n[me]";
     button_ping.disabled = true;
   }
-  else if (obj.type===0) { // master socket
+  else */if (obj.type===0) { // master socket
     block.style.backgroundColor = "cornflowerblue";
     button_close.disabled = true;
   }
   else if (obj.type===1) block.style.backgroundColor = "lightgreen"; // regular socket
-  else if (obj.type===2) block.style.backgroundColor = "yellow"; // web socket
+  else if (obj.type===2) { // web socket
+    block.style.backgroundColor = "yellow";
+    button_ping.disabled = true;
+  }
   else block.style.backgroundColor = "white";
   
   return block;

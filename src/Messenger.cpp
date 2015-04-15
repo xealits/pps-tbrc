@@ -59,7 +59,7 @@ Messenger::DisconnectClient(int sid, MessageKey key, bool force)
   Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump();
   if (ws) {
     try {
-      Send(SocketMessage(key, ""), sid);
+      Send(SocketMessage(key, sid), sid);
       //std::ostringstream o; o << 0xFF << 0x00;
       //Send(Message(o.str()), sid);
     } catch (Exception& e) {
@@ -194,8 +194,8 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   else if (m.GetKey()==PING_LISTENER) {
     int toping = m.GetIntValue();
     Send(SocketMessage(PING_LISTENER), toping);
-    SocketMessage msg;
-    do { msg = FetchMessage(toping); } while (msg.GetKey()!=PING_ANSWER);
+    SocketMessage msg; int i=0;
+    do { msg = FetchMessage(toping); i++; } while (msg.GetKey()!=PING_ANSWER && i<2);
     Send(SocketMessage(PING_ANSWER, msg.GetValue()), sid);
   } 
   else if (m.GetKey()==GET_LISTENERS) {

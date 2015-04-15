@@ -3,9 +3,13 @@
 
 #include "Socket.h"
 
-#define MAX_MESSAGE_ATTEMPTS 5 
-
 typedef std::set<int> ListenersList;
+
+struct ListenerInfo
+{
+  std::string name;
+  int type;
+};
 
 /**
  * Messenger/broadcaster object used by the server to send/receive commands from
@@ -33,6 +37,7 @@ class Messenger : public Socket
   private:
     WebSocket* fWS;
     int fNumAttempts;
+    std::vector<ListenerInfo> fListenersInfo;
 };
 
 #endif
