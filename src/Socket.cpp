@@ -163,7 +163,6 @@ Socket::FetchMessage(int id)
     //...
   }
   else if (num_bytes==0) {
-    //return SocketMessage(LISTENER_DELETED, id);
     std::ostringstream o; o << "Socket " << id << " just got disconnected";
     throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning, 11000);
   }

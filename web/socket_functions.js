@@ -33,6 +33,7 @@ function restore_init_state() {
   socket_id.style.backgroundColor = "yellow";
   disable_connected_buttons();
   listener_id = -1;
+  time_field.style.color = "lightgray";
   if (connection!=0) {
     delete connection;
     connection = 0;
@@ -74,7 +75,6 @@ function bind_socket() {
       return;
     }
     unbind_socket();
-    //console.log("Server"+event.originalTarget.readyState);
   }
   connection.onopen = function () {
     connection.onmessage = function(event) {
@@ -83,8 +83,6 @@ function bind_socket() {
   };
   connection.onclose = function() { 
     bind_socket();
-    //socket_close();
-    //handle_disconnect();
   };
 }
   
@@ -92,10 +90,21 @@ function unbind_socket() {
   if (connection===0) return;
   
   connection.send("REMOVE_LISTENER:"+listener_id);
-  connection.onmessage = function(event) {
-    parse_message(event);
-    console.log(event);
-  }
+  connection.onmessage = function(event) { parse_message(event); }
+}
+
+function ask_socket_removal(id) {
+  if (connection===0) return;
+  
+  connection.send("REMOVE_LISTENER:"+id);
+  connection.onmessage = function(event) { parse_message(event); }  
+}
+
+function ask_socket_ping(id) {
+  if (connection===0) return;
+  
+  connection.send("PING_LISTENER:"+id);
+  connection.onmessage = function(event) { parse_message(event); }  
 }
 
 function socket_close() {
@@ -103,9 +112,7 @@ function socket_close() {
 
   console_log.value = "close() invoked";
   unbind_socket();
-  connection.onclose = function (event) {
-    console.log(event);
-  };
+  connection.onclose = function (event) {};
   connection.close();
 }
 
@@ -145,11 +152,15 @@ function parse_message(event) {
       built_clients.splice(built_clients.indexOf(difference[i]), 1);
     }
   }
-  else if (d.indexOf("LISTENER_DELETED")>-1) {
-    //connection = 0;
-    //bind_socket();
+  else if (d.indexOf("THIS_LISTENER_DELETED")>-1) {
     restore_init_state();
     unbind_socket();
+  }
+  else if (d.indexOf("OTHER_LISTENER_DELETED")>-1) {
+    console.log("Socket successfully deleted!");
+  }
+  else if (d.indexOf("PING_ANSWER")>-1) {
+    alert(d.substr(d.indexOf(":")+1));
   }
   else if (d.indexOf("MASTER_DISCONNECT")>-1) {
     alert("ALERT:\nMaster disconnected!");
@@ -167,23 +178,45 @@ function socket_refresh() {
   connection.onmessage = function(event) {
     parse_message(event);
   };
+  time_field.style.color = "black";
   time_field.innerHTML = new Date;
 }
 
 function create_block(obj) {  
-  var block = document.createElement("button");
+  var block = document.createElement("span");
+  var title = document.createElement("div");
+  var button_close = document.createElement("button");
+  var button_ping = document.createElement("button");
   
   block.setAttribute('id', 'socket_block_'+obj.id);
   block.className = "socket_block";
-  block.innerHTML = "<b>"+obj.name+"<b>";
   
+  title.innerHTML = obj.name;
+  title.className = "socket_block_title";
+  block.appendChild(title);
+  
+  button_close.setAttribute('id', 'close_socket_'+obj.id);
+  button_close.setAttribute('onclick', 'ask_socket_removal('+obj.id+')');
+  button_close.innerHTML = "Close";
+  block.appendChild(button_close);
+  
+  button_ping.setAttribute('id', 'ping_socket_'+obj.id);
+  button_ping.setAttribute('onclick', 'ask_socket_ping('+obj.id+')');
+  button_ping.innerHTML = "Ping";
+  block.appendChild(button_ping);
+
   if (obj.id===listener_id) { // this is us
     block.style.backgroundColor = "lightblue";
-    block.disabled = true;
     block.innerHTML += "\n[me]";
+    button_ping.disabled = true;
   }
-  else if (obj.type===1) block.style.backgroundColor = "yellow"; // web socket
-  else block.style.backgroundColor = "lightgreen"; // regular socket
+  else if (obj.type===0) { // master socket
+    block.style.backgroundColor = "cornflowerblue";
+    button_close.disabled = true;
+  }
+  else if (obj.type===1) block.style.backgroundColor = "lightgreen"; // regular socket
+  else if (obj.type===2) block.style.backgroundColor = "yellow"; // web socket
+  else block.style.backgroundColor = "white";
   
   return block;
 }

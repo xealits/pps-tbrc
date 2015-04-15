@@ -3,6 +3,13 @@
   width: 150px;
   /*border: 2px black outset;*/
   display: inline-block;
-  margin: 2px;
+  margin: 3px;
+  padding: 5px;
+}
+.socket_block_title
+{
+  font-weight: bold;
+  font-size: 12pt;
   padding: 2px;
+  text-align: center;
 }

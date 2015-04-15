@@ -45,7 +45,7 @@ Messenger::Disconnect()
 }
 
 void
-Messenger::DisconnectClient(int sid, bool force)
+Messenger::DisconnectClient(int sid, MessageKey key, bool force)
 {
   bool ws;
   try {
@@ -59,7 +59,7 @@ Messenger::DisconnectClient(int sid, bool force)
   Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump();
   if (ws) {
     try {
-      Send(SocketMessage(LISTENER_DELETED, ""), sid);
+      Send(SocketMessage(key, ""), sid);
       //std::ostringstream o; o << 0xFF << 0x00;
       //Send(Message(o.str()), sid);
     } catch (Exception& e) {
@@ -147,7 +147,7 @@ Messenger::Receive()
       message = FetchMessage(sid->first);
     } catch (Exception& e) {
       if (e.ErrorNumber()==11000) {
-        DisconnectClient(sid->first);
+        DisconnectClient(sid->first, THIS_LISTENER_DELETED);
       }
     }
     SocketMessage m;
@@ -176,7 +176,28 @@ Messenger::Receive()
 void
 Messenger::ProcessMessage(SocketMessage m, int sid)
 {
-  if (m.GetKey()==REMOVE_LISTENER) DisconnectClient(m.GetIntValue());
+  if (m.GetKey()==REMOVE_LISTENER) {
+    MessageKey key;
+    
+    if (m.GetIntValue()==GetSocketId()) {
+      std::ostringstream o;
+      o << "Some client (id=" << sid << ") asked for this master's disconnection!"
+        << "\n\tIgnoring this request...";
+      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+      return;
+    }
+    
+    if (sid==m.GetIntValue()) key = THIS_LISTENER_DELETED;
+    else key = OTHER_LISTENER_DELETED;
+    DisconnectClient(m.GetIntValue(), key);
+  }
+  else if (m.GetKey()==PING_LISTENER) {
+    int toping = m.GetIntValue();
+    Send(SocketMessage(PING_LISTENER), toping);
+    SocketMessage msg;
+    do { msg = FetchMessage(toping); } while (msg.GetKey()!=PING_ANSWER);
+    Send(SocketMessage(PING_ANSWER, msg.GetValue()), sid);
+  } 
   else if (m.GetKey()==GET_LISTENERS) {
     int i = 0;
     std::ostringstream os;
@@ -187,12 +208,20 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     Send(SocketMessage(LISTENERS_LIST, os.str()), sid);
   }
   else if (m.GetKey()==WEB_GET_LISTENERS) {
-    int i = 0;
+    int i = 0, type;
     std::ostringstream os;
     for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++, i++) {
+      if (it->first==GetSocketId()) type = 0; // master (us)
+      else if (!it->second) type = 1; // regular socket
+      else type = 2; // web socket
+      
       if (i!=0) os << ";";
-      os << it->first << "," << "socket_" << it->first << "," << it->second;
-      //if (it->second) os << " (web)";
+      
+      os << it->first << ",";
+      if (it->first==GetSocketId()) os << "Master,";
+      else os << "socket_" << it->first << ",";
+      
+      os << type;
     }
     try {
       Send(SocketMessage(LISTENERS_LIST, os.str()), sid);

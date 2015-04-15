@@ -67,7 +67,7 @@ Listener::Disconnect()
   }
   try {
     SocketMessage ack(FetchMessage());
-    if (ack.GetKey()==LISTENER_DELETED) {
+    if (ack.GetKey()==THIS_LISTENER_DELETED or ack.GetKey()==OTHER_LISTENER_DELETED) {
       fIsConnected = false;
     }
   } catch (Exception& e) {
@@ -91,9 +91,18 @@ Listener::Receive()
   } catch (Exception& e) {
     if (e.ErrorNumber()!=11000) // client has been disconnected
       e.Dump();
-    else Disconnect();
+    else {
+      throw Exception(__PRETTY_FUNCTION__, "Some other socket asked for this client's disconnection. Obtemperating...", Fatal);
+    }
   }
   if (msg.GetKey()==MASTER_DISCONNECT) throw Exception(__PRETTY_FUNCTION__, "Master disconnected!", Fatal);
+  else if (msg.GetKey()==OTHER_LISTENER_DELETED) 
+    throw Exception(__PRETTY_FUNCTION__, "Some other socket asked for this client's disconnection. Obtemperating...", Fatal);
+  else if (msg.GetKey()==PING_LISTENER) {
+    ostringstream os; os << "Pong. I feel fine, thank you!";
+    Send(SocketMessage(PING_ANSWER, os.str()));
+    Exception(__PRETTY_FUNCTION__, "Got a ping, answering...", Info).Dump();
+  } 
   else if (msg.GetKey()==LISTENERS_LIST) {
     VectorValue vals = msg.GetVectorValue();
     std::ostringstream o; o << "List of members on the socket:\n\t";

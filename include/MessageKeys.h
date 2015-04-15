@@ -11,12 +11,12 @@ MESSAGES_ENUM(\
   INVALID_KEY, WEBSOCKET_KEY,                                          \
   
   // listener messages
-  ADD_LISTENER, REMOVE_LISTENER, GET_LISTENERS,                        \
+  ADD_LISTENER, REMOVE_LISTENER, GET_LISTENERS, PING_LISTENER,         \
   
   // master messages
   MASTER_BROADCAST, MASTER_DISCONNECT,                                 \
-  SET_LISTENER_ID, LISTENER_DELETED,                                   \
-  LISTENERS_LIST,                                                      \
+  SET_LISTENER_ID, THIS_LISTENER_DELETED, OTHER_LISTENER_DELETED,      \
+  LISTENERS_LIST, PING_ANSWER,                                         \
   
   // web socket messages
   WEB_GET_LISTENERS,                                                   \
