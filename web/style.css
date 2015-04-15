@@ -1,0 +1,8 @@
+.socket_block
+{
+  width: 150px;
+  /*border: 2px black outset;*/
+  display: inline-block;
+  margin: 2px;
+  padding: 2px;
+}

@@ -3,12 +3,12 @@ var bind_button, unbind_button, refresh_button, time_field;
 var socket_id, console_log;
 var built_clients;
 
-Array.prototype.diff = function(a) {
-  /*var b = this;
-  var onlyInA = b.filter(function(curr){ return a.filter(function(cb){ return cb.value==curr.value && cb.display==curr.display }).length===0 });
-  var onlyInB = a.filter(function(curr){ return b.filter(function(ca){ return ca.value==curr.value && ca.display==curr.display }).length===0 });
+Array.prototype.diff = function(b) {
+  /*var a = this;
+  var onlyInA = a.filter(function(curr){ return b.filter(function(cb){ return cb.value==curr.value && cb.display==curr.display }).length===0 });
+  var onlyInB = b.filter(function(curr){ return a.filter(function(ca){ return ca.value==curr.value && ca.display==curr.display }).length===0 });
   return onlyInA.concat(onlyInB);*/
-  return this.filter(function() { return a.id===this.id; });
+  return this.filter(function(i) { return b.indexOf(i)<0; });
 }
 
 function enable_connected_buttons() {
@@ -122,34 +122,28 @@ function parse_message(event) {
   else if (d.indexOf("LISTENERS_LIST")>-1) {
     var listeners = d.substr(d.indexOf(":")+1);
     var list = listeners.split(';');
-    //console_log.value = listeners;
     var retrieved = [];
-    //output.innerHTML = "";
+    var retrieved_ids = [];
     for (var i=0; i<list.length; i++) {
       var fields = list[i].split(',');
       if (fields.length<3) continue;
-      //retrieved_ids.push(parseInt(fields[0]));
       var id = parseInt(fields[0]);
       var name = fields[1];
       var socket_type = parseInt(fields[2]);
       retrieved.push({'id': id, 'name': name, 'type': socket_type});
-      //output.appendChild(create_block(fields));
+      retrieved_ids.push(id);
     }
-    console.log("retrieved:");
-    console.log(retrieved);
-    console.log("built:");
-    console.log(built_clients);
-    //console.log("diff: "+retrieved.diff(built_clients));
-    var difference = retrieved.diff(built_clients);
-    console.log("diff1: "+difference.length);
-    console.log(difference);
+    var difference = retrieved_ids.diff(built_clients);
     for (var i=0; i<difference.length; i++) {
-      output.appendChild(create_block(difference[i]));
-      built_clients.push(difference[i]);
+      var idx = retrieved_ids.indexOf(difference[i]);
+      output.appendChild(create_block(retrieved[idx]));
+      built_clients.push(retrieved_ids[idx]);
     }
-    difference = built_clients.diff(retrieved);
-    console.log("diff2: "+difference.length);
-    console.log(difference);
+    difference = built_clients.diff(retrieved_ids);
+    for (var i=0; i<difference.length; i++) {
+      remove_block(difference[i]);
+      built_clients.splice(built_clients.indexOf(difference[i]), 1);
+    }
   }
   else if (d.indexOf("LISTENER_DELETED")>-1) {
     //connection = 0;
@@ -193,3 +187,8 @@ function create_block(obj) {
   
   return block;
 }
+
+function remove_block(id) {
+  return (elem=document.getElementById("socket_block_"+id)).parentNode.removeChild(elem);
+}
+
