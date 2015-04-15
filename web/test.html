@@ -1,22 +1,29 @@
 <!DOCTYPE html>
 <meta charset="utf-8" /> 
-<title>WebSocket</title>
+<title>CT-PPS Run control</title>
 
+<link rel="stylesheet" type="text/css" href="style.css">
 <script language="javascript" src="socket_functions.js"></script>
 <script language="javascript" type="text/javascript">
   
-  window.addEventListener("load", init, false);
-  window.addEventListener("beforeunload", close, false);
-  window.setInterval(get_socket_listeners, 5000);
+  window.addEventListener("load", socket_init, false);
+  window.addEventListener("beforeunload", socket_close, false);
+  //window.onbeforeunload = function() {
+    //console.log("haha");
+    //alert("haha");
+    //socket_close();
+  //};
+  window.setInterval(socket_refresh, 500);
 
 </script>
 
-<h2>Run control</h2>
+<h2>CT-PPS Test beam run control</h2>
 
-<button onClick="bind_socket()" id="connect_button">Connect</button>
-<button onClick="unbind_socket()" id="disconnect_button">Disconnect</button>
-<button onClick="get_socket_listeners()" id="get_listeners_button">Get listeners</button>
-<input type="text" id="socket_id" value="###"  style="background-color:yellow;" size=2 disabled />
+<button onClick="bind_socket()" id="bind_button">Bind</button>
+<button onClick="unbind_socket()" id="unbind_button">Unbind</button>
+<button onClick="socket_refresh()" id="refresh_button">Refresh</button>
+<input type="text" id="socket_id" size=2 disabled />
+<span id="time_field"></span>
 <br />
-<textarea id="console_log" cols=50 rows=5 disabled></textarea>
+<textarea id="console_log" cols=60 rows=4 disabled></textarea>
 <div id="output"></div>

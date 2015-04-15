@@ -60,6 +60,8 @@ class Socket
       for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++) {
         if (it->first==sid) return it->second;
       }
+      std::ostringstream o; o << "Client # " << sid << " not found in listeners list";
+      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
       return false;
     }
 

@@ -16,10 +16,12 @@ class HTTPMessage : public Message
 {
   public:
     inline HTTPMessage(WebSocket* ws, Message m, MessageAction a) : Message(m), fWS(ws) {
+      fOriginalString = GetString();
       if (a==EncodeMessage) Encode();
       else if (a==DecodeMessage) Decode();
     }
     inline HTTPMessage(WebSocket* ws, const char* msg, MessageAction a) : Message(msg), fWS(ws) {
+      fOriginalString = GetString();
       if (a==EncodeMessage) Encode();
       else if (a==DecodeMessage) Decode();
     }
@@ -48,12 +50,17 @@ class HTTPMessage : public Message
          << " Host:     " << fWS->host << std::endl
          << " Origin:   " << fWS->origin << std::endl
          << " Protocol: " << fWS->protocol << std::endl
-         << " Key:      " << fWS->key << std::endl
-         << "===================================================" << std::endl;      
+         << " Key:      " << fWS->key << std::endl;
+      if (!fString.empty()) 
+        os << " Data:     \"" << fString << "\"" << std::endl;
+      if (!fOriginalString.empty()) 
+        os << " Original: \"" << fOriginalString << "\"" << std::endl;
+      os << "===================================================" << std::endl;      
     }
     
   private:
     WebSocket* fWS;
+    std::string fOriginalString;
 };
 
 #endif

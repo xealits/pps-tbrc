@@ -36,10 +36,12 @@ int main(int argc, char* argv[])
 
   while (true) {
     try {
+      l->Send(SocketMessage(GET_LISTENERS));
       l->Receive();
+      sleep(2);
     } catch (Exception& e) {
       e.Dump();
-      exit(0);
+      //exit(0);
     }
   }
 

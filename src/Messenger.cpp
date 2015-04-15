@@ -1,11 +1,11 @@
 #include "Messenger.h"
 
 Messenger::Messenger() :
-  Socket(-1), fWS(0)
+  Socket(-1), fWS(0), fNumAttempts(0)
 {}
 
 Messenger::Messenger(int port) :
-  Socket(port), fWS(0)
+  Socket(port), fWS(0), fNumAttempts(0)
 {
   std::cout << __PRETTY_FUNCTION__ << " new Messenger at port " << GetPort() << std::endl;
   fWS = new WebSocket;
@@ -45,16 +45,31 @@ Messenger::Disconnect()
 }
 
 void
-Messenger::DisconnectClient(int sid)
+Messenger::DisconnectClient(int sid, bool force)
 {
-  bool ws = IsWebSocket(sid);
+  bool ws;
+  try {
+    ws = IsWebSocket(sid);
+  } catch (Exception& e) {
+    e.Dump();
+    return;
+  }
   std::ostringstream o; o << "Disconnecting client # " << sid;
   if (ws) o << " (web socket)";
   Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump();
   if (ws) {
-    Send(SocketMessage(LISTENER_DELETED, ""), sid);
-    std::ostringstream o; o << 0xFF << 0x00;
-    Send(Message(o.str()), sid);
+    try {
+      Send(SocketMessage(LISTENER_DELETED, ""), sid);
+      //std::ostringstream o; o << 0xFF << 0x00;
+      //Send(Message(o.str()), sid);
+    } catch (Exception& e) {
+      e.Dump();
+      if (e.ErrorNumber()==10032 or force) {
+        fSocketsConnected.erase(std::pair<int,bool>(sid, ws));
+        FD_CLR(sid, &fMaster);
+        return;
+      }
+    }
   }
   else {
     Messenger* mes = new Messenger;
@@ -69,7 +84,13 @@ Messenger::DisconnectClient(int sid)
 void
 Messenger::Send(const Message& m, int sid)
 {
-  if (IsWebSocket(sid)) SendMessage(HTTPMessage(fWS, m, EncodeMessage), sid);
+  bool ws = false;
+  try {
+    ws = IsWebSocket(sid);
+  } catch (Exception& e) {
+    e.Dump();
+  }
+  if (ws) SendMessage(HTTPMessage(fWS, m, EncodeMessage), sid);
   else SendMessage(m, sid);
 }
 
@@ -121,19 +142,26 @@ Messenger::Receive()
     }
     
     // Handle data from a client
-    Message message = FetchMessage(sid->first);
+    Message message;
+    try {
+      message = FetchMessage(sid->first);
+    } catch (Exception& e) {
+      if (e.ErrorNumber()==11000) {
+        DisconnectClient(sid->first);
+      }
+    }
     SocketMessage m;
     if (sid->second) {
       HTTPMessage msg(fWS, message, DecodeMessage);
       try {
         m = SocketMessage(msg);
-      } catch (Exception& e) {
-        DisconnectClient(sid->first);
-        e.Dump();
-        throw Exception(__PRETTY_FUNCTION__, "Received an invalid message from websocket!", JustWarning);
-      }
+      } catch (Exception& e) {;}
     }
     else m = SocketMessage(message.GetString());
+
+    // Message was successfully decoded
+    fNumAttempts = 0;
+    
     try {
       ProcessMessage(m, sid->first);
     } catch (Exception& e) {
@@ -149,6 +177,15 @@ void
 Messenger::ProcessMessage(SocketMessage m, int sid)
 {
   if (m.GetKey()==REMOVE_LISTENER) DisconnectClient(m.GetIntValue());
+  else if (m.GetKey()==GET_LISTENERS) {
+    int i = 0;
+    std::ostringstream os;
+    for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++, i++) {
+      if (i!=0) os << ";";
+      os << it->first;
+    }
+    Send(SocketMessage(LISTENERS_LIST, os.str()), sid);
+  }
   else if (m.GetKey()==WEB_GET_LISTENERS) {
     int i = 0;
     std::ostringstream os;

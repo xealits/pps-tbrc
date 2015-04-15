@@ -71,23 +71,40 @@ Listener::Disconnect()
       fIsConnected = false;
     }
   } catch (Exception& e) {
-    e.Dump();
+    if (e.ErrorNumber()!=11000) // client has been disconnected
+      e.Dump();
   }
+}
+
+void
+Listener::Send(const Message& m)
+{
+  SendMessage(m);
 }
 
 void
 Listener::Receive()
 {
+  SocketMessage msg;
   try {
-    SocketMessage msg(FetchMessage());
-    switch (msg.GetKey()) {
-      case MASTER_DISCONNECT:
-        throw Exception(__PRETTY_FUNCTION__, "Master disconnected!", Fatal);
-      
-      default:
-        return;      
-    }
+    msg = FetchMessage();
   } catch (Exception& e) {
-    e.Dump();
+    if (e.ErrorNumber()!=11000) // client has been disconnected
+      e.Dump();
+    else Disconnect();
+  }
+  if (msg.GetKey()==MASTER_DISCONNECT) throw Exception(__PRETTY_FUNCTION__, "Master disconnected!", Fatal);
+  else if (msg.GetKey()==LISTENERS_LIST) {
+    VectorValue vals = msg.GetVectorValue();
+    std::ostringstream o; o << "List of members on the socket:\n\t";
+    int i = 0;
+    for (VectorValue::const_iterator v=vals.begin(); v!=vals.end(); v++, i++) {
+      if (i!=0) o << ", ";
+      o << *v;
+    }
+    Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump();
+  }
+  else {
+    return;
   }
 }

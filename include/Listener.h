@@ -22,6 +22,7 @@ class Listener : public Socket
     bool Connect();
     void Disconnect();
   
+    void Send(const Message& m);
     void Receive();
   
   private:

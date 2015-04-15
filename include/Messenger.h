@@ -3,7 +3,7 @@
 
 #include "Socket.h"
 
-#include <set>
+#define MAX_MESSAGE_ATTEMPTS 5 
 
 typedef std::set<int> ListenersList;
 
@@ -23,7 +23,7 @@ class Messenger : public Socket
 
     bool Connect();
     void Disconnect();
-    void DisconnectClient(int sid);
+    void DisconnectClient(int sid, bool force=false);
     
     MessageKey Receive();
     void ProcessMessage(SocketMessage m, int sid);
@@ -32,6 +32,7 @@ class Messenger : public Socket
     
   private:
     WebSocket* fWS;
+    int fNumAttempts;
 };
 
 #endif
