@@ -1,6 +1,7 @@
 #include "Messenger.h"
 
 #include <iostream>
+#include <unistd.h>
 
 using namespace std;
 
@@ -29,6 +30,9 @@ int main(int argc, char* argv[])
     cout << "Error while trying to connect the messenger!" << endl;
     return -1;
   }
+  
+  pid_t pid;
+  
 
   while (true) {
     try {
