@@ -46,10 +46,16 @@ class Socket
     inline int GetPort() const { return fPort; }
   
     /**
-     * Set the socket to accept connections from clients
-     * \brief Accept connections from outside
+     * Set the socket to accept connections any client transmitting through the
+     * socket
+     * \brief Accept connection from a client
+     * \param[inout] socket Master/client object to enable on the socket
      */
     void AcceptConnections(Socket& socket);
+    /**
+     * Register all open file descriptors to read their communication through the
+     * socket
+     */
     void SelectConnections();
     
     inline void SetSocketId(int sid) { fSocketId=sid; }
@@ -91,12 +97,12 @@ class Socket
     /**
      * \brief Send a message on a socket
      */
-    void SendMessage(Message message, int id=-1);
+    void SendMessage(Message message, int id=-1) const;
     /**
      * \brief Receive a message from a socket
      * \return Received message as a std::string
      */
-    Message FetchMessage(int id=-1);
+    Message FetchMessage(int id=-1) const;
 
   private:
     /**
@@ -118,10 +124,11 @@ class Socket
      * \brief Create an endpoint for communication
      */
     void Create();
+    /**
+     * \brief Configure the socket object for communication
+     */
     void Configure();
-    void SetNonBlock(bool nb);
 
-    //struct sockaddr_in6 fAddress;
     struct sockaddr_in fAddress;
 
 };

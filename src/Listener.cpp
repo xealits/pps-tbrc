@@ -77,13 +77,13 @@ Listener::Disconnect()
 }
 
 void
-Listener::Send(const Message& m)
+Listener::Send(const Message& m) const
 {
   SendMessage(m);
 }
 
 void
-Listener::Receive()
+Listener::Receive() const
 {
   SocketMessage msg;
   try {

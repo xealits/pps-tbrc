@@ -82,7 +82,7 @@ Messenger::DisconnectClient(int sid, MessageKey key, bool force)
 }
 
 void
-Messenger::Send(const Message& m, int sid)
+Messenger::Send(const Message& m, int sid) const
 {
   bool ws = false;
   try {
@@ -232,7 +232,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
 }
 
 void
-Messenger::Broadcast(Message m)
+Messenger::Broadcast(const Message& m) const
 {
   try {
     for (SocketCollection::const_iterator sid=fSocketsConnected.begin(); sid!=fSocketsConnected.end(); sid++) {

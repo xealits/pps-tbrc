@@ -117,15 +117,6 @@ Socket::SelectConnections()
 }
 
 void
-Socket::SetNonBlock(bool nb)
-{
-  int flags = fcntl(fSocketId, F_GETFL, 0);
-  if (!fcntl(fSocketId, F_SETFL, flags|(nb*O_NONBLOCK))) { // make the socket non-blocking (async)
-    throw Exception(__PRETTY_FUNCTION__, "Unable to set the socket readout to a non-blocking state", Fatal, SOCKET_ERROR(errno));
-  }
-}
-
-void
 Socket::Listen(int maxconn)
 {
   if (listen(fSocketId, maxconn)!=0) {
@@ -138,7 +129,7 @@ Socket::Listen(int maxconn)
 }
 
 void
-Socket::SendMessage(Message message, int id)
+Socket::SendMessage(Message message, int id) const
 {
   if (id<0) id = fSocketId;
   
@@ -149,7 +140,7 @@ Socket::SendMessage(Message message, int id)
 }
 
 Message
-Socket::FetchMessage(int id)
+Socket::FetchMessage(int id) const
 {
   // At first we prepare the buffer to be filled
   char buf[MAX_WORD_LENGTH];

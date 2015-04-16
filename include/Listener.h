@@ -22,8 +22,8 @@ class Listener : public Socket
     bool Connect();
     void Disconnect();
   
-    void Send(const Message& m);
-    void Receive();
+    void Send(const Message& m) const;
+    void Receive() const;
   
   private:
     bool Announce();
