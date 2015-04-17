@@ -23,7 +23,8 @@ class Listener : public Socket
     void Disconnect();
   
     void Send(const Message& m) const;
-    void Receive() const;
+    void Receive();
+    virtual void ParseMessage(const SocketMessage& m) {;}
   
   private:
     bool Announce();

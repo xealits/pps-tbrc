@@ -1,11 +1,5 @@
 #include "FPGAHandler.h"
 
-FPGAConfiguration::FPGAConfiguration() :
-  fWord(0)
-{}
-
-////////////////////////////////////////////////////////////////////////////////
-
 FPGAHandler::FPGAHandler(int port, const char* dev) :
   Listener(port), fDevice(dev), fFilename(""), fIsFileOpen(false)
 {  
@@ -48,13 +42,13 @@ FPGAHandler::OpenFile()
 }
 
 void
-FPGAHandler::SendConfiguration(const FPGAConfiguration& c)
+FPGAHandler::SendConfiguration(const TDCConfiguration& c)
 {
 }
 
-FPGAConfiguration
+TDCConfiguration
 FPGAHandler::ReadConfiguration()
 {
-  FPGAConfiguration c;
+  TDCConfiguration c;
   return c;
 }

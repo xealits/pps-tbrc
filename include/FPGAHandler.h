@@ -2,30 +2,22 @@
 #define FPGAHandler_h
 
 #include "Listener.h"
+#include "TDCConfiguration.h"
 
 #include <fstream>
 #include <usb.h>
 
 struct file_header_t {
-  uint16_t magic;
+  uint32_t magic;
   uint32_t run_id;
   uint32_t spill_id;
   //uint64_t configuration;
 };
 
-class FPGAConfiguration
-{
-  public:
-    FPGAConfiguration();
-    inline virtual ~FPGAConfiguration() {;}
-    
-    //FIXME FIXME FIXME burp...
-    // Set...() ... Get...()
-    
-  private:
-    uint32_t fWord;
-};
-
+/**
+ * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+ * \date 14 Apr 2015
+ */
 class FPGAHandler : public Listener
 {
   public:
@@ -35,8 +27,8 @@ class FPGAHandler : public Listener
     void OpenFile();
     inline std::string GetFilename() const { return fFilename; }
     
-    void SendConfiguration(const FPGAConfiguration& c);
-    FPGAConfiguration ReadConfiguration();
+    void SendConfiguration(const TDCConfiguration& c);
+    TDCConfiguration ReadConfiguration();
     
     void ReadBuffer();
 

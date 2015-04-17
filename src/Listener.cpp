@@ -83,7 +83,7 @@ Listener::Send(const Message& m) const
 }
 
 void
-Listener::Receive() const
+Listener::Receive()
 {
   SocketMessage msg;
   try {
@@ -114,6 +114,6 @@ Listener::Receive() const
     Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump();
   }
   else {
-    return;
+    ParseMessage(msg);
   }
 }

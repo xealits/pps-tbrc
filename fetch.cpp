@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 
   h = new FPGAHandler(1987, "/dev/usbmon");
   
-  FPGAConfiguration config;
+  TDCConfiguration config;
   
   try {
     h->Connect();
