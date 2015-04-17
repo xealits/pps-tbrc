@@ -101,7 +101,7 @@ Socket::AcceptConnections(Socket& socket)
   }
   // Add to master set
   FD_SET(socket.GetSocketId(), &fMaster);
-  fSocketsConnected.insert(std::pair<int,bool>(socket.GetSocketId(), false));
+  fSocketsConnected.insert(std::pair<int,SocketType>(socket.GetSocketId(), CLIENT));
 }
 
 void
@@ -123,9 +123,9 @@ Socket::Listen(int maxconn)
     Stop();
     throw Exception(__PRETTY_FUNCTION__, "Cannot listen on socket!", JustWarning, SOCKET_ERROR(errno));
   }
-  // Add the listener to the master set
+  // Add the messenger to the master set
   FD_SET(fSocketId, &fMaster);
-  fSocketsConnected.insert(std::pair<int,bool>(fSocketId, false));
+  fSocketsConnected.insert(std::pair<int,SocketType>(fSocketId, MASTER));
 }
 
 void

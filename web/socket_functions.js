@@ -89,21 +89,21 @@ function bind_socket() {
 function unbind_socket() {
   if (connection===0) return;
   
-  connection.send("REMOVE_LISTENER:"+listener_id);
+  connection.send("REMOVE_CLIENT:"+listener_id);
   connection.onmessage = function(event) { parse_message(event); }
 }
 
 function ask_socket_removal(id) {
   if (connection===0) return;
   
-  connection.send("REMOVE_LISTENER:"+id);
+  connection.send("REMOVE_CLIENT:"+id);
   connection.onmessage = function(event) { parse_message(event); }  
 }
 
 function ask_socket_ping(id) {
   if (connection===0) return;
   
-  connection.send("PING_LISTENER:"+id);
+  connection.send("PING_CLIENT:"+id);
   connection.onmessage = function(event) { parse_message(event); }  
 }
 
@@ -119,14 +119,14 @@ function socket_close() {
 function parse_message(event) {
   console_log.value = event.data;
   var d = event.data;
-  if (d.indexOf("SET_LISTENER_ID")>-1) {
+  if (d.indexOf("SET_CLIENT_ID")>-1) {
     listener_id = parseInt(d.substr(d.indexOf(":")+1));
     socket_id.value = listener_id;
     socket_id.style.backgroundColor = "lightgreen";
     enable_connected_buttons();
     socket_refresh();
   }
-  else if (d.indexOf("LISTENERS_LIST")>-1) {
+  else if (d.indexOf("CLIENTS_LIST")>-1) {
     var listeners = d.substr(d.indexOf(":")+1);
     var list = listeners.split(';');
     var retrieved = [];
@@ -153,11 +153,11 @@ function parse_message(event) {
       built_clients.splice(built_clients.indexOf(difference[i]), 1);
     }
   }
-  else if (d.indexOf("THIS_LISTENER_DELETED")>-1) {
+  else if (d.indexOf("THIS_CLIENT_DELETED")>-1) {
     restore_init_state();
     unbind_socket();
   }
-  else if (d.indexOf("OTHER_LISTENER_DELETED")>-1) {
+  else if (d.indexOf("OTHER_CLIENT_DELETED")>-1) {
     var id = parseInt(d.substr(d.indexOf(":")+1));
     if (id===listener_id) {
       restore_init_state();
@@ -180,7 +180,7 @@ function socket_refresh() {
   if (connection===0 || connection===undefined) return;
   if (listener_id<0) return;
   
-  connection.send("WEB_GET_LISTENERS:"+listener_id);
+  connection.send("WEB_GET_CLIENTS:"+listener_id);
   connection.onmessage = function(event) {
     parse_message(event);
   };
@@ -220,12 +220,19 @@ function create_block(obj) {
     block.style.backgroundColor = "cornflowerblue";
     button_close.disabled = true;
   }
-  else if (obj.type===1) block.style.backgroundColor = "lightgreen"; // regular socket
-  else if (obj.type===2) { // web socket
+  else if (obj.type===1) { // web socket
     block.style.backgroundColor = "yellow";
     button_ping.disabled = true;
   }
-  else block.style.backgroundColor = "white";
+  else if (obj.type===2) {
+    block.style.backgroundColor = "lightgreen"; // regular socket
+  }
+  else if (obj.type===3) {
+    block.style.backgroundColor = "lightblue"; // detector socket
+  }
+  else {
+    block.style.backgroundColor = "white";
+  }
   
   return block;
 }

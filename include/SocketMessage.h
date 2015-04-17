@@ -21,7 +21,7 @@ class SocketMessage : public Message
 {
   public:
     inline SocketMessage() : Message("") {;}
-    inline SocketMessage(Message msg) : Message(msg) {
+    inline SocketMessage(const Message& msg) : Message(msg) {
       try {
         fMessage = Object();
       } catch (Exception& e) {
@@ -105,8 +105,7 @@ class SocketMessage : public Message
       std::string value;
       size_t end;
       if ((end=fString.find(':'))==std::string::npos) {
-        std::ostringstream s;
-        s << "Invalid message built! (\"" << fString << "\")";
+        std::ostringstream s; s << "Invalid message built! (\"" << fString << "\")";
         throw Exception(__PRETTY_FUNCTION__, s.str().c_str(), JustWarning);
       }
       key = MessageKeyToObject(fString.substr(0, end).c_str());
@@ -117,7 +116,7 @@ class SocketMessage : public Message
       std::string out = MessageKeyToString(fMessage.first);
       out += ':';
       out += fMessage.second;
-      //out += '\0';
+      out += '\0';
       return out;
     }
   

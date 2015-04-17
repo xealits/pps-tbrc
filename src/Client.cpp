@@ -1,16 +1,16 @@
-#include "Listener.h"
+#include "Client.h"
 
-Listener::Listener(int port) :
-  Socket(port), fListenerId(-1), fIsConnected(false)
+Client::Client(int port) :
+  Socket(port), fClientId(-1), fIsConnected(false)
 {}
 
-Listener::~Listener()
+Client::~Client()
 {
   if (fIsConnected) Disconnect();
 }
 
 bool
-Listener::Connect()
+Client::Connect()
 {
   try {
     Start();
@@ -26,19 +26,19 @@ Listener::Connect()
 }
   
 bool
-Listener::Announce()
+Client::Announce()
 {
   try {
     // Once connected we send our request for connection
-    SendMessage(SocketMessage(ADD_LISTENER, ""));
+    SendMessage(SocketMessage(ADD_CLIENT, static_cast<int>(GetType())));
     
     // Then we wait for to the server to send us a connection
     // acknowledgement + an id
     SocketMessage ack(FetchMessage());
     
     switch (ack.GetKey()) {
-    case SET_LISTENER_ID:
-      fListenerId = ack.GetIntValue();
+    case SET_CLIENT_ID:
+      fClientId = ack.GetIntValue();
       break;
       
     case INVALID_KEY:
@@ -51,23 +51,23 @@ Listener::Announce()
     return false;
   }
   
-  std::cout << __PRETTY_FUNCTION__ << " connected to socket at port " << GetPort() << ", received id \"" << fListenerId << "\""<< std::endl;
+  std::cout << __PRETTY_FUNCTION__ << " connected to socket at port " << GetPort() << ", received id \"" << fClientId << "\""<< std::endl;
   return true;
 }
 
 void
-Listener::Disconnect()
+Client::Disconnect()
 {
   std::cout << "===> Disconnecting the client from socket" << std::endl;
   if (!fIsConnected) return;
   try {
-    SendMessage(SocketMessage(REMOVE_LISTENER, fListenerId), -1);
+    SendMessage(SocketMessage(REMOVE_CLIENT, fClientId), -1);
   } catch (Exception& e) {
     e.Dump();
   }
   try {
     SocketMessage ack(FetchMessage());
-    if (ack.GetKey()==THIS_LISTENER_DELETED or ack.GetKey()==OTHER_LISTENER_DELETED) {
+    if (ack.GetKey()==THIS_CLIENT_DELETED or ack.GetKey()==OTHER_CLIENT_DELETED) {
       fIsConnected = false;
     }
   } catch (Exception& e) {
@@ -77,13 +77,13 @@ Listener::Disconnect()
 }
 
 void
-Listener::Send(const Message& m) const
+Client::Send(const Message& m) const
 {
   SendMessage(m);
 }
 
 void
-Listener::Receive()
+Client::Receive()
 {
   SocketMessage msg;
   try {
@@ -96,14 +96,17 @@ Listener::Receive()
     }
   }
   if (msg.GetKey()==MASTER_DISCONNECT) throw Exception(__PRETTY_FUNCTION__, "Master disconnected!", Fatal);
-  else if (msg.GetKey()==OTHER_LISTENER_DELETED) 
+  else if (msg.GetKey()==OTHER_CLIENT_DELETED) 
     throw Exception(__PRETTY_FUNCTION__, "Some other socket asked for this client's disconnection. Obtemperating...", Fatal);
-  else if (msg.GetKey()==PING_LISTENER) {
+  else if (msg.GetKey()==GET_CLIENT_TYPE) {
+    Send(SocketMessage(CLIENT_TYPE, static_cast<int>(GetType())));
+  } 
+  else if (msg.GetKey()==PING_CLIENT) {
     ostringstream os; os << "Pong. I feel fine, thank you!";
     Send(SocketMessage(PING_ANSWER, os.str()));
     Exception(__PRETTY_FUNCTION__, "Got a ping, answering...", Info).Dump();
   } 
-  else if (msg.GetKey()==LISTENERS_LIST) {
+  else if (msg.GetKey()==CLIENTS_LIST) {
     VectorValue vals = msg.GetVectorValue();
     std::ostringstream o; o << "List of members on the socket:\n\t";
     int i = 0;

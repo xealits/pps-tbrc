@@ -1,10 +1,10 @@
-#include "Listener.h"
+#include "Client.h"
 
 #include <iostream>
 
 using namespace std;
 
-Listener* l = 0;
+Client* l = 0;
 int gEnd = 0;
 
 void CtrlC(int aSig) {
@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
   const int port = atoi(argv[1]);
   cout << "Starting to listen on port " << port << endl;
 
-  l = new Listener(port);
+  l = new Client(port);
   if (!l->Connect()) {
     cout << "Failed to connect the listener" << endl;
     return -1;
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 
   while (true) {
     try {
-      l->Send(SocketMessage(GET_LISTENERS));
+      l->Send(SocketMessage(GET_CLIENTS));
       l->Receive();
       sleep(2);
     } catch (Exception& e) {

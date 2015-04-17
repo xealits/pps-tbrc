@@ -1,7 +1,7 @@
 #ifndef FPGAHandler_h
 #define FPGAHandler_h
 
-#include "Listener.h"
+#include "Client.h"
 #include "TDCConfiguration.h"
 
 #include <fstream>
@@ -18,7 +18,7 @@ struct file_header_t {
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 14 Apr 2015
  */
-class FPGAHandler : public Listener
+class FPGAHandler : public Client
 {
   public:
     FPGAHandler(int port, const char* dev);
@@ -31,6 +31,7 @@ class FPGAHandler : public Listener
     TDCConfiguration ReadConfiguration();
     
     void ReadBuffer();
+    inline SocketType GetType() const { return DETECTOR; }
 
   private:
     std::string fDevice;

@@ -1,7 +1,7 @@
 #include "FPGAHandler.h"
 
 FPGAHandler::FPGAHandler(int port, const char* dev) :
-  Listener(port), fDevice(dev), fFilename(""), fIsFileOpen(false)
+  Client(port), fDevice(dev), fFilename(""), fIsFileOpen(false)
 {  
   try { OpenFile(); } catch (Exception& e) { e.Dump(); }
 }

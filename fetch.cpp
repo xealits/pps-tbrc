@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 
   while (true) {
     try {
-      h->Send(SocketMessage(GET_LISTENERS));
+      h->Send(SocketMessage(GET_CLIENTS));
       h->Receive();
       sleep(2);
     } catch (Exception& e) {

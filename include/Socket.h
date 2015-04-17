@@ -25,8 +25,13 @@
 #define SOCKET_ERROR(x) 10000+x
 #define MAX_WORD_LENGTH 5000
 
+typedef enum
+{
+  INVALID=-1, MASTER=0, WEBSOCKET_CLIENT, CLIENT, DETECTOR
+} SocketType;
+
 class Socket;
-typedef std::set< std::pair<int,bool> > SocketCollection;
+typedef std::set< std::pair<int,SocketType> > SocketCollection;
 /**
  * General object providing all useful method to
  * connect/bind/send/receive information through system sockets.
@@ -61,15 +66,16 @@ class Socket
     inline void SetSocketId(int sid) { fSocketId=sid; }
     inline int GetSocketId() const { return fSocketId; }
     
-    inline bool IsWebSocket(int sid) const { 
+    inline SocketType GetSocketType(int sid) const { 
       // FIXME need to find a more C++-like method...
       for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++) {
         if (it->first==sid) return it->second;
       }
       std::ostringstream o; o << "Client # " << sid << " not found in listeners list";
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
-      return false;
+      return INVALID;
     }
+    inline bool IsWebSocket(int sid) const { return GetSocketType(sid)==WEBSOCKET_CLIENT; }
 
     void DumpConnected() const;
     

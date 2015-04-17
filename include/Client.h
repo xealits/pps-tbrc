@@ -1,35 +1,37 @@
-#ifndef Listener_h
-#define Listener_h
+#ifndef Client_h
+#define Client_h
 
 #include <string>
 
 #include "Socket.h"
 
 /**
- * Listener/client object used by the server to send/receive commands from
+ * Client object used by the server to send/receive commands from
  * the messenger/broadcaster.
  *
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 24 Mar 2015
  */
-class Listener : public Socket
+class Client : public Socket
 {
   public:
-    inline Listener() {;}
-    Listener(int port);
-    ~Listener();
+    inline Client() {;}
+    Client(int port);
+    ~Client();
 
     bool Connect();
     void Disconnect();
   
     void Send(const Message& m) const;
     void Receive();
+    
     virtual void ParseMessage(const SocketMessage& m) {;}
+    virtual SocketType GetType() const { return CLIENT; }
   
   private:
     bool Announce();
   
-    int fListenerId;
+    int fClientId;
     bool fIsConnected;
 };
 

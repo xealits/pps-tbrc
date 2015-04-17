@@ -27,6 +27,8 @@ class Messenger : public Socket
 
     bool Connect();
     void Disconnect();
+    
+    void AddClient();
     /**
      * Ask to a client to disconnect from this socket
      * \brief Disconnect a client
