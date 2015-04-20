@@ -22,14 +22,14 @@ class Client : public Socket
     bool Connect();
     void Disconnect();
   
-    void Send(const Message& m) const;
+    inline void Send(const Message& m) const { SendMessage(m); }
     void Receive();
     
     virtual void ParseMessage(const SocketMessage& m) {;}
     virtual SocketType GetType() const { return CLIENT; }
   
   private:
-    bool Announce();
+    void Announce();
   
     int fClientId;
     bool fIsConnected;

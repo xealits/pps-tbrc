@@ -8,7 +8,7 @@ typedef std::set<int> ListenersList;
 struct ListenerInfo
 {
   std::string name;
-  int type;
+  SocketType type;
 };
 
 /**
@@ -25,19 +25,18 @@ class Messenger : public Socket
     Messenger(int port);
     ~Messenger();
 
-    bool Connect();
-    void Disconnect();
-    
-    void AddClient();
     /**
-     * Ask to a client to disconnect from this socket
-     * \brief Disconnect a client
-     * \param[in] sid Unique identifier of the client to disconnect
-     * \param[in] key Key to the message to transmit for disconnection
-     * \param[in] force Do we need to force the client out of this socket ?
+     * Connect this master to the socket for clients to be able to bind.
+     * \brief Connect the master
      */
-    void DisconnectClient(int sid, MessageKey key, bool force=false);
-    
+    bool Connect();
+    /**
+     * Remove this master from the socket, thus disconnecting automatically the
+     * clients connected.
+     * \brief Remove the master
+     */
+    void Disconnect();
+        
     /**
      * \brief Send any type of message to any client
      * \param[in] m Message to transmit
@@ -50,17 +49,32 @@ class Messenger : public Socket
      */
     MessageKey Receive();
     /**
-     * \brief Process a message received from the socket
-     * \param[in] Unique identifier of the client sending the message
-     */
-    void ProcessMessage(SocketMessage m, int sid);
-    /**
      * \brief Emit a message to all clients connected through the socket
      * \param[in] m Message to transmit
      */
     void Broadcast(const Message& m) const;
     
   private:
+    /**
+     * Add one client to the list of socket actors to monitor for message
+     * retrieval/submission.
+     * \brief Add a client to listen to
+     */
+    void AddClient();
+    /**
+     * Ask to a client to disconnect from this socket.
+     * \brief Disconnect a client
+     * \param[in] sid Unique identifier of the client to disconnect
+     * \param[in] key Key to the message to transmit for disconnection
+     * \param[in] force Do we need to force the client out of this socket ?
+     */
+    void DisconnectClient(int sid, MessageKey key, bool force=false);
+    void SwitchClientType(int sid, SocketType type);
+    /**
+     * \brief Process a message received from the socket
+     * \param[in] Unique identifier of the client sending the message
+     */
+    void ProcessMessage(SocketMessage m, int sid);
     WebSocket* fWS;
     int fNumAttempts;
     std::vector<ListenerInfo> fListenersInfo;

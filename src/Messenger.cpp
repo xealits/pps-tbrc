@@ -23,7 +23,7 @@ Messenger::Connect()
   try {
     Start();
     Bind();
-    Listen(10);
+    Listen(20);
   } catch (Exception& e) {
     e.Dump();
     return false;
@@ -87,11 +87,13 @@ Messenger::Send(const Message& m, int sid) const
   bool ws = false;
   try {
     ws = IsWebSocket(sid);
+    Message tosend = (ws) ? HTTPMessage(fWS, m, EncodeMessage) : m;
+    std::cout << "Sending a message to socket # " << sid << " (WS? " << ws << "):" << std::endl;
+    tosend.Dump();
+    SendMessage(tosend, sid);
   } catch (Exception& e) {
     e.Dump();
   }
-  if (ws) SendMessage(HTTPMessage(fWS, m, EncodeMessage), sid);
-  else SendMessage(m, sid);
 }
 
 MessageKey
@@ -159,26 +161,38 @@ Messenger::AddClient()
     AcceptConnections(mess);
     Message message = FetchMessage(mess.GetSocketId());
     if (message.IsFromWeb()) {
+      message.Dump();
       // Feed the handshake to the WebSocket object
       fWS->parseHandshake((unsigned char*)message.GetString().c_str(), message.GetString().size());
       Send(Message(fWS->answerHandshake()), mess.GetSocketId());
       // From now on handle a WebSocket connection
-      fSocketsConnected.erase(std::pair<int,SocketType>(mess.GetSocketId(), CLIENT));
-      fSocketsConnected.insert(std::pair<int,SocketType>(mess.GetSocketId(), WEBSOCKET_CLIENT));
-      // Send the client's unique identifier
-      Send(SocketMessage(SET_CLIENT_ID, mess.GetSocketId()), mess.GetSocketId());
+      SwitchClientType(mess.GetSocketId(), WEBSOCKET_CLIENT);
     }
     else {
       // if not a WebSocket connection
-      if (SocketMessage(message).GetKey()==ADD_CLIENT) {
-        SocketType type = static_cast<SocketType>(SocketMessage(message).GetIntValue());
-        if (type!=CLIENT) {
-          fSocketsConnected.erase(std::pair<int,SocketType>(mess.GetSocketId(), CLIENT));
-          fSocketsConnected.insert(std::pair<int,SocketType>(mess.GetSocketId(), type));
-        }
+      SocketMessage m(message);
+      if (m.GetKey()==ADD_CLIENT) {
+        SocketType type = static_cast<SocketType>(m.GetIntValue());
+        if (type!=CLIENT) SwitchClientType(mess.GetSocketId(), type);
       }
-      Send(SocketMessage(SET_CLIENT_ID, mess.GetSocketId()), mess.GetSocketId());
     }
+    // Send the client's unique identifier
+    Send(SocketMessage(SET_CLIENT_ID, mess.GetSocketId()), mess.GetSocketId());
+    std::cout << "after sending the client id=" << mess.GetSocketId() << "!" << std::endl;
+    SocketMessage(SET_CLIENT_ID, mess.GetSocketId()).Dump();
+  } catch (Exception& e) {
+    e.Dump();
+  }
+}
+
+void
+Messenger::SwitchClientType(int sid, SocketType type)
+{
+  SocketType oldtype;
+  try {
+    oldtype = GetSocketType(sid);
+    fSocketsConnected.erase (std::pair<int,SocketType>(sid, oldtype));
+    fSocketsConnected.insert(std::pair<int,SocketType>(sid, type));    
   } catch (Exception& e) {
     e.Dump();
   }

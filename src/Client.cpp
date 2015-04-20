@@ -25,34 +25,31 @@ Client::Connect()
   return true;
 }
   
-bool
+void
 Client::Announce()
 {
   try {
     // Once connected we send our request for connection
     SendMessage(SocketMessage(ADD_CLIENT, static_cast<int>(GetType())));
     
-    // Then we wait for to the server to send us a connection
-    // acknowledgement + an id
+    // Then we wait for to the server to send us a connection acknowledgement
+    // + an id
     SocketMessage ack(FetchMessage());
     
     switch (ack.GetKey()) {
-    case SET_CLIENT_ID:
-      fClientId = ack.GetIntValue();
-      break;
-      
-    case INVALID_KEY:
-    default:
-      throw Exception(__PRETTY_FUNCTION__, "Received an invalid answer from server", JustWarning);
+      case SET_CLIENT_ID:
+        fClientId = ack.GetIntValue();
+        break;
+      case INVALID_KEY:
+      default:
+        throw Exception(__PRETTY_FUNCTION__, "Received an invalid answer from server", JustWarning);
     }
     
   } catch (Exception& e) {
     e.Dump();
-    return false;
   }
   
   std::cout << __PRETTY_FUNCTION__ << " connected to socket at port " << GetPort() << ", received id \"" << fClientId << "\""<< std::endl;
-  return true;
 }
 
 void
@@ -77,12 +74,6 @@ Client::Disconnect()
 }
 
 void
-Client::Send(const Message& m) const
-{
-  SendMessage(m);
-}
-
-void
 Client::Receive()
 {
   SocketMessage msg;
@@ -95,21 +86,23 @@ Client::Receive()
       throw Exception(__PRETTY_FUNCTION__, "Some other socket asked for this client's disconnection. Obtemperating...", Fatal);
     }
   }
-  if (msg.GetKey()==MASTER_DISCONNECT) throw Exception(__PRETTY_FUNCTION__, "Master disconnected!", Fatal);
-  else if (msg.GetKey()==OTHER_CLIENT_DELETED) 
+  if (msg.GetKey()==MASTER_DISCONNECT) {
+    throw Exception(__PRETTY_FUNCTION__, "Master disconnected!", Fatal);
+  }
+  else if (msg.GetKey()==OTHER_CLIENT_DELETED) {
     throw Exception(__PRETTY_FUNCTION__, "Some other socket asked for this client's disconnection. Obtemperating...", Fatal);
+  }
   else if (msg.GetKey()==GET_CLIENT_TYPE) {
     Send(SocketMessage(CLIENT_TYPE, static_cast<int>(GetType())));
   } 
   else if (msg.GetKey()==PING_CLIENT) {
-    ostringstream os; os << "Pong. I feel fine, thank you!";
+    ostringstream os; os << "Pong. My name is " << GetSocketId() << " and I feel fine, thank you!";
     Send(SocketMessage(PING_ANSWER, os.str()));
     Exception(__PRETTY_FUNCTION__, "Got a ping, answering...", Info).Dump();
   } 
   else if (msg.GetKey()==CLIENTS_LIST) {
     VectorValue vals = msg.GetVectorValue();
-    std::ostringstream o; o << "List of members on the socket:\n\t";
-    int i = 0;
+    int i = 0; std::ostringstream o; o << "List of members on the socket:\n\t";
     for (VectorValue::const_iterator v=vals.begin(); v!=vals.end(); v++, i++) {
       if (i!=0) o << ", ";
       o << *v;

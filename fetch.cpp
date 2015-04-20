@@ -26,6 +26,13 @@ int main(int argc, char* argv[])
   h = new FPGAHandler(1987, "/dev/usbmon");
   
   TDCConfiguration config;
+  config.SetChannelOffset(0, 0x155);
+  config.SetLeadingMode();
+  config.SetTrailingMode();
+  config.SetEdgeResolution(TDCConfiguration::E_6250PS);
+  config.Dump();
+  cout << "channel offset=0x" << hex << config.GetChannelOffset(0) << dec << endl;
+  cout << "edge resolution=" << config.GetEdgeResolution() << endl;
   
   try {
     h->Connect();
@@ -37,7 +44,7 @@ int main(int argc, char* argv[])
   cout << " --> Output filename: " << h->GetFilename() << endl;
   cout << endl << "*** Ready for acquisition! ***" << endl << endl;
 
-  while (true) {
+  /*while (true) {
     try {
       h->Send(SocketMessage(GET_CLIENTS));
       h->Receive();
@@ -46,7 +53,7 @@ int main(int argc, char* argv[])
       e.Dump();
       //exit(0);
     }
-  }
+  }*/
 
   delete h;
   return 0;

@@ -4,15 +4,12 @@ var socket_id, console_log;
 var built_clients;
 
 Array.prototype.diff = function(b) {
-  /*var a = this;
-  var onlyInA = a.filter(function(curr){ return b.filter(function(cb){ return cb.value==curr.value && cb.display==curr.display }).length===0 });
-  var onlyInB = b.filter(function(curr){ return a.filter(function(ca){ return ca.value==curr.value && ca.display==curr.display }).length===0 });
-  return onlyInA.concat(onlyInB);*/
   return this.filter(function(i) { return b.indexOf(i)<0; });
 }
 
 function enable_connected_buttons() {
   console.log("Connected");
+  socket_id.style.backgroundColor = "lightgreen";
   bind_button.disabled = true;
   unbind_button.disabled = false;
   refresh_button.disabled = false;
@@ -56,7 +53,8 @@ function socket_init() {
 
 function bind_socket() {
   if (connection!==0) {
-    console.log("Another attempt was made to bind! Aborting.");
+    console.error("Wrong (or multiple) attempt made to bind! Aborting.");
+    connection = 0;
     return;
   }
   connection = new WebSocket('ws://localhost:1987');
@@ -65,19 +63,21 @@ function bind_socket() {
   built_clients = [];
 
   connection.onerror = function (event) {
-    if (event.originalTarget.readyState!==1) {
-      console_log.value = "Server not ready ("+event.originalTarget.readyState+") for connection!";
+    //console.log(event); 
+    if (event.originalTarget===undefined || event.originalTarget.readyState!==1) {
+      console_log.value = "Server not ready for connection!";
       socket_id.style.backgroundColor = "red";
-      connection = 0;
       socket_id.value = -1;
-      bind_button.disabled = false;
       disable_connected_buttons();
       return;
     }
     unbind_socket();
   }
   connection.onopen = function () {
+    //console.log(event);
     connection.onmessage = function(event) {
+      console.log("new message received:");
+      console.log(event);
       parse_message(event);
     };
   };
@@ -118,11 +118,12 @@ function socket_close() {
 
 function parse_message(event) {
   console_log.value = event.data;
+  console.log(event);
   var d = event.data;
+  console.log(d);
   if (d.indexOf("SET_CLIENT_ID")>-1) {
     listener_id = parseInt(d.substr(d.indexOf(":")+1));
     socket_id.value = listener_id;
-    socket_id.style.backgroundColor = "lightgreen";
     enable_connected_buttons();
     socket_refresh();
   }
@@ -190,48 +191,49 @@ function socket_refresh() {
 
 function create_block(obj) {  
   var block = document.createElement("span");
-  var title = document.createElement("div");
-  var button_close = document.createElement("button");
-  var button_ping = document.createElement("button");
-  
   block.setAttribute('id', 'socket_block_'+obj.id);
   block.className = "socket_block";
   
+  var title = document.createElement("div");
   title.innerHTML = obj.name;
   title.className = "socket_block_title";
   block.appendChild(title);
   
+  var button_close = document.createElement("button");
   button_close.setAttribute('id', 'close_socket_'+obj.id);
   button_close.setAttribute('onclick', 'ask_socket_removal('+obj.id+')');
   button_close.innerHTML = "Close";
   block.appendChild(button_close);
   
+  var button_ping = document.createElement("button");
   button_ping.setAttribute('id', 'ping_socket_'+obj.id);
   button_ping.setAttribute('onclick', 'ask_socket_ping('+obj.id+')');
   button_ping.innerHTML = "Ping";
   block.appendChild(button_ping);
-
-  /*if (obj.id===listener_id) { // this is us
-    block.style.backgroundColor = "lightblue";
-    block.innerHTML += "\n[me]";
-    button_ping.disabled = true;
-  }
-  else */if (obj.type===0) { // master socket
-    block.style.backgroundColor = "cornflowerblue";
-    button_close.disabled = true;
-  }
-  else if (obj.type===1) { // web socket
-    block.style.backgroundColor = "yellow";
-    button_ping.disabled = true;
-  }
-  else if (obj.type===2) {
-    block.style.backgroundColor = "lightgreen"; // regular socket
-  }
-  else if (obj.type===3) {
-    block.style.backgroundColor = "lightblue"; // detector socket
-  }
-  else {
-    block.style.backgroundColor = "white";
+  
+  var logger = document.createElement("input[type=text]");
+  logger.setAttribute('id', 'logger_'+obj.id);
+  logger.disabled = true;
+  block.appendChild(logger);
+  
+  switch (obj.type) {
+    case 0: // master socket
+      block.style.backgroundColor = "cornflowerblue";
+      button_close.disabled = true;
+      break;
+    case 1: // web socket
+      block.style.backgroundColor = "yellow";
+      button_ping.disabled = true;
+      break;
+    case 2: // regular socket
+      block.style.backgroundColor = "lightgreen";
+      break;
+    case 3: // detector socket
+      block.style.backgroundColor = "lightblue";
+      break;
+    default:
+      block.style.backgroundColor = "white";
+      break;
   }
   
   return block;

@@ -3,16 +3,11 @@
 <title>CT-PPS Run control</title>
 
 <link rel="stylesheet" type="text/css" href="style.css">
-<script language="javascript" src="socket_functions.js"></script>
+<script language="javascript" src="socket.js"></script>
 <script language="javascript" type="text/javascript">
   
   window.addEventListener("load", socket_init, false);
   window.addEventListener("beforeunload", socket_close, false);
-  //window.onbeforeunload = function() {
-    //console.log("haha");
-    //alert("haha");
-    //socket_close();
-  //};
   window.setInterval(socket_refresh, 500);
 
 </script>
