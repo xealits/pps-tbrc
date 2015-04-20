@@ -2,9 +2,7 @@
 
 FPGAHandler::FPGAHandler(int port, const char* dev) :
   Client(port), fDevice(dev), fFilename(""), fIsFileOpen(false)
-{  
-  try { OpenFile(); } catch (Exception& e) { e.Dump(); }
-}
+{}
 
 FPGAHandler::~FPGAHandler()
 {
@@ -30,7 +28,7 @@ FPGAHandler::OpenFile()
   std::cout << "Filename: " << fFilename << std::endl;
   
   fOutput.open(fFilename.c_str(), std::fstream::out|std::ios::binary);
-  if (!fOutput.is_open())
+  if (!(fIsFileOpen=fOutput.is_open()))
     throw Exception(__PRETTY_FUNCTION__, "Error opening the file! Check you have enough permissions to write!", Fatal);
   
   // First we write the header to the file
@@ -38,17 +36,18 @@ FPGAHandler::OpenFile()
   th.magic = 0x50505330; // PPS0 in ASCII
   th.run_id = 0;
   th.spill_id = 0;
+  th.config = fConfig;
   fOutput.write((char*)&th, sizeof(file_header_t));
 }
 
 void
-FPGAHandler::SendConfiguration(const TDCConfiguration& c)
+FPGAHandler::SendConfiguration()
 {
+  // ...
 }
 
-TDCConfiguration
+void
 FPGAHandler::ReadConfiguration()
 {
-  TDCConfiguration c;
-  return c;
+  // ...
 }

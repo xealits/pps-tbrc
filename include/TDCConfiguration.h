@@ -89,7 +89,7 @@ class TDCConfiguration
       if (channel>=NUM_CHANNELS or channel<0) return;
       SetBits(kOffset0-9*channel, offset, 9);
     }
-    inline uint16_t GetChannelOffset(int channel) {
+    inline uint16_t GetChannelOffset(int channel) const {
       if (channel>=NUM_CHANNELS or channel<0) return -1;
       return static_cast<uint16_t>(GetBits(kOffset0-9*channel, 9));
     }
@@ -102,7 +102,7 @@ class TDCConfiguration
       if (tap>31 or tap<0) return;
       SetBits(kDLLTapAdjust0+3*tap, adj, 3);
     }
-    inline uint8_t GetDLLAdjustment(int tap) {
+    inline uint8_t GetDLLAdjustment(int tap) const {
       if (tap>31 or tap<0) return -1;
       return static_cast<uint8_t>(GetBits(kDLLTapAdjust0+3*tap, 3));
     }
@@ -131,7 +131,7 @@ class TDCConfiguration
     inline void SetEdgesPairing(const bool pair=true) { SetBits(kEnablePair, pair, 1); }
     inline bool GetEdgesPairing() const { return static_cast<bool>(GetBits(kEnablePair, 1)); }
     
-    void Dump(std::ostream& os=std::cout) const;
+    void Dump(int verb=1, std::ostream& os=std::cout) const;
     
   private:
     void SetBits(uint16_t lsb, uint16_t word, uint8_t size);

@@ -27,11 +27,11 @@ int main(int argc, char* argv[])
   h = new FPGAHandler(1987, "/dev/usbmon");
   
   TDCConfiguration config;
-  config.SetChannelOffset(0, 0x155);
+  config.SetAllChannelsOffset(0x155);
   config.SetLeadingMode();
   config.SetTrailingMode();
   config.SetEdgeResolution(TDCConfiguration::E_6250PS);
-  config.Dump();
+  config.Dump(2);
   cout << "channel offset=0x" << hex << config.GetChannelOffset(0) << dec << endl;
   cout << "edge resolution=" << config.GetEdgeResolution() << endl;
   
@@ -42,7 +42,8 @@ int main(int argc, char* argv[])
   
   try {
     h->Connect();
-    h->SendConfiguration(config);
+    h->SetConfiguration(config);
+    h->OpenFile();
   } catch (Exception& e) {
     e.Dump();
   }

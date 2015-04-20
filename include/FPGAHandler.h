@@ -11,7 +11,7 @@ struct file_header_t {
   uint32_t magic;
   uint32_t run_id;
   uint32_t spill_id;
-  //uint64_t configuration;
+  TDCConfiguration config;
 };
 
 /**
@@ -27,8 +27,10 @@ class FPGAHandler : public Client
     void OpenFile();
     inline std::string GetFilename() const { return fFilename; }
     
-    void SendConfiguration(const TDCConfiguration& c);
-    TDCConfiguration ReadConfiguration();
+    inline void SetConfiguration(const TDCConfiguration& c) { fConfig=c; }
+    inline TDCConfiguration GetConfiguration() const { return fConfig; }
+    void SendConfiguration();
+    void ReadConfiguration();
     
     void ReadBuffer();
     inline SocketType GetType() const { return DETECTOR; }
@@ -37,6 +39,7 @@ class FPGAHandler : public Client
     std::string fDevice;
     std::string fFilename;
     std::ofstream fOutput;
+    TDCConfiguration fConfig;
     bool fIsFileOpen;
 };
 
