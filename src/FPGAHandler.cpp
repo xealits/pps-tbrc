@@ -33,7 +33,7 @@ FPGAHandler::OpenFile()
   
   // First we write the header to the file
   file_header_t th;
-  th.magic = 0x50505330; // PPS0 in ASCII
+  th.magic = 0x30535050; // PPS0 in ASCII
   th.run_id = 0;
   th.spill_id = 0;
   th.config = fConfig;
@@ -44,10 +44,52 @@ void
 FPGAHandler::SendConfiguration()
 {
   // ...
+  for (unsigned int i=0; i<fConfig.GetNumWords(); i++) {
+    WriteUSB(fConfig.GetWord(i), 32);
+  }
 }
 
 void
 FPGAHandler::ReadConfiguration()
 {
   // ...
+  int attempts = 0;
+  
+  do {
+    WriteUSB(207, 8); attempts++;
+  } while (FetchUSB(8)!=255 and attempts<3);
+  
+  uint8_t ack; unsigned int i, j;
+  uint32_t word = 0x0;
+  i = 0; j = 0;
+  do {
+    ack = (i%2==0) ? 0 : 255;
+    uint32_t ret = static_cast<uint32_t>(FetchUSB(8));
+    WriteUSB(ack, 8);
+    word |= (ret<<i*8);
+    if (i%32==0 and i!=0) {
+      fConfig.SetWord(j, word);
+      word = 0x0;
+      j++;
+    }
+    i++;
+  } while (j<fConfig.GetNumWords() and attempts<3);
+}
+
+uint32_t
+FPGAHandler::FetchUSB(uint8_t size) const
+{
+  uint32_t out = 0x0;
+  // ...
+  std::cout << __PRETTY_FUNCTION__ << " fetching from USB:" << std::endl;
+  std::cout << " Size: " << static_cast<int>(size) << std::endl;
+  return (out&((1<<size)-1));
+}
+
+void
+FPGAHandler::WriteUSB(uint32_t word, uint8_t size) const
+{
+  std::cout << __PRETTY_FUNCTION__ << " writing to USB:" << std::endl;
+  std::cout << " Size: " << static_cast<int>(size) << std::endl;
+  std::cout << " Word: " << word << std::endl;
 }

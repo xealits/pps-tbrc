@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
   h = new FPGAHandler(1987, "/dev/usbmon");
   
   TDCConfiguration config;
-  config.SetAllChannelsOffset(0x155);
+  config.SetAllChannelsOffset(0x120);
   config.SetLeadingMode();
   config.SetTrailingMode();
   config.SetEdgeResolution(TDCConfiguration::E_6250PS);
@@ -44,6 +44,7 @@ int main(int argc, char* argv[])
     h->Connect();
     h->SetConfiguration(config);
     h->OpenFile();
+    h->SendConfiguration();
   } catch (Exception& e) {
     e.Dump();
   }

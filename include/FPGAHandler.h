@@ -32,6 +32,9 @@ class FPGAHandler : public Client
     void SendConfiguration();
     void ReadConfiguration();
     
+    void WriteUSB(uint32_t word, uint8_t size) const;
+    uint32_t FetchUSB(uint8_t size) const;
+    
     void ReadBuffer();
     inline SocketType GetType() const { return DETECTOR; }
 
