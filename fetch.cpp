@@ -1,4 +1,5 @@
 #include "FPGAHandler.h"
+#include "TDCEvent.h"
 
 #include <iostream>
 
@@ -33,6 +34,11 @@ int main(int argc, char* argv[])
   config.Dump();
   cout << "channel offset=0x" << hex << config.GetChannelOffset(0) << dec << endl;
   cout << "edge resolution=" << config.GetEdgeResolution() << endl;
+  
+  TDCEvent ev(0x4100000f);
+  cout << "event: TDC id=" << ev.GetTDCId() << endl;
+  cout << "event: leading edge? " << (ev.GetType()==TDCEvent::LeadingEdge) << endl;
+  cout << "event: trailing edge? " << (ev.GetType()==TDCEvent::TrailingEdge) << endl;
   
   try {
     h->Connect();

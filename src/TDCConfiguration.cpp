@@ -9,7 +9,7 @@ TDCConfiguration::TDCConfiguration()
 }
 
 void
-TDCConfiguration::SetWord(uint16_t lsb, uint16_t word, uint8_t size)
+TDCConfiguration::SetBits(uint16_t lsb, uint16_t word, uint8_t size)
 {
   //FIXME FIXME FIXME burp...
   // See http://www.ioccc.org/ for more information
@@ -22,27 +22,12 @@ TDCConfiguration::SetWord(uint16_t lsb, uint16_t word, uint8_t size)
 }
 
 uint16_t
-TDCConfiguration::GetWord(uint16_t lsb, uint8_t size) const
+TDCConfiguration::GetBits(uint16_t lsb, uint8_t size) const
 {
   uint16_t lsb_rel = lsb % WORD_SIZE;
   uint8_t word_id = (lsb-lsb_rel)/WORD_SIZE;
   uint16_t mask = (1<<size)-1; // 2**size-1
   return static_cast<uint16_t>((fWord[word_id]>>lsb_rel) & mask);
-}
-
-void
-TDCConfiguration::SetChannelOffset(int channel, uint16_t offset)
-{
-  const bit ch = kOffset0-9*channel;
-  SetWord(ch, offset, 9);
-}
-
-uint16_t
-TDCConfiguration::GetChannelOffset(int channel)
-{
-  if (channel>31 or channel<0) return -1;
-  const bit ch = kOffset0-9*channel;
-  return GetWord(ch, 9);
 }
 
 void
