@@ -1,4 +1,5 @@
 var listener_id, connection;
+var upper_fields;
 var bind_button, unbind_button, refresh_button, time_field;
 var socket_id, console_log;
 var built_clients;
@@ -11,16 +12,21 @@ function enable_connected_buttons() {
   console.log("Connected");
   socket_id.style.backgroundColor = "lightgreen";
   bind_button.disabled = true;
+  bind_button.className = "btn";
   unbind_button.disabled = false;
+  unbind_button.className = "btn btn-danger";
   refresh_button.disabled = false;
   console_log.value = "";
 }
 
 function disable_connected_buttons() {
   console.log("Disconnected");
+  bind_button.className = "btn btn-primary";
   bind_button.disabled = false;
   unbind_button.disabled = true;
+  unbind_button.className = "btn";
   refresh_button.disabled = true;
+  refresh_button.className = "btn";
   output.innerHTML = "";
   socket_id.value = "###";
 }
@@ -28,6 +34,7 @@ function disable_connected_buttons() {
 function restore_init_state() {
   socket_id.value = "###";
   socket_id.style.backgroundColor = "yellow";
+  //socket_id.className = "form-control";
   disable_connected_buttons();
   listener_id = -1;
   time_field.style.color = "lightgray";
@@ -40,6 +47,7 @@ function restore_init_state() {
 function socket_init() {
   listener_id = -1;
   connection = 0;
+  upper_fields = document.getElementById("upper_fields");
   bind_button = document.getElementById("bind_button");
   unbind_button = document.getElementById("unbind_button");
   refresh_button = document.getElementById("refresh_button");
@@ -68,6 +76,7 @@ function bind_socket() {
       console_log.value = "Server not ready for connection!";
       socket_id.style.backgroundColor = "red";
       socket_id.value = -1;
+      upper_fields.className = "has-error";
       disable_connected_buttons();
       return;
     }

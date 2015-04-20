@@ -2,7 +2,8 @@
 <meta charset="utf-8" /> 
 <title>CT-PPS Run control</title>
 
-<link rel="stylesheet" type="text/css" href="style.css">
+<link rel="stylesheet" type="text/css" href="style.css"/>
+<link rel="stylesheet" href="bootstrap.min.css"/>
 <script language="javascript" src="socket.js"></script>
 <script language="javascript" type="text/javascript">
   
@@ -12,13 +13,17 @@
 
 </script>
 
-<h2>CT-PPS Test beam run control</h2>
+<div class="container-fluid">
+  <h2>CT-PPS Test beam run control</h2>
 
-<button onClick="bind_socket()" id="bind_button">Bind</button>
-<button onClick="unbind_socket()" id="unbind_button">Unbind</button>
-<button onClick="socket_refresh()" id="refresh_button">Refresh</button>
-<input type="text" id="socket_id" size=2 disabled />
-<span id="time_field"></span>
-<br />
-<textarea id="console_log" cols=60 rows=4 disabled></textarea>
-<div id="output"></div>
+  <div id="upper_fields">
+    <button onClick="bind_socket()" id="bind_button">Bind</button>
+    <button onClick="unbind_socket()" id="unbind_button">Unbind</button>
+    <button onClick="socket_refresh()" id="refresh_button">Refresh</button>
+    <input type="text" id="socket_id" size=2 disabled />
+    <span id="time_field"></span>
+    <br />
+    <textarea id="console_log" cols=60 rows=4 disabled class="form-control"></textarea>
+  </div>
+  <div id="output"></div>
+</div>
