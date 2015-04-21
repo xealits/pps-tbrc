@@ -20,9 +20,21 @@ class TDCConfiguration
   typedef uint32_t word_t;
   
   public:  
-    typedef enum { E_100PS=0, E_200PS, E_400PS, E_800PS, E_1600PS, E_3120PS, E_6250PS, E_12500PS } EdgeResolution;
+    typedef enum {
+      E_100PS=0, E_200PS, E_400PS, E_800PS, E_1600PS, E_3120PS, E_6250PS, E_12500PS
+    } EdgeResolution;
     typedef enum { DT_5NS=0, DT_10NS, DT_30NS, DT_100NS } DeadTime;
-    typedef enum { W_100PS=0, W_200PS, W_400PS, W_800PS, W_1p6NS, W_3p2NS, W_6p25NS, W_12p5NS, W_25NS, W_50NS, W_100NS, W_200NS, W_400NS, W_800NS } WidthResolution;
+    typedef enum {
+      W_100PS=0, W_200PS, W_400PS, W_800PS, W_1p6NS, W_3p2NS, W_6p25NS,
+      W_12p5NS, W_25NS, W_50NS, W_100NS, W_200NS, W_400NS, W_800NS
+    } WidthResolution;
+    typedef enum {
+      VernierError=0x1, CoarseError=0x2, ChannelSelectError=0x4,
+      L1BufferParityError=0x8, TriggerFIFOParityError=0x10,
+      TriggerMatchingError=0x20, ReadoutFIFOParityError=0x40,
+      ReadoutStateError=0x80, SetupParityError=0x100, ControlParityError=0x200,
+      JTAGInstructionParityError=0x400
+    } EnabledError;
   
   public:
     TDCConfiguration();
@@ -45,6 +57,8 @@ class TDCConfiguration
      */
     inline uint8_t GetNumWords() const { return kNumWords; }
     
+    inline void SetEnableError(const EnabledError& err) { SetBits(kEnableError, err, 10); }
+    inline EnabledError GetEnableError() const { return static_cast<EnabledError>(GetBits(kEnableError, 10)); }
     inline void SetEdgeResolution(const EdgeResolution r) { SetBits(kLeadingResolution, r, 3); }
     inline EdgeResolution GetEdgeResolution() const { return static_cast<EdgeResolution>(GetBits(kLeadingResolution, 3)); }
     /**
@@ -141,6 +155,7 @@ class TDCConfiguration
     word_t fWord[kNumWords];
     
     // Least Significant Bits
+    static const bit kEnableError = 6;
     static const bit kLeadingResolution = 84;
     static const bit kMaxEventSize = 116;
     static const bit kRejectFIFOFull = 120;
