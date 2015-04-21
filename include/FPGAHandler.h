@@ -2,12 +2,10 @@
 #define FPGAHandler_h
 
 #include "Client.h"
+#include "USBHandler.h"
 #include "TDCConfiguration.h"
 
 #include <fstream>
-#include <usb.h>
-
-#define USB_WORD_SIZE 8
 
 /**
  * General header to store in each collected data file for offline readout. It
@@ -31,7 +29,7 @@ struct file_header_t {
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 14 Apr 2015
  */
-class FPGAHandler : public Client
+class FPGAHandler : public Client, public USBHandler
 {
   public:
     /// Bind to a FPGA through the USB protocol, and to the socket
@@ -61,17 +59,11 @@ class FPGAHandler : public Client
     inline SocketType GetType() const { return DETECTOR; }
 
   private:
-    /// Write a word to the USB device
-    void WriteUSB(uint32_t word, uint8_t size) const;
-    /// Receive a word from the USB device
-    uint32_t FetchUSB(uint8_t size) const;
-    
     /// Set the setup word to the HPTDC internal setup register
     void SendConfiguration();
     /// Read the setup word from the HPTDC internal setup register
     void ReadConfiguration();
     
-    std::string fDevice;
     std::string fFilename;
     std::ofstream fOutput;
     TDCConfiguration fConfig;

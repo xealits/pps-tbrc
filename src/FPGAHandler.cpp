@@ -1,7 +1,7 @@
 #include "FPGAHandler.h"
 
 FPGAHandler::FPGAHandler(int port, const char* dev) :
-  Client(port), fDevice(dev), fFilename(""), fIsFileOpen(false)
+  Client(port), USBHandler(dev), fFilename(""), fIsFileOpen(false)
 {}
 
 FPGAHandler::~FPGAHandler()
@@ -99,20 +99,3 @@ FPGAHandler::ReadConfiguration()
   } while (FetchUSB(USB_WORD_SIZE)!=255 and attempts<3);
 }
 
-uint32_t
-FPGAHandler::FetchUSB(uint8_t size) const
-{
-  uint32_t out = 0x0;
-  // ...
-  std::cout << __PRETTY_FUNCTION__ << " fetching from USB:" << std::endl;
-  std::cout << " Size: " << static_cast<int>(size) << std::endl;
-  return (out&((1<<size)-1));
-}
-
-void
-FPGAHandler::WriteUSB(uint32_t word, uint8_t size) const
-{
-  std::cout << __PRETTY_FUNCTION__ << " writing to USB:" << std::endl;
-  std::cout << " Size: " << static_cast<int>(size) << std::endl;
-  std::cout << " Word: " << word << std::endl;
-}
