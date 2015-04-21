@@ -3,8 +3,11 @@
 
 #include "Socket.h"
 
-typedef std::set<int> ListenersList;
-
+/**
+ * Structure handling its name and type for any listener/client to be used in
+ * the socket management parts of this code.
+ * \brief Information on a socket's listener
+ */
 struct ListenerInfo
 {
   std::string name;
@@ -14,6 +17,7 @@ struct ListenerInfo
 /**
  * Messenger/broadcaster object used by the server to send/receive commands from
  * the clients/listeners.
+ * \brief Base master object for the socket
  *
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 23 Mar 2015
@@ -21,19 +25,21 @@ struct ListenerInfo
 class Messenger : public Socket
 {
   public:
+    /// Build a void master object or socket actor
     Messenger();
+    /// Build a master object to control the socket
     Messenger(int port);
     ~Messenger();
 
     /**
      * Connect this master to the socket for clients to be able to bind.
-     * \brief Connect the master
+     * \brief Connect the master to the socket
      */
     bool Connect();
     /**
      * Remove this master from the socket, thus disconnecting automatically the
      * clients connected.
-     * \brief Remove the master
+     * \brief Remove the master and destroy the socket
      */
     void Disconnect();
         
@@ -50,7 +56,8 @@ class Messenger : public Socket
      * \param[in] m Message to transmit
      */
     void Broadcast(const Message& m) const;
-    
+    /// Socket actor type retrieval method
+    inline SocketType GetType() const { return MASTER; }
   private:
     /**
      * Add one client to the list of socket actors to monitor for message

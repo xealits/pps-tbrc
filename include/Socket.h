@@ -35,6 +35,7 @@ typedef std::set< std::pair<int,SocketType> > SocketCollection;
 /**
  * General object providing all useful method to
  * connect/bind/send/receive information through system sockets.
+ * \brief Base socket object from which clients/master from a socket inherit
  *
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 23 Mar 2015
@@ -45,6 +46,9 @@ class Socket
     inline Socket() {;}
     Socket(int port);
     virtual ~Socket();
+    
+    /// Terminates the socket and all attached communications
+    void Stop();
     
     inline void SetPort(int port) { fPort=port; }
     /// Retrieve the port used for this socket
@@ -86,8 +90,6 @@ class Socket
      * \return Success of the operation
      */
     bool Start();
-    /// Terminates the socket and all attached communications
-    void Stop();
     /**
      * \brief Bind a name to a socket
      * \return Success of the operation

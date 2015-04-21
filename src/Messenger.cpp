@@ -72,10 +72,10 @@ Messenger::DisconnectClient(int sid, MessageKey key, bool force)
     }
   }
   else {
-    Messenger* mes = new Messenger;
-    mes->SetSocketId(sid);
-    mes->Stop();
-    delete mes;
+    Socket* s = new Socket;
+    s->SetSocketId(sid);
+    s->Stop();
+    delete s;
   }
   fSocketsConnected.erase(std::pair<int,SocketType>(sid, type));
   FD_CLR(sid, &fMaster);

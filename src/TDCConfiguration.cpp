@@ -40,9 +40,9 @@ TDCConfiguration::GetBits(uint16_t lsb, uint8_t size) const
 void
 TDCConfiguration::Dump(int verb, std::ostream& os) const
 {
-  os << "==========================================="
+  os << "====================="
      << " TDC Configuration dump "
-     << "===========================================" << std::endl;
+     << "=====================" << std::endl;
   if (verb>1) {
     os << std::endl;
     for (unsigned int i=0; i<sizeof(fWord)/sizeof(fWord[0]); i++) {
@@ -71,9 +71,9 @@ TDCConfiguration::Dump(int verb, std::ostream& os) const
      << " Maximal event size:         " << GetMaxEventSize() << std::endl
      << " Reject events if FIFO full? " << GetRejectFIFOFull() << std::endl
      << " Channels offset/DLL adjustments:" << std::endl
-     << " +---------------------------------------------------------+" << std::endl;
+     << "   +---------------------------------------------------------+" << std::endl;
   for (unsigned int i=0; i<NUM_CHANNELS/2; i++ ) {
-    os << " |  Ch.  " << std::setw(2) << i
+    os << "   |  Ch.  " << std::setw(2) << i
        << ":   0x" << std::setfill('0')
        << std::setw(3) << std::hex << static_cast<int>(GetChannelOffset(i))
        << " / 0x"
@@ -85,12 +85,12 @@ TDCConfiguration::Dump(int verb, std::ostream& os) const
        << std::setw(3) << static_cast<int>(GetDLLAdjustment(i+NUM_CHANNELS/2)) << std::dec << std::setfill(' ')
        << " |" << std::endl;
   }
-  os << " +---------------------------------------------------------+" << std::endl
+  os << "   +---------------------------------------------------------+" << std::endl
      << " Width resolution:           " << GetWidthResolution() << std::endl
      << " Dead time:                  " << GetDeadTime() << std::endl
      << " Leading/trailing mode:      " << GetLeadingMode() << " / " << GetTrailingMode() << std::endl
      << " Trigger matching mode:      " << GetTriggerMatchingMode() << std::endl
      << " Edges pairing:              " << GetEdgesPairing() << std::endl;
-  os << "======================================================="
-     << "=======================================================" << std::endl;
+  os << "================================="
+     << "=================================" << std::endl;
 }

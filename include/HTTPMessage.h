@@ -12,6 +12,15 @@ typedef enum
   EncodeMessage
 } MessageAction;
 
+/**
+ * Type of message compatible to the transmission through a WebSocket protocol.
+ * It enables a direct conversion of standards from any socket message format
+ * used elsewhere in this code using the \a MessageAction statement.
+ * \brief Message to be transmitted through a WebSocket protocol
+ * 
+ * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+ * \date 1 Apr 2015
+ */
 class HTTPMessage : public Message
 {
   public:

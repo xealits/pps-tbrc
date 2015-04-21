@@ -7,6 +7,14 @@
 #include <fstream>
 #include <usb.h>
 
+/**
+ * General header to store in each collected data file for offline readout. It
+ * enable any reader to retrieve the run/spill number, as well as the HPTDC
+ * configuration during data collection.
+ * \brief Header to the output files
+ * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+ * \date 14 Apr 2015 
+ */
 struct file_header_t {
   uint32_t magic;
   uint32_t run_id;
@@ -15,30 +23,50 @@ struct file_header_t {
 };
 
 /**
+ * Main driver for a homebrew FPGA designed for the timing detectors' HPTDC
+ * chip readout.
+ * \brief Driver for timing detectors' FPGA readout
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 14 Apr 2015
  */
 class FPGAHandler : public Client
 {
   public:
+    /// Bind to a FPGA through the USB protocol, and to the socket
     FPGAHandler(int port, const char* dev);
     virtual ~FPGAHandler();
     
+    /// Open an output file to store header/HPTDC events
     void OpenFile();
+    /// Retrieve the file name used to store data collected from the FPGA
     inline std::string GetFilename() const { return fFilename; }
     
-    inline void SetConfiguration(const TDCConfiguration& c) { fConfig=c; }
-    inline TDCConfiguration GetConfiguration() const { return fConfig; }
-    void SendConfiguration();
-    void ReadConfiguration();
-    
-    void WriteUSB(uint32_t word, uint8_t size) const;
-    uint32_t FetchUSB(uint8_t size) const;
+    /// Submit the HPTDC setup word as a TDCConfiguration object
+    inline void SetConfiguration(const TDCConfiguration& c) {
+      fConfig=c;
+      SendConfiguration();
+    }
+    /// Retrieve the HPTDC setup word as a TDCConfiguration object
+    inline TDCConfiguration GetConfiguration() {
+      ReadConfiguration();
+      return fConfig;
+    }
     
     void ReadBuffer();
+    /// Socket actor type retrieval method
     inline SocketType GetType() const { return DETECTOR; }
 
   private:
+    /// Write a word to the USB device
+    void WriteUSB(uint32_t word, uint8_t size) const;
+    /// Receive a word from the USB device
+    uint32_t FetchUSB(uint8_t size) const;
+    
+    /// Set the setup word to the HPTDC internal setup register
+    void SendConfiguration();
+    /// Read the setup word from the HPTDC internal setup register
+    void ReadConfiguration();
+    
     std::string fDevice;
     std::string fFilename;
     std::ofstream fOutput;

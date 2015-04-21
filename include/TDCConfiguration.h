@@ -11,6 +11,7 @@
 
 /**
  * Object handling the configuration word provided by/to the HPTDC chip
+ * \brief Setup word to be sent to the HPTDC chip
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 16 Apr 2015
  */
@@ -21,12 +22,12 @@ class TDCConfiguration
   
   public:  
     typedef enum {
-      E_100PS=0, E_200PS, E_400PS, E_800PS, E_1600PS, E_3120PS, E_6250PS, E_12500PS
+      E_100ps=0, E_200ps, E_400ps, E_800ps, E_1p6ns, E_3p12ns, E_6p25ns, E_12p5ns
     } EdgeResolution;
-    typedef enum { DT_5NS=0, DT_10NS, DT_30NS, DT_100NS } DeadTime;
+    typedef enum { DT_5ns=0, DT_10ns, DT_30ns, DT_100ns } DeadTime;
     typedef enum {
-      W_100PS=0, W_200PS, W_400PS, W_800PS, W_1p6NS, W_3p2NS, W_6p25NS,
-      W_12p5NS, W_25NS, W_50NS, W_100NS, W_200NS, W_400NS, W_800NS
+      W_100ps=0, W_200ps, W_400ps, W_800ps, W_1p6ns, W_3p2ns, W_6p25ns,
+      W_12p5ns, W_25ns, W_50ns, W_100ns, W_200ns, W_400ns, W_800ns
     } WidthResolution;
     typedef enum {
       VernierError=0x1, CoarseError=0x2, ChannelSelectError=0x4,
@@ -112,13 +113,19 @@ class TDCConfiguration
         SetChannelOffset(i, offset);
       }
     }
+    /// Set the DLL taps adjustments with a resolution of ~10 ps
     inline void SetDLLAdjustment(int tap, uint8_t adj) {
-      if (tap>31 or tap<0) return;
+      if (tap>=NUM_CHANNELS or tap<0) return;
       SetBits(kDLLTapAdjust0+3*tap, adj, 3);
     }
     inline uint8_t GetDLLAdjustment(int tap) const {
-      if (tap>31 or tap<0) return -1;
+      if (tap>=NUM_CHANNELS or tap<0) return -1;
       return static_cast<uint8_t>(GetBits(kDLLTapAdjust0+3*tap, 3));
+    }
+    inline void SetAllTapsDLLAdjustment(uint8_t adj) {
+      for (int i=0; i<NUM_CHANNELS; i++) {
+        SetDLLAdjustment(i, adj);
+      }
     }
     inline void SetRCAdjustment(int tap, uint8_t adj) {
       if (tap>3 or tap<0) return;

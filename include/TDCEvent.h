@@ -1,6 +1,13 @@
 #ifndef TDCEvent_h
 #define TDCEvent_h
 
+/**
+ * Object enabling to decipher any measurement/error/debug event returned by the
+ * HPTDC chip
+ * \brief HPTDC event parser
+ * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+ * \date 20 Apr 2015
+ */
 class TDCEvent
 {
   public:

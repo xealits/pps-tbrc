@@ -7,26 +7,30 @@
 #include "MessageKeys.h"
 
 /**
- * \brief Base message type
+ * Base handler for messages to be transmitted through the socket
+ * \brief Base socket message type
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 6 Apr 2015
  */
 class Message
 {
   public:
+    /// Void message constructor
     inline Message() : fString("") {;}
+    /// Construct a message from a string
     inline Message(const char* msg) : fString(msg) {;}
+    /// Construct a message from a string
     inline Message(std::string msg) : fString(msg) {;}
-    inline ~Message() {;}
+    inline virtual ~Message() {;}
     
+    /// Placeholder for the MessageKey retrieval method
     inline MessageKey GetKey() const { return INVALID_KEY; }
+    /// Retrieve the string carried by this message as a whole
     inline std::string GetString() const { return fString; }
     
+    /// Extract from any message its potential arrival from a WebSocket protocol
     inline bool IsFromWeb() const {
-      size_t end;
-      if ((end=fString.find("WebSocket"))!=std::string::npos) {
-        return true;
-      }
+      if (fString.find("WebSocket")!=std::string::npos) return true;
       return false;
     }
     
