@@ -1,7 +1,22 @@
+body
+{
+  font-size: 11pt;
+}
+
+h1
+{
+  font-size: 16pt;
+}
+
+input
+{
+  border: 1px lightgray solid;
+}
+
 .socket_block
 {
   width: 150px;
-  /*border: 2px black outset;*/
+  border: 1px lightgray solid;
   display: inline-block;
   margin: 3px;
   padding: 5px;

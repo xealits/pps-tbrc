@@ -43,11 +43,8 @@ class Messenger : public Socket
      * \param[in] sid Unique identifier of the client on this socket
      */
     inline void Send(const Message& m, int sid) const;
-    /**
-     * \brief Handle a message reception from a client
-     * \return The key to the message received if successfully parsed
-     */
-    MessageKey Receive();
+    /// Handle a message reception from a client
+    void Receive();
     /**
      * \brief Emit a message to all clients connected through the socket
      * \param[in] m Message to transmit

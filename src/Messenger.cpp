@@ -96,7 +96,7 @@ Messenger::Send(const Message& m, int sid) const
   }
 }
 
-MessageKey
+void
 Messenger::Receive()
 {
   // We start by copying the master file descriptors list to the
@@ -118,7 +118,7 @@ Messenger::Receive()
     // First check if we need to handle new connections
     if (sid->first==GetSocketId()) {
       AddClient();
-      return MessageKey();
+      return;
     }
     
     // Handle data from a client
@@ -147,10 +147,9 @@ Messenger::Receive()
     } catch (Exception& e) {
       e.Dump();
     }
-    return message.GetKey();
   }
   
-  return INVALID_KEY;
+  return;
 }
 
 void

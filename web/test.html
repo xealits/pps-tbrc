@@ -13,17 +13,15 @@
 
 </script>
 
-<div class="container-fluid">
-  <h2>CT-PPS Test beam run control</h2>
+<h1>CT-PPS Test beam run control</h1>
 
-  <div id="upper_fields">
-    <button onClick="bind_socket()" id="bind_button">Bind</button>
-    <button onClick="unbind_socket()" id="unbind_button">Unbind</button>
-    <button onClick="socket_refresh()" id="refresh_button">Refresh</button>
-    <input type="text" id="socket_id" size=2 disabled />
-    <span id="time_field"></span>
-    <br />
-    <textarea id="console_log" cols=60 rows=4 disabled class="form-control"></textarea>
-  </div>
-  <div id="output"></div>
+<div id="upper_fields">
+  <button onClick="bind_socket()" id="bind_button">Bind</button>
+  <button onClick="unbind_socket()" id="unbind_button">Unbind</button>
+  <button onClick="socket_refresh()" id="refresh_button">Refresh</button>
+  <input type="text" id="socket_id" size=2 disabled />
+  <span id="time_field"></span>
+  <br />
+  <textarea id="console_log" cols=60 rows=4 disabled class="form-control"></textarea>
 </div>
+<div id="output"></div>
