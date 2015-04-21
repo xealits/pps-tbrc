@@ -42,20 +42,28 @@ class SocketMessage : public Message
         throw e;
       }
     }
+    /// Construct a socket message out of a key
     inline SocketMessage(MessageKey key) : Message() { SetKeyValue(key, ""); }
+    /// Construct a socket message out of a key and a string-type value
     inline SocketMessage(MessageKey key, const char* value) : Message() { SetKeyValue(key, value); }
+    /// Construct a socket message out of a key and a string-type value
     inline SocketMessage(MessageKey key, std::string value) : Message() { SetKeyValue(key, value.c_str()); }
+    /// Construct a socket message out of a key and an integer-type value
     inline SocketMessage(MessageKey key, const int value) : Message() { SetKeyValue(key, value); }
+    /// Construct a socket message out of a key and a float-type value
     inline SocketMessage(MessageKey key, const float value) : Message() { SetKeyValue(key, value); }
+    /// Construct a socket message out of a key and a double precision-type value
     inline SocketMessage(MessageKey key, const double value) : Message() { SetKeyValue(key, value); }
+    /// Construct a socket message out of a map of key/string-type value
     inline SocketMessage(MessageMap msg_m) : Message() { fMessage = msg_m; }
     inline ~SocketMessage() {;}
     
-    /// Send a string-valued message
+    /// String-valued message
     inline void SetKeyValue(MessageKey key, std::string value) {
       fMessage = make_pair(key, value);
       fString = String();
     }
+    /// String-valued message
     inline void SetKeyValue(MessageKey key, const char* value) {
       SetKeyValue(key, std::string(value));
     }
@@ -64,21 +72,26 @@ class SocketMessage : public Message
       std::ostringstream ss; ss << int_value;
       SetKeyValue(key, ss.str());
     }
-    /// Send an float-valued message
+    /// Float-valued message
     inline void SetKeyValue(MessageKey key, float float_value) {
       std::ostringstream ss; ss << float_value;
       SetKeyValue(key, ss.str());
     }
-    /// Send an double-valued message
+    /// Double-valued message
     inline void SetKeyValue(MessageKey key, double double_value) {
       std::ostringstream ss; ss << double_value;
       SetKeyValue(key, ss.str());
     }
 
+    /// Extract the whole key:value message
     inline std::string GetString() const { return fString; }
+    /// Extract the message's key
     inline MessageKey GetKey() const { return fMessage.first; }
+    /// Extract the message's string value
     inline std::string GetValue() const { return fMessage.second; }
+    /// Extract the message's integer value
     inline int GetIntValue() const { return atoi(fMessage.second.c_str()); }
+    /// Extract the message's vector of string value
     inline VectorValue GetVectorValue() const {
       size_t start = 0, end = 0;
       VectorValue out;

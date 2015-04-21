@@ -21,7 +21,7 @@ MESSAGES_ENUM(
   
   // web socket messages
   WEB_GET_CLIENTS
-);  
+);
 
 #endif
 

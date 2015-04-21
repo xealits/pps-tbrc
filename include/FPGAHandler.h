@@ -7,6 +7,8 @@
 #include <fstream>
 #include <usb.h>
 
+#define USB_WORD_SIZE 8
+
 /**
  * General header to store in each collected data file for offline readout. It
  * enable any reader to retrieve the run/spill number, as well as the HPTDC
@@ -38,6 +40,8 @@ class FPGAHandler : public Client
     
     /// Open an output file to store header/HPTDC events
     void OpenFile();
+    /// Close a previously opened output file used to store header/HPTDC events
+    void CloseFile();
     /// Retrieve the file name used to store data collected from the FPGA
     inline std::string GetFilename() const { return fFilename; }
     

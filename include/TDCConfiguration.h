@@ -155,7 +155,20 @@ class TDCConfiguration
     void Dump(int verb=1, std::ostream& os=std::cout) const;
     
   private:
+    /**
+     * Set a fixed amount of bits in the full configuration word
+     * \brief Set bits in the configuration word
+     * \param[in] lsb Least significant bit of the word to set
+     * \param[in] word Word to set
+     * \param[in] size Size of the word to set
+     */
     void SetBits(uint16_t lsb, uint16_t word, uint8_t size);
+    /**
+     * Extract a fixed amount of bits from the full configuration word
+     * \brief Extract bits from the configuration word
+     * \param[in] lsb Least significant bit of the word to retrieve
+     * \param[in] size Size of the word to retrieve
+     */
     uint16_t GetBits(uint16_t lsb, uint8_t size) const;
     
     static const uint8_t kNumWords = BITS_NUM/WORD_SIZE+1;

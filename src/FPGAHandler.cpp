@@ -6,9 +6,7 @@ FPGAHandler::FPGAHandler(int port, const char* dev) :
 
 FPGAHandler::~FPGAHandler()
 {
-  if (fIsFileOpen) {
-    fOutput.close();
-  }
+  CloseFile();
 }
 
 void
@@ -41,39 +39,64 @@ FPGAHandler::OpenFile()
 }
 
 void
+FPGAHandler::CloseFile()
+{
+  if (fIsFileOpen) fOutput.close();
+}
+
+void
 FPGAHandler::SendConfiguration()
 {
   // ...
+  int attempts = 0;
+  
+  // First we initiate the communication
+  do {
+    WriteUSB(199, USB_WORD_SIZE); attempts++;
+  } while (FetchUSB(USB_WORD_SIZE)!=255 and attempts<3);
+  
+  // Then we feed the configuration words
   for (unsigned int i=0; i<fConfig.GetNumWords(); i++) {
-    WriteUSB(fConfig.GetWord(i), 32);
+    uint32_t word = fConfig.GetWord(i);
+    for (unsigned int j=0; j<WORD_SIZE/USB_WORD_SIZE; j++) {
+      WriteUSB((word>>USB_WORD_SIZE*j)&0xFF, USB_WORD_SIZE);
+    }
   }
+  
+  // Finally we close the communication
+  do {
+    WriteUSB(60, USB_WORD_SIZE); attempts++;
+  } while (FetchUSB(USB_WORD_SIZE)!=255 and attempts<3);
 }
 
 void
 FPGAHandler::ReadConfiguration()
 {
   // ...
+  unsigned int ack, byte, i=0, j=0, word=0x0;
   int attempts = 0;
   
+  // First we initiate the communication
   do {
-    WriteUSB(207, 8); attempts++;
-  } while (FetchUSB(8)!=255 and attempts<3);
+    WriteUSB(207, USB_WORD_SIZE); attempts++;
+  } while (FetchUSB(USB_WORD_SIZE)!=255 and attempts<3);
   
-  uint8_t ack; unsigned int i, j;
-  uint32_t word = 0x0;
-  i = 0; j = 0;
+  // Then we retrieve the configuration words
   do {
     ack = (i%2==0) ? 0 : 255;
-    uint32_t ret = static_cast<uint32_t>(FetchUSB(8));
-    WriteUSB(ack, 8);
-    word |= (ret<<i*8);
-    if (i%32==0 and i!=0) {
-      fConfig.SetWord(j, word);
-      word = 0x0;
+    byte = static_cast<uint8_t>(FetchUSB(USB_WORD_SIZE));  WriteUSB(ack, USB_WORD_SIZE);
+    word |= (byte<<i*USB_WORD_SIZE);
+    if (i%WORD_SIZE==0 and i!=0) {
+      fConfig.SetWord(j, word); word = 0x0;
       j++;
     }
     i++;
   } while (j<fConfig.GetNumWords() and attempts<3);
+  
+  // Finally we close the communication
+  do {
+    WriteUSB(15, USB_WORD_SIZE); attempts++;
+  } while (FetchUSB(USB_WORD_SIZE)!=255 and attempts<3);
 }
 
 uint32_t

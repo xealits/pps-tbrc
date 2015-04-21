@@ -18,8 +18,8 @@ TDCConfiguration::SetBits(uint16_t lsb, uint16_t word, uint8_t size)
     uint16_t bit = lsb+i;
     uint8_t bit_rel = bit % WORD_SIZE;
     uint8_t word_id = (bit-bit_rel)/WORD_SIZE;
-    fWord[word_id] &=~static_cast<word_t>(1<<bit_rel); // first we clear the bit
-    fWord[word_id] |= static_cast<word_t>(((word&(1<<i))>>i)<<bit_rel); // then we set it
+    fWord[word_id] &=~(1<<bit_rel); // first we clear the bit
+    fWord[word_id] |= (((word>>i)&0x1)<<bit_rel); // then we set it
   }
 }
 
