@@ -62,6 +62,11 @@ TDCConfiguration::Dump(int verb, std::ostream& os) const
     }
     os << std::endl;
   }
+  os << " Enabled errors:             ";
+  for (unsigned int i=0; i<11; i++) {
+    if (static_cast<bool>((GetEnableError()>>i)&0x1)) os << i << " ";
+  }
+  os << std::endl;
   os << " Edge resolution:            " << GetEdgeResolution() << std::endl
      << " Maximal event size:         " << GetMaxEventSize() << std::endl
      << " Reject events if FIFO full? " << GetRejectFIFOFull() << std::endl

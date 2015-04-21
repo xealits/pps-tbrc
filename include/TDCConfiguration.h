@@ -57,8 +57,8 @@ class TDCConfiguration
      */
     inline uint8_t GetNumWords() const { return kNumWords; }
     
-    inline void SetEnableError(const EnabledError& err) { SetBits(kEnableError, err, 10); }
-    inline EnabledError GetEnableError() const { return static_cast<EnabledError>(GetBits(kEnableError, 10)); }
+    inline void SetEnableError(const uint16_t& err) { SetBits(kEnableError, err, 11); }
+    inline uint16_t GetEnableError() const { return static_cast<uint16_t>(GetBits(kEnableError, 11)); }
     inline void SetEdgeResolution(const EdgeResolution r) { SetBits(kLeadingResolution, r, 3); }
     inline EdgeResolution GetEdgeResolution() const { return static_cast<EdgeResolution>(GetBits(kLeadingResolution, 3)); }
     /**

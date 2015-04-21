@@ -28,6 +28,13 @@ int main(int argc, char* argv[])
   
   TDCConfiguration config;
   config.SetAllChannelsOffset(0x120);
+  config.SetEnableError(
+    TDCConfiguration::ReadoutFIFOParityError
+  | TDCConfiguration::ReadoutStateError
+  | TDCConfiguration::SetupParityError
+  | TDCConfiguration::ControlParityError
+  | TDCConfiguration::JTAGInstructionParityError
+  );
   config.SetLeadingMode();
   config.SetTrailingMode();
   config.SetEdgeResolution(TDCConfiguration::E_6250PS);
