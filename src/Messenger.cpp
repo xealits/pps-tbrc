@@ -72,10 +72,9 @@ Messenger::DisconnectClient(int sid, MessageKey key, bool force)
     }
   }
   else {
-    Socket* s = new Socket;
-    s->SetSocketId(sid);
-    s->Stop();
-    delete s;
+    Socket s;
+    s.SetSocketId(sid);
+    s.Stop();
   }
   fSocketsConnected.erase(std::pair<int,SocketType>(sid, type));
   FD_CLR(sid, &fMaster);
@@ -99,6 +98,9 @@ Messenger::Send(const Message& m, int sid) const
 void
 Messenger::Receive()
 {
+  Message msg;
+  SocketMessage m;
+  
   // We start by copying the master file descriptors list to the
   // temporary list for readout
   fReadFds = fMaster;
@@ -111,74 +113,58 @@ Messenger::Receive()
   }
   
   // Looking for something to read!
-  for (SocketCollection::const_iterator sid=fSocketsConnected.begin(); sid!=fSocketsConnected.end(); sid++) {
-    
-    if (!FD_ISSET(sid->first, &fReadFds)) continue;
+  for (SocketCollection::const_iterator s=fSocketsConnected.begin(); s!=fSocketsConnected.end(); s++) {
+    if (!FD_ISSET(s->first, &fReadFds)) continue;
     
     // First check if we need to handle new connections
-    if (sid->first==GetSocketId()) {
-      AddClient();
-      return;
-    }
+    if (s->first==GetSocketId()) { AddClient(); return; }
     
     // Handle data from a client
-    Message message;
-    try {
-      message = FetchMessage(sid->first);
-    } catch (Exception& e) {
-      if (e.ErrorNumber()==11000) {
-        DisconnectClient(sid->first, THIS_CLIENT_DELETED);
-      }
+    try { msg = FetchMessage(s->first); } catch (Exception& e) {
+      if (e.ErrorNumber()==11000) { DisconnectClient(s->first, THIS_CLIENT_DELETED); return; }
     }
-    SocketMessage m;
-    if (sid->second==WEBSOCKET_CLIENT) {
-      HTTPMessage msg(fWS, message, DecodeMessage);
-      try {
-        m = SocketMessage(msg);
-      } catch (Exception& e) {;}
+    if (s->second==WEBSOCKET_CLIENT) {
+      HTTPMessage h_msg(fWS, msg, DecodeMessage);
+      try { m = SocketMessage(h_msg); } catch (Exception& e) {;}
     }
-    else m = SocketMessage(message.GetString());
+    else m = SocketMessage(msg.GetString());
 
     // Message was successfully decoded
     fNumAttempts = 0;
     
-    try {
-      ProcessMessage(m, sid->first);
-    } catch (Exception& e) {
+    try { ProcessMessage(m, s->first); } catch (Exception& e) {
       e.Dump();
     }
   }
-  
-  return;
 }
 
 void
 Messenger::AddClient()
 {
-  Messenger mess;
+  Socket s;
   try {
-    AcceptConnections(mess);
-    Message message = FetchMessage(mess.GetSocketId());
+    AcceptConnections(s);
+    Message message = FetchMessage(s.GetSocketId());
     if (message.IsFromWeb()) {
       message.Dump();
       // Feed the handshake to the WebSocket object
       fWS->parseHandshake((unsigned char*)message.GetString().c_str(), message.GetString().size());
-      Send(Message(fWS->answerHandshake()), mess.GetSocketId());
+      Send(Message(fWS->answerHandshake()), s.GetSocketId());
       // From now on handle a WebSocket connection
-      SwitchClientType(mess.GetSocketId(), WEBSOCKET_CLIENT);
+      SwitchClientType(s.GetSocketId(), WEBSOCKET_CLIENT);
     }
     else {
       // if not a WebSocket connection
       SocketMessage m(message);
       if (m.GetKey()==ADD_CLIENT) {
         SocketType type = static_cast<SocketType>(m.GetIntValue());
-        if (type!=CLIENT) SwitchClientType(mess.GetSocketId(), type);
+        if (type!=CLIENT) SwitchClientType(s.GetSocketId(), type);
       }
     }
     // Send the client's unique identifier
-    Send(SocketMessage(SET_CLIENT_ID, mess.GetSocketId()), mess.GetSocketId());
-    std::cout << "after sending the client id=" << mess.GetSocketId() << "!" << std::endl;
-    SocketMessage(SET_CLIENT_ID, mess.GetSocketId()).Dump();
+    Send(SocketMessage(SET_CLIENT_ID, s.GetSocketId()), s.GetSocketId());
+    std::cout << "after sending the client id=" << s.GetSocketId() << "!" << std::endl;
+    //SocketMessage(SET_CLIENT_ID, s.GetSocketId()).Dump();
   } catch (Exception& e) {
     e.Dump();
   }

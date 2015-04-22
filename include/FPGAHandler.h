@@ -29,7 +29,7 @@ struct file_header_t {
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 14 Apr 2015
  */
-class FPGAHandler : public Client, public USBHandler
+class FPGAHandler : public Client, private USBHandler
 {
   public:
     /// Bind to a FPGA through the USB protocol, and to the socket

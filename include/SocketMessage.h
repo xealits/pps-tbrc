@@ -22,65 +22,49 @@ class SocketMessage : public Message
   public:
     inline SocketMessage() : Message("") {;}
     inline SocketMessage(const Message& msg) : Message(msg) {
-      try {
-        fMessage = Object();
-      } catch (Exception& e) {
-        throw e;
-      }
+      try { fMessage = Object(); } catch (Exception& e) { throw e; }
     }
     inline SocketMessage(const char* msg_s) : Message(msg_s) { 
-      try {
-        fMessage = Object();
-      } catch (Exception& e) {
-        throw e;
-      }
+      try { fMessage = Object(); } catch (Exception& e) { throw e; }
     }
     inline SocketMessage(std::string msg_s) : Message(msg_s) {
-      try {
-        fMessage = Object();
-      } catch (Exception& e) {
-        throw e;
-      }
+      try { fMessage = Object(); } catch (Exception& e) { throw e; }
     }
     /// Construct a socket message out of a key
-    inline SocketMessage(MessageKey key) : Message() { SetKeyValue(key, ""); }
+    inline SocketMessage(const MessageKey& key) : Message() { SetKeyValue(key, ""); }
     /// Construct a socket message out of a key and a string-type value
-    inline SocketMessage(MessageKey key, const char* value) : Message() { SetKeyValue(key, value); }
+    inline SocketMessage(const MessageKey& key, const char* value) : Message() { SetKeyValue(key, value); }
     /// Construct a socket message out of a key and a string-type value
-    inline SocketMessage(MessageKey key, std::string value) : Message() { SetKeyValue(key, value.c_str()); }
+    inline SocketMessage(const MessageKey& key, std::string value) : Message() { SetKeyValue(key, value.c_str()); }
     /// Construct a socket message out of a key and an integer-type value
-    inline SocketMessage(MessageKey key, const int value) : Message() { SetKeyValue(key, value); }
+    inline SocketMessage(const MessageKey& key, const int value) : Message() { SetKeyValue(key, value); }
     /// Construct a socket message out of a key and a float-type value
-    inline SocketMessage(MessageKey key, const float value) : Message() { SetKeyValue(key, value); }
+    inline SocketMessage(const MessageKey& key, const float value) : Message() { SetKeyValue(key, value); }
     /// Construct a socket message out of a key and a double precision-type value
-    inline SocketMessage(MessageKey key, const double value) : Message() { SetKeyValue(key, value); }
+    inline SocketMessage(const MessageKey& key, const double value) : Message() { SetKeyValue(key, value); }
     /// Construct a socket message out of a map of key/string-type value
     inline SocketMessage(MessageMap msg_m) : Message() { fMessage = msg_m; }
     inline ~SocketMessage() {;}
     
     /// String-valued message
-    inline void SetKeyValue(MessageKey key, std::string value) {
-      fMessage = make_pair(key, value);
+    inline void SetKeyValue(const MessageKey& key, const char* value) {
+      fMessage = make_pair(key, std::string(value));
       fString = String();
     }
-    /// String-valued message
-    inline void SetKeyValue(MessageKey key, const char* value) {
-      SetKeyValue(key, std::string(value));
-    }
     /// Send an integer-valued message
-    inline void SetKeyValue(MessageKey key, int int_value) {
+    inline void SetKeyValue(const MessageKey& key, int int_value) {
       std::ostringstream ss; ss << int_value;
-      SetKeyValue(key, ss.str());
+      SetKeyValue(key, ss.str().c_str());
     }
     /// Float-valued message
-    inline void SetKeyValue(MessageKey key, float float_value) {
+    inline void SetKeyValue(const MessageKey& key, float float_value) {
       std::ostringstream ss; ss << float_value;
-      SetKeyValue(key, ss.str());
+      SetKeyValue(key, ss.str().c_str());
     }
     /// Double-valued message
-    inline void SetKeyValue(MessageKey key, double double_value) {
+    inline void SetKeyValue(const MessageKey& key, double double_value) {
       std::ostringstream ss; ss << double_value;
-      SetKeyValue(key, ss.str());
+      SetKeyValue(key, ss.str().c_str());
     }
 
     /// Extract the whole key:value message

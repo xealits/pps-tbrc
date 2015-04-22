@@ -1,6 +1,7 @@
 #ifndef messages_h
 #define messages_h
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -21,12 +22,12 @@ inline std::vector<std::string> sar(const char* a, const char* b)
   std::vector<std::string> out;
   out.push_back(a);
   size_t pos; std::string token;
+  o.erase(std::remove(o.begin(), o.end(), ' '), o.end());
   while ((pos=o.find(","))!=std::string::npos) {
     token = o.substr(0, pos);
     out.push_back(token.c_str());
-    o.erase(0, pos+2);
+    o.erase(0, pos+1);
   }
-  out.push_back(o.c_str());
   return out;
 }
 
@@ -40,9 +41,9 @@ inline std::vector<std::string> sar(const char* a, const char* b)
  */
 #define MESSAGES_ENUM(m1, ...)\
   enum MessageKey { m1=0, __VA_ARGS__  };\
-  inline const char* MessageKeyToString(MessageKey value) {\
+  inline std::string MessageKeyToString(MessageKey value) {\
     std::vector<std::string> s=sar(#m1, #__VA_ARGS__);\
-    return ((value<s.size())&&(value>=0)) ? s[value].c_str() : s[0].c_str(); } \
+    return ((value<s.size())&&(value>=0)) ? s[value] : s[0]; } \
   inline const MessageKey MessageKeyToObject(const char* value) {\
     std::vector<std::string> s=sar(#m1, #__VA_ARGS__);\
     for (size_t i=0; i<s.size(); i++) { if (s[i]==std::string(value)) return (MessageKey)i; }\
