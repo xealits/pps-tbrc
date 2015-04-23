@@ -23,7 +23,7 @@ USBHandler::Init()
   }
   std::ostringstream o; o << "Dumping the list of USB devices attached to this machine:\n\t";
   for (int i=0; i<ret; i++) {
-    DumpDevice(all_devices[i], o);
+    DumpDevice(all_devices[i], 1, o);
   }
   Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump(std::cout);
   //fHandle = libusb_open_device_with_vid_pid(usb_context, 5118, 7424);
@@ -33,7 +33,7 @@ USBHandler::Init()
 }
 
 void
-USBHandler::DumpDevice(libusb_device* dev, std::ostream& out)
+USBHandler::DumpDevice(libusb_device* dev, int verb, std::ostream& out)
 {
   int ret;
   libusb_device_descriptor desc;
@@ -69,40 +69,44 @@ USBHandler::DumpDevice(libusb_device* dev, std::ostream& out)
     default: out << "unrecognized!"; break;
   }
   out << ")" << std::endl
-      << "Vendor/product Id: " << desc.idVendor << " / " << desc.idProduct << std::endl
+      << "Vendor/product Id: " << std::hex
+      << std::setw(4) << std::setfill('0') <<  desc.idVendor << " / "
+      << std::setw(4) << std::setfill('0') << desc.idProduct << std::dec << std::endl
       << "Number of possible configurations: " << (int)desc.bNumConfigurations << std::endl;
-  libusb_config_descriptor *config;
-  libusb_get_config_descriptor(dev, 0, &config);
-  out << "Interfaces: " << (int)config->bNumInterfaces << std::endl;
-  const libusb_interface *inter;
-  const libusb_interface_descriptor *interdesc;
-  const libusb_endpoint_descriptor *epdesc;
-  for (int i=0; i<(int)config->bNumInterfaces; i++) {
-    inter = &config->interface[i];
-    out << "  Interface " << i << " has " << inter->num_altsetting << " alternate setting(s):" << std::endl;
-    for (int j=0; j<inter->num_altsetting; j++) {
-      interdesc = &inter->altsetting[j];
-      out /*<< "  => Interface Number: " << (int)interdesc->bInterfaceNumber << std::endl*/
-          << "     Setting " << j << " with " << (int)interdesc->bNumEndpoints << " endpoint(s):" << std::endl;
-      for (int k=0; k<(int)interdesc->bNumEndpoints; k++) {
-        epdesc = &interdesc->endpoint[k];
-        out << "     - Descriptor Type: " << (int)epdesc->bDescriptorType << " (";
-        switch ((int)epdesc->bDescriptorType) {
-          case 0x1: out << "device"; break;
-          case 0x2: out << "configuration"; break;
-          case 0x3: out << "string"; break;
-          case 0x4: out << "interface"; break;
-          case 0x5: out << "endpoint"; break;
-          case 0x6: out << "device qualifier"; break;
-          case 0x7: out << "other speed configuration"; break;
-          case 0x8: out << "interface power (obsolete)"; break;
-          case 0x9: out << "on-the-go"; break;
-          case 0x10: out << "device capability"; break;
-          default: out << "unrecognized!"; break;
+  if (verb>1) {
+    libusb_config_descriptor *config;
+    libusb_get_config_descriptor(dev, 0, &config);
+    out << "Interfaces: " << (int)config->bNumInterfaces << std::endl;
+    const libusb_interface *inter;
+    const libusb_interface_descriptor *interdesc;
+    const libusb_endpoint_descriptor *epdesc;
+    for (int i=0; i<(int)config->bNumInterfaces; i++) {
+      inter = &config->interface[i];
+      out << "  Interface " << i << " has " << inter->num_altsetting << " alternate setting(s):" << std::endl;
+      for (int j=0; j<inter->num_altsetting; j++) {
+        interdesc = &inter->altsetting[j];
+        out /*<< "  => Interface Number: " << (int)interdesc->bInterfaceNumber << std::endl*/
+            << "     Setting " << j << " with " << (int)interdesc->bNumEndpoints << " endpoint(s):" << std::endl;
+        for (int k=0; k<(int)interdesc->bNumEndpoints; k++) {
+          epdesc = &interdesc->endpoint[k];
+          out << "     - Descriptor Type: " << (int)epdesc->bDescriptorType << " (";
+          switch ((int)epdesc->bDescriptorType) {
+            case 0x1: out << "device"; break;
+            case 0x2: out << "configuration"; break;
+            case 0x3: out << "string"; break;
+            case 0x4: out << "interface"; break;
+            case 0x5: out << "endpoint"; break;
+            case 0x6: out << "device qualifier"; break;
+            case 0x7: out << "other speed configuration"; break;
+            case 0x8: out << "interface power (obsolete)"; break;
+            case 0x9: out << "on-the-go"; break;
+            case 0x10: out << "device capability"; break;
+            default: out << "unrecognized!"; break;
+          }
+          out << ") at endpoint address 0x" << std::hex << (int)epdesc->bEndpointAddress << std::dec << std::endl;
         }
-        out << ") at endpoint address 0x" << std::hex << (int)epdesc->bEndpointAddress << std::dec << std::endl;
       }
     }
+    libusb_free_config_descriptor(config);
   }
-  libusb_free_config_descriptor(config);
 }

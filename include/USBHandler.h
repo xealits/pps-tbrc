@@ -22,7 +22,7 @@ class USBHandler
     
     void Init();
     
-    void DumpDevice(libusb_device* dev, std::ostream& out=std::cout);
+    void DumpDevice(libusb_device* dev, int verb=1, std::ostream& out=std::cout);
     
   protected:
     /// Write a word to the USB device
