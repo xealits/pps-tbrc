@@ -3,7 +3,7 @@
 
 #include "Client.h"
 #include "USBHandler.h"
-#include "TDCConfiguration.h"
+#include "TDCSetup.h"
 
 #include <fstream>
 
@@ -19,7 +19,7 @@ struct file_header_t {
   uint32_t magic;
   uint32_t run_id;
   uint32_t spill_id;
-  TDCConfiguration config;
+  TDCSetup config;
 };
 
 /**
@@ -43,13 +43,13 @@ class FPGAHandler : public Client, private USBHandler
     /// Retrieve the file name used to store data collected from the FPGA
     inline std::string GetFilename() const { return fFilename; }
     
-    /// Submit the HPTDC setup word as a TDCConfiguration object
-    inline void SetConfiguration(const TDCConfiguration& c) {
+    /// Submit the HPTDC setup word as a TDCSetup object
+    inline void SetConfiguration(const TDCSetup& c) {
       fConfig=c;
       SendConfiguration();
     }
-    /// Retrieve the HPTDC setup word as a TDCConfiguration object
-    inline TDCConfiguration GetConfiguration() {
+    /// Retrieve the HPTDC setup word as a TDCSetup object
+    inline TDCSetup GetConfiguration() {
       ReadConfiguration();
       return fConfig;
     }
@@ -66,8 +66,9 @@ class FPGAHandler : public Client, private USBHandler
     
     std::string fFilename;
     std::ofstream fOutput;
-    TDCConfiguration fConfig;
+    TDCSetup fConfig;
     bool fIsFileOpen;
+    bool fIsTDCInReadout;
 };
 
 #endif

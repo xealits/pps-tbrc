@@ -1,5 +1,5 @@
-#ifndef TDCConfiguration_h
-#define TDCConfiguration_h
+#ifndef TDCSetup_h
+#define TDCSetup_h
 
 #include <iostream>
 #include <iomanip>
@@ -20,12 +20,13 @@
  * \date 16 Apr 2015
  * \ingroup HPTDC
  */
-class TDCConfiguration
+class TDCSetup
 {
-  typedef uint16_t bit;
-  typedef uint32_t word_t;
-  
   public:  
+    /// LSB index
+    typedef uint16_t bit;
+    /// Unit of the TDC setup word to be successfully contained on any machine
+    typedef uint32_t word_t;
     typedef enum {
       E_100ps=0, E_200ps, E_400ps, E_800ps, E_1p6ns, E_3p12ns, E_6p25ns, E_12p5ns
     } EdgeResolution;
@@ -56,11 +57,22 @@ class TDCConfiguration
     typedef enum {
       DLL_clock_40=0x0, DLL_pll_clock_40=0x1, DLL_pll_clock_160=0x2, DLL_pll_clock_320=0x3, DLL_aux_clock=0x4
     } DLLClockSource;
+    typedef enum {
+      RO_Fixed=0x0, RO_pll_80Mbits_s=0x1
+    } ReadoutSpeed;
+    typedef enum {
+      SS_NoStrobe=0x0, SS_DSStrobe=0x1, SS_LeadingTrailingStrobe=0x2, SS_LeadingEdge=0x3
+    } SerialStrobeType;
+    typedef enum {
+      RSC_40Mbits_s=0x0, RSC_20Mbits_s=0x1, RSC_10Mbits_s=0x2, RSC_5Mbits_s=0x3,
+      RSC_2p5Mbits_s=0x4, RSC_1p25Mbits_s=0x5, RSC_625kbits_s=0x6,
+      RSC_312p5kbits_s=0x7
+    } ReadoutSingleCycleSpeed;
   
   public:
-    TDCConfiguration();
-    TDCConfiguration(const TDCConfiguration& c);
-    inline virtual ~TDCConfiguration() {;}
+    TDCSetup();
+    TDCSetup(const TDCSetup& c);
+    inline virtual ~TDCSetup() {;}
     
     /// Set one bit(s) subset in the setup word
     inline void SetWord(const unsigned int i, const word_t word) {
@@ -78,15 +90,17 @@ class TDCConfiguration
      */
     inline uint8_t GetNumWords() const {
       return kNumWords; }
+      
+    //////////////////////// Public set'ers and get'ers ////////////////////////
     
     /// Mark events with error if global error signal is set.
-    inline void SetEnableErrorMark(bool em) {
+    inline void SetEnableErrorMark(const bool em) {
       SetBits(kEnableErrorMark, em, 1); }
     inline bool GetEnableErrorMark() const {
       return static_cast<bool>(GetBits(kEnableErrorMark, 1));
     }
     /// Bypass TDC chip if global error signal is set.
-    inline void SetEnableErrorBypass(bool eb) {
+    inline void SetEnableErrorBypass(const bool eb) {
       SetBits(kEnableErrorBypass, eb, 1);
     }
     inline bool GetEnableErrorBypass() const {
@@ -100,18 +114,61 @@ class TDCConfiguration
       return static_cast<uint16_t>(GetBits(kEnableError, 11));
     }
     /// Enable of serial read-out (otherwise parallel read-out)
-    inline void SetEnableSerial(bool es) {
+    inline void SetEnableSerial(const bool es) {
       SetBits(kEnableSerial, es, 1);
     }
     inline bool GetEnableSerial() const {
       return static_cast<bool>(GetBits(kEnableSerial, 1));
     }
     /// Enable of read-out via JTAG
-    inline void SetEnableJTAGReadout(bool jr) {
+    inline void SetEnableJTAGReadout(const bool jr) {
       SetBits(kEnableJTAGReadout, jr, 1);
     }
     inline bool GetEnableJTAGReadout() const {
       return static_cast<bool>(GetBits(kEnableJTAGReadout, 1));
+    }
+    /// Effective size of readout FIFO
+    inline void SetReadoutFIFOSize(int rfs) {
+      uint8_t size;
+      if (rfs<2) return; // FIXME error!
+      else if (rfs==2) size = 0x0; // no hit
+      else if (rfs<=4) size = 0x1; // 1 hit
+      else if (rfs<=8) size = 0x2; // 2 hits
+      else if (rfs<=16) size = 0x3; // 4 hits
+      else if (rfs<=32) size = 0x4; // 32 hits
+      else if (rfs<=64) size = 0x5; // 64 hits
+      else if (rfs<=128) size = 0x6; // 128 hits
+      else if (rfs<=256) size = 0x7; // 128 hits
+      else return; // FIXME error!
+      SetBits(kReadoutFIFOSize, size, 3);
+    }
+    inline int GetReadoutFIFOSize() const {
+      uint8_t sz = static_cast<uint8_t>(GetBits(kReadoutFIFOSize, 3));
+      return (0x1<<(sz+1));
+    }
+    /// Set the offset in reject counter (defines reject latency together with coarse count offset)
+    inline void SetRejectCountOffset(uint16_t rco) {
+      SetBits(kRejectCountOffset, rco, 12);
+    }
+    /// Extract the offset in reject counter
+    inline uint16_t GetRejectCountOffset() const {
+      return static_cast<uint16_t>(GetBits(kRejectCountOffset, 12));
+    }
+    /// Set the search window (in multiples of clock cycles: 0=25 ns, 1=50 ns, ...)
+    inline void SetSearchWindow(uint16_t sw) {
+      SetBits(kSearchWindow, sw, 12);
+    }
+    /// Extract the search window (in multiples of clock cycles: 0=25 ns, 1=50 ns, ...)
+    inline uint16_t GetSearchWindow() const {
+      return static_cast<uint16_t>(GetBits(kSearchWindow, 12));
+    }
+    /// Set the matching window (in multiples of clock cycles: 0=25 ns, 1=50 ns, ...)
+    inline void SetMatchWindow(uint16_t mw) {
+      SetBits(kMatchWindow, mw, 12);
+    }
+    /// Extract the matching window (in multiples of clock cycles: 0=25 ns, 1=50 ns, ...)
+    inline uint16_t GetMatchWindow() const {
+      return static_cast<uint16_t>(GetBits(kMatchWindow, 12));
     }
     inline void SetEdgeResolution(const EdgeResolution r) {
       SetBits(kLeadingResolution, r, 3);
@@ -125,19 +182,19 @@ class TDCConfiguration
      * if lower than 0 or bigger than 128 then set to unimited.
      * \brief Set the maximum number of hits per event
      */
-    inline void SetMaxEventSize(int sz) {
+    inline void SetMaxEventSize(int sz=-1) {
       uint8_t size;
       if (sz<0) size = 0x9; // no limit
       else if (sz==0) size = 0x0; // no hit
-      else if (sz>0) size = 0x1; // 1 hit
-      else if (sz>1) size = 0x2; // 2 hits
-      else if (sz>2) size = 0x3; // 4 hits
-      else if (sz>4) size = 0x4; // 8 hits
-      else if (sz>8) size = 0x5; // 16 hits
-      else if (sz>16) size = 0x6; // 32 hits
-      else if (sz>32) size = 0x7; // 64 hits
-      else if (sz>64) size = 0x8; // 128 hits
-      else if (sz>128) size = 0x9; // no limit
+      else if (sz<=1) size = 0x1; // 1 hit
+      else if (sz<=2) size = 0x2; // 2 hits
+      else if (sz<=4) size = 0x3; // 4 hits
+      else if (sz<=8) size = 0x4; // 8 hits
+      else if (sz<=16) size = 0x5; // 16 hits
+      else if (sz<=32) size = 0x6; // 32 hits
+      else if (sz<=64) size = 0x7; // 64 hits
+      else if (sz<=128) size = 0x8; // 128 hits
+      else size = 0x9; // no limit
       SetBits(kMaxEventSize, size, 4);
     }
     /// Extract the maximum number of hits per event
@@ -151,7 +208,7 @@ class TDCConfiguration
      * Set whether or not hits are rejected once FIFO is full.
      * \brief Reject hits when readout FIFO full.
      */
-    inline void SetRejectFIFOFull(bool rej=true) {
+    inline void SetRejectFIFOFull(const bool rej=true) {
       SetBits(kRejectFIFOFull, rej, 1);
     }
     /**
@@ -182,7 +239,11 @@ class TDCConfiguration
     inline bool GetEnableReadoutSeparator() const {
       return static_cast<bool>(GetBits(kEnableReadoutSeparator, 1));
     }
-    /// Set offset for the trigger time tag counter
+    /// Set offset for the event counter
+    inline void SetEventCountOffset(uint16_t eco) {
+      SetBits(kEventCountOffset, eco, 12);
+    }
+    /// Set offset for the trigger time tag counter to set effective trigger latency
     inline void SetTriggerCountOffset(uint16_t tco) {
       SetBits(kTriggerCountOffset, tco, 12);
     }
@@ -190,14 +251,17 @@ class TDCConfiguration
     inline uint16_t GetTriggerCountOffset() const {
       return static_cast<uint16_t>(GetBits(kTriggerCountOffset, 12));
     }
+    /// Set the time offset for one single channel
     inline void SetChannelOffset(int channel, uint16_t offset) {
       if (channel>=NUM_CHANNELS or channel<0) return;
       SetBits(kOffset0-9*channel, offset, 9);
     }
+    /// Return the offset for one single channel
     inline uint16_t GetChannelOffset(int channel) const {
       if (channel>=NUM_CHANNELS or channel<0) return -1;
       return static_cast<uint16_t>(GetBits(kOffset0-9*channel, 9));
     }
+    /// Set the time offset for all channels
     inline void SetAllChannelsOffset(uint16_t offset) {
       for (int i=0; i<NUM_CHANNELS; i++) {
         SetChannelOffset(i, offset);
@@ -216,26 +280,32 @@ class TDCConfiguration
       if (tap>=NUM_CHANNELS or tap<0) return;
       SetBits(kDLLTapAdjust0+3*tap, adj, 3);
     }
+    /// Set the adjustment of DLL taps
     inline uint8_t GetDLLAdjustment(int tap) const {
       if (tap>=NUM_CHANNELS or tap<0) return -1;
       return static_cast<uint8_t>(GetBits(kDLLTapAdjust0+3*tap, 3));
     }
+    /// Extract the adjustment of DLL taps
     inline void SetAllTapsDLLAdjustment(uint8_t adj) {
       for (int i=0; i<NUM_CHANNELS; i++) {
         SetDLLAdjustment(i, adj);
       }
     }
+    /// Set the adjustment of the RC delay line
     inline void SetRCAdjustment(int tap, uint8_t adj) {
       if (tap>3 or tap<0) return;
       SetBits(kRCAdjust0+3*tap, adj, 3);
     }
+    /// Extract the adjustment of the RC delay line
     inline uint8_t GetRCAdjustment(int tap) {
       if (tap>3 or tap<0) return -1;
       return static_cast<uint8_t>(GetBits(kRCAdjust0+3*tap, 3));
     }
+    /// Set the pulse width resolution when paired measurements are performed
     inline void SetWidthResolution(const WidthResolution r) {
       SetBits(kWidthSelect, r, 4);
     }
+    /// Extract the pulse width resolution when paired measurements are performed
     inline WidthResolution GetWidthResolution() const {
       return static_cast<WidthResolution>(GetBits(kWidthSelect, 4));
     }
@@ -335,6 +405,65 @@ class TDCConfiguration
      */
     uint16_t GetBits(uint16_t lsb, uint8_t size) const;
     
+    //////////////////////// Private set'ers and get'ers ////////////////////////
+    
+    /// Serial transmission speed in single cycle mode
+    inline void SetReadoutSingleCycleSpeed(const ReadoutSingleCycleSpeed rscs=RSC_40Mbits_s) {
+      SetBits(kReadoutSingleCycleSpeed, static_cast<int>(rscs), 3);
+    }
+    /// Programmable delay of serial input, in time unit ~ 1 ns
+    inline void SetSerialDelay(const uint8_t sd=0x0) {
+      SetBits(kSerialDelay, sd, 4);
+    }
+    inline void SetStrobeSelect(const SerialStrobeType ss=SS_NoStrobe) {
+      SetBits(kStrobeSelect, static_cast<int>(ss), 2);
+    }
+    /**
+     * \brief Selection of serial read-out speed
+     * \param[in] rss
+     * * 0: Selection of serial read-out speed (as defined by setup[19:17],
+     * \a SetReadoutSingleCycleSpeed)
+     * * 1: 80 Mbits/s (PLL lock required)
+     */
+    inline void SetReadoutSpeedSelect(const ReadoutSpeed rss=RO_Fixed) {
+      SetBits(kReadoutSpeedSelect, static_cast<int>(rss), 1);
+    }
+    /// Programmable delay of token input, in time unit ~ 1 ns
+    inline void SetTokenDelay(const uint8_t td=0x0) {
+      SetBits(kTokenDelay, td, 4);
+    }
+    /// Enable of local trailers in read-out
+    inline void SetEnableLocalTrailer(const bool elt=true) {
+      SetBits(kEnableLocalTrailer, elt, 1);
+    }
+    /// Enable of local headers in read-out
+    inline void SetEnableLocalHeader(const bool elh=true) {
+      SetBits(kEnableLocalHeader, elh, 1);
+    }
+    /// Enable of global trailers in read-out (only valid for master TDC)
+    inline void SetEnableGlobalTrailer(const bool egt=true) {
+      SetBits(kEnableGlobalTrailer, egt, 1);
+    }
+    /// Enable of global headers in read-out (only valid for master TDC)
+    inline void SetEnableGlobalHeader(const bool egh=true) {
+      SetBits(kEnableGlobalHeader, egh, 1);
+    }
+    /// Keep token until end of event or no more data,
+    /// otherwise pass token after each word read.
+    /// Must be enabled when using trigger matching.
+    inline void SetKeepToken(const bool kt=true) {
+      SetBits(kKeepToken, kt, 1);
+    }
+    inline void SetMaster(const bool m=true) {
+      SetBits(kMaster, m, 1);
+    }
+    inline void SetEnableBytewise(const bool seb=true) {
+      SetBits(kEnableBytewise, seb, 1);
+    }
+    /// Select serial in and token in from bypass inputs
+    inline void SetBypassInputs(const bool sbi=true) {
+      SetBits(kSelectBypassInputs, sbi, 1);
+    }
     /// Enable overflow detection of L1 buffers (should always be enabled!)
     inline void SetEnableOverflowDetect(const bool eod=true) {
       SetBits(kEnableOverflowDetect, eod, 1);
@@ -348,30 +477,39 @@ class TDCConfiguration
     inline void SetEnableAutomaticReject(const bool ear=true) {
       SetBits(kEnableAutomaticReject, ear, 1);
     }
+    /// Enable all counters to be set on bunch count reset
     inline void SetEnableSetCountersOnBunchReset(const bool escobr=true) {
       SetBits(kEnableSetCountersOnBunchReset, escobr, 1);
     }
+    /// Enable master reset code on encoded_control
     inline void SetEnableMasterResetCode(const bool emrc=true) {
       SetBits(kEnableMasterResetCode, emrc, 1);
     }
+    /// Enable master reset of whole TDC on event reset
     inline void SetEnableMasterResetOnEventReset(const bool emroer=true) {
       SetBits(kEnableMasterResetOnEventReset, emroer, 1);
     }
+    /// Enable reset channel buffers when separator
     inline void SetEnableResetChannelBufferWhenSeparator(const bool ercbws=true) {
       SetBits(kEnableResetChannelBufferWhenSeparator, ercbws, 1);
     }
+    /// Enable generation of separator on event reset
     inline void SetEnableSeparatorOnEventReset(const bool esoer=true) {
       SetBits(kEnableSeparatorOnEventReset, esoer, 1);
     }
+    /// Enable generation of separator on bunch reset
     inline void SetEnableSeparatorOnBunchReset(const bool esobr=true) {
       SetBits(kEnableSeparatorOnBunchReset, esobr, 1);
     }
+    /// Enable of direct event reset input pin (1), otherwise taken from encoded control
     inline void SetEnableDirectEventReset(const bool eder=true) {
       SetBits(kEnableDirectEventReset, eder, 1);
     }
+    /// Enable of direct bunch reset input pin (1), otherwise taken from encoded control
     inline void SetEnableDirectBunchReset(const bool edbr=true) {
       SetBits(kEnableDirectBunchReset, edbr, 1);
     }
+    /// Enable of direct trigger input pin
     inline void SetEnableDirectTrigger(const bool edt=true) {
       SetBits(kEnableDirectTrigger, edt, 1);
     }
@@ -515,12 +653,31 @@ class TDCConfiguration
     static const uint8_t kNumWords = BITS_NUM/WORD_SIZE+1;
     word_t fWord[kNumWords];
     
-    // Least Significant Bits
+    // List of LSBs for all sub-words in the full ~700-bits setup word
+    static const bit kTestSelect = 0;
     static const bit kEnableErrorMark = 4;
     static const bit kEnableErrorBypass = 5;
     static const bit kEnableError = 6;
+    static const bit kReadoutSingleCycleSpeed = 17;
+    static const bit kSerialDelay = 20;
+    static const bit kStrobeSelect = 24;
+    static const bit kReadoutSpeedSelect = 26;
+    static const bit kTokenDelay = 27;
+    static const bit kEnableLocalTrailer = 31;
+    static const bit kEnableLocalHeader = 32;
+    static const bit kEnableGlobalTrailer = 33;
+    static const bit kEnableGlobalHeader = 34;
+    static const bit kKeepToken = 35;
+    static const bit kMaster = 36;
+    static const bit kEnableBytewise = 37;
     static const bit kEnableSerial = 38;
     static const bit kEnableJTAGReadout = 39;
+    static const bit kTDCId = 40;
+    static const bit kSelectBypassInputs = 44;
+    static const bit kReadoutFIFOSize = 45;
+    static const bit kRejectCountOffset = 48;
+    static const bit kSearchWindow = 60;
+    static const bit kMatchWindow = 72;
     static const bit kLeadingResolution = 84;
     static const bit kMaxEventSize = 116;
     static const bit kRejectFIFOFull = 120;
@@ -529,6 +686,7 @@ class TDCConfiguration
     static const bit kEnableOverflowDetect = 123;
     static const bit kEnableRelative = 124;
     static const bit kEnableAutomaticReject = 125;
+    static const bit kEventCountOffset = 126;
     static const bit kTriggerCountOffset = 138;
     static const bit kEnableSetCountersOnBunchReset = 150;
     static const bit kEnableMasterResetCode = 151;

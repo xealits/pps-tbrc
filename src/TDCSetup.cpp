@@ -1,6 +1,6 @@
-#include "TDCConfiguration.h"
+#include "TDCSetup.h"
 
-TDCConfiguration::TDCConfiguration()
+TDCSetup::TDCSetup()
 {
   for (uint8_t i=0; i<sizeof(fWord)/sizeof(fWord[0]); i++) {
     //fWord[i] = (1<<WORD_SIZE)-1;
@@ -9,7 +9,7 @@ TDCConfiguration::TDCConfiguration()
   SetConstantValues();
 }
 
-TDCConfiguration::TDCConfiguration(const TDCConfiguration& c)
+TDCSetup::TDCSetup(const TDCSetup& c)
 {
   for (uint8_t i=0; i<sizeof(fWord)/sizeof(fWord[0]); i++) {
     fWord[i] = c.fWord[i];
@@ -18,7 +18,7 @@ TDCConfiguration::TDCConfiguration(const TDCConfiguration& c)
 }
 
 void
-TDCConfiguration::SetBits(uint16_t lsb, uint16_t word, uint8_t size)
+TDCSetup::SetBits(uint16_t lsb, uint16_t word, uint8_t size)
 {
   if (size<=0 or size>16) return;
   //FIXME FIXME FIXME burp...
@@ -33,7 +33,7 @@ TDCConfiguration::SetBits(uint16_t lsb, uint16_t word, uint8_t size)
 }
 
 uint16_t
-TDCConfiguration::GetBits(uint16_t lsb, uint8_t size) const
+TDCSetup::GetBits(uint16_t lsb, uint8_t size) const
 {
   if (size<=0 or size>16) return -1;
   uint16_t out = 0x0;
@@ -47,14 +47,37 @@ TDCConfiguration::GetBits(uint16_t lsb, uint8_t size) const
 }
 
 void
-TDCConfiguration::SetConstantValues()
+TDCSetup::SetConstantValues()
 {
+  SetReadoutSingleCycleSpeed(RSC_40Mbits_s); // FIXME don't care...
+  SetSerialDelay(0x0); // FIXME maybe affected by the realistic tests
+  SetStrobeSelect(SS_LeadingEdge);
+  SetReadoutSpeedSelect(RO_Fixed);
+  SetTokenDelay(0x0); // FIXME maybe affected by the realistic tests
+  
+  SetEnableLocalTrailer(true); // FIXME not yet discussed...
+  SetEnableLocalHeader(true); // FIXME not yet discussed...
+  SetEnableGlobalTrailer(true); // FIXME not yet discussed...
+  SetEnableGlobalHeader(true); // FIXME not yet discussed...
+  
+  SetKeepToken(true);
+  SetMaster(true);
+  SetEnableBytewise(true);
+  
+  SetBypassInputs(true);
+  SetReadoutFIFOSize(256);
+  
   SetEnableOverflowDetect(true);
   SetEnableRelative(false);
   SetEnableAutomaticReject(false);
   
-  SetEnableSetCountersOnBunchReset(false); // FIXME not discussed yet...
-  SetEnableResetChannelBufferWhenSeparator(false); // FIXME not discussed yet...
+  /*SetEventCountOffset(0); // FIXME needs confirmation
+  SetTriggerCountOffset(0);*/
+  
+  SetEnableSetCountersOnBunchReset(false); // FIXME not yet discussed...
+  SetEnableMasterResetCode(false);
+  SetEnableMasterResetOnEventReset(false);
+  SetEnableResetChannelBufferWhenSeparator(false); // FIXME not yet discussed...
   SetEnableSeparatorOnEventReset(false);
   SetEnableSeparatorOnBunchReset(false);
   SetEnableDirectEventReset(true);
@@ -64,13 +87,12 @@ TDCConfiguration::SetConstantValues()
   SetLowPowerMode(true);
   SetDLLControl(0x1);
   
-  SetDeadTime(DT_5ns); // FIXME do we force the dead time value?
+  //SetDeadTime(DT_5ns); // FIXME do we force the dead time value?
+  //SetTestInvert(false);
+  //SetTestMode(false);
   
-  SetTestInvert(false);
-  SetTestMode(false);
-  
-  SetModeRC(true);
   SetModeRCCompression(true);
+  SetModeRC(true);
   SetDLLMode(DLL_320MHz);
   SetPLLControl(0x4, false, false, false);
   
@@ -92,7 +114,7 @@ TDCConfiguration::SetConstantValues()
 }
 
 void
-TDCConfiguration::Dump(int verb, std::ostream& os) const
+TDCSetup::Dump(int verb, std::ostream& os) const
 {
   os << "====================="
      << " TDC Configuration dump "

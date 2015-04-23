@@ -26,12 +26,12 @@ int main(int argc, char* argv[])
 
   h = new FPGAHandler(1987, "/dev/usbmon");
 
-  TDCConfiguration config = h->GetConfiguration();
+  TDCSetup config = h->GetConfiguration();
   config.SetAllChannelsOffset(255);
-  config.SetEnableError(TDCConfiguration::ReadoutFIFOParityError|TDCConfiguration::ReadoutStateError|TDCConfiguration::SetupParityError|TDCConfiguration::ControlParityError|TDCConfiguration::JTAGInstructionParityError);
+  config.SetEnableError(TDCSetup::ReadoutFIFOParityError|TDCSetup::ReadoutStateError|TDCSetup::SetupParityError|TDCSetup::ControlParityError|TDCSetup::JTAGInstructionParityError);
   config.SetLeadingMode();
   config.SetTrailingMode();
-  config.SetEdgeResolution(TDCConfiguration::E_200ps);
+  config.SetEdgeResolution(TDCSetup::E_200ps);
   config.Dump(2);
   cout << "channel offset=0x" << hex << config.GetChannelOffset(0) << dec << endl;
   cout << "edge resolution=0x" << hex << config.GetEdgeResolution() << endl;

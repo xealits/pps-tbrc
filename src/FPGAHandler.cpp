@@ -1,7 +1,8 @@
 #include "FPGAHandler.h"
 
 FPGAHandler::FPGAHandler(int port, const char* dev) :
-  Client(port), USBHandler(dev), fFilename(""), fIsFileOpen(false)
+  Client(port), USBHandler(dev), fFilename(""), fIsFileOpen(false),
+  fIsTDCInReadout(false)
 {
   USBHandler::Init();
 }
@@ -75,7 +76,7 @@ FPGAHandler::SendConfiguration()
 void
 FPGAHandler::ReadConfiguration()
 {
-  TDCConfiguration c;
+  TDCSetup c;
   // ...
   unsigned int ack, byte, i=0, j=0, word=0x0;
   int attempts = 0;
