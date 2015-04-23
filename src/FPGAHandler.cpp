@@ -2,7 +2,9 @@
 
 FPGAHandler::FPGAHandler(int port, const char* dev) :
   Client(port), USBHandler(dev), fFilename(""), fIsFileOpen(false)
-{}
+{
+  USBHandler::Init();
+}
 
 FPGAHandler::~FPGAHandler()
 {

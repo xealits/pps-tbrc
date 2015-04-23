@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(PPS_TB_RC)
 
-set(GCC_COMPILE_FLAGS "-Wall -lusb -fPIC -O2")
+set(GCC_COMPILE_FLAGS "-Wall -fPIC -O2")
 add_definitions(${GCC_COMPILE_FLAGS})
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
@@ -14,5 +14,8 @@ include_directories("${PROJECT_SOURCE_DIR}/external")
 
 add_executable(ppsRun main.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
 add_executable(listener listener.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
+
+#find_package(libusb-1.0 REQUIRED)
+set(CMAKE_CXX_FLAGS "-lusb-1.0")
 add_executable(ppsFetch fetch.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
 
