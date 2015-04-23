@@ -6,6 +6,15 @@ TDCConfiguration::TDCConfiguration()
     //fWord[i] = (1<<WORD_SIZE)-1;
     fWord[i] = 0;
   }
+  SetConstantValues();
+}
+
+TDCConfiguration::TDCConfiguration(const TDCConfiguration& c)
+{
+  for (uint8_t i=0; i<sizeof(fWord)/sizeof(fWord[0]); i++) {
+    fWord[i] = c.fWord[i];
+  }
+  SetConstantValues();
 }
 
 void
@@ -43,6 +52,27 @@ TDCConfiguration::SetConstantValues()
   SetEnableOverflowDetect(true);
   SetEnableRelative(false);
   SetEnableAutomaticReject(false);
+  
+  SetLowPowerMode(true);
+  SetDLLControl(0x1);
+  
+  SetTestInvert(false);
+  SetTestMode(false);
+  
+  SetModeRC(true);
+  SetModeRCCompression(true);
+  SetDLLMode(DLL_320MHz);
+  SetPLLControl(0x4, false, false, false);
+  
+  SetSerialClockDelay(false, 0x0);
+  SetIOClockDelay(false, 0x0);
+  SetCoreClockDelay(false, 0x0);
+  SetDLLClockDelay(false, 0x0);
+  SetSerialClockSource(Serial_pll_clock_80);
+  SetIOClockSource(IO_clock_40);
+  SetCoreClockSource(Core_pll_clock_80);
+  SetDLLClockSource(DLL_pll_clock_320);
+  
   SetRollOver(0xFFF);
   SetEnableTTLSerial(true);
   SetEnableTTLControl(true);

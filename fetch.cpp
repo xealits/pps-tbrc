@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
   config.SetLeadingMode();
   config.SetTrailingMode();
   config.SetEdgeResolution(TDCConfiguration::E_200ps);
-  //config.Dump(2);
+  config.Dump(2);
   cout << "channel offset=0x" << hex << config.GetChannelOffset(0) << dec << endl;
   cout << "edge resolution=0x" << hex << config.GetEdgeResolution() << endl;
   

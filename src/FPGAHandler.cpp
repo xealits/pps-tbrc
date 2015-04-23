@@ -75,6 +75,7 @@ FPGAHandler::SendConfiguration()
 void
 FPGAHandler::ReadConfiguration()
 {
+  TDCConfiguration c;
   // ...
   unsigned int ack, byte, i=0, j=0, word=0x0;
   int attempts = 0;
@@ -91,7 +92,7 @@ FPGAHandler::ReadConfiguration()
     USBHandler::Write(ack, USB_WORD_SIZE);
     word |= (byte<<i*USB_WORD_SIZE);
     if (i%WORD_SIZE==0 and i!=0) {
-      fConfig.SetWord(j, word);
+      c.SetWord(j, word);
       word = 0x0; j++;
     }
     i++;
@@ -101,5 +102,7 @@ FPGAHandler::ReadConfiguration()
   do {
     USBHandler::Write(15, USB_WORD_SIZE); attempts++;
   } while (USBHandler::Fetch(USB_WORD_SIZE)!=255 and attempts<3);
+  
+  fConfig = c;
 }
 

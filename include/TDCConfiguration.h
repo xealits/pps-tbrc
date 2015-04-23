@@ -41,10 +41,25 @@ class TDCConfiguration
       ReadoutStateError=0x80, SetupParityError=0x100,
       ControlParityError=0x200, JTAGInstructionParityError=0x400
     } EnabledError;
+    typedef enum {
+      DLL_40MHz=0x0, DLL_160MHz=0x1, DLL_320MHz=0x2, DLL_Illegal=0x3
+    } DLLSpeedMode;
+    typedef enum {
+      Serial_pll_clock_80=0x0, Serial_pll_clock_160=0x1, Serial_pll_clock_40=0x2, Serial_aux_clock=0x3
+    } SerialClockSource;
+    typedef enum {
+      IO_clock_40=0x0, IO_pll_clock_80=0x1, IO_pll_clock_160=0x2, IO_aux_clock=0x3
+    } IOClockSource;
+    typedef enum {
+      Core_clock_40=0x0, Core_pll_clock_80=0x1, Core_pll_clock_160=0x2, Core_aux_clock=0x3
+    } CoreClockSource;
+    typedef enum {
+      DLL_clock_40=0x0, DLL_pll_clock_40=0x1, DLL_pll_clock_160=0x2, DLL_pll_clock_320=0x3, DLL_aux_clock=0x4
+    } DLLClockSource;
   
   public:
     TDCConfiguration();
-    //inline TDCConfiguration(const word_t* c) : fWord(c) {;}
+    TDCConfiguration(const TDCConfiguration& c);
     inline virtual ~TDCConfiguration() {;}
     
     /// Set one bit(s) subset in the setup word
@@ -238,13 +253,19 @@ class TDCConfiguration
     inline DeadTime GetDeadTime() const {
       return static_cast<DeadTime>(GetBits(kDeadTime, 2));
     }
-    /// Enable the detection of leading edges
-    inline void SetLeadingMode(const bool lead=true) {
-      SetBits(kLeading, lead, 1);
+    /// Automatic inversion of test pattern. Only used during production testing.
+    inline void SetTestInvert(const bool ti=true) {
+      SetBits(kTestInvert, ti, 1);
     }
-    /// Extract the status for the detection of leading edges
-    inline bool GetLeadingMode() const {
-      return static_cast<bool>(GetBits(kLeading, 1));
+    inline bool GetTestInvert() const {
+      return static_cast<bool>(GetBits(kTestInvert, 1));
+    }
+    /// Test mode where hit data are taken from coretest. Only used during production testing.
+    inline void SetTestMode(const bool tm=true) {
+      SetBits(kTestMode, tm, 1);
+    }
+    inline bool GetTestMode() const {
+      return static_cast<bool>(GetBits(kTestMode, 1));
     }
     /// Enable/disable the detection of trailing edges
     inline void SetTrailingMode(const bool trail=true) {
@@ -253,6 +274,14 @@ class TDCConfiguration
     /// Extract the status for the detection of trailing edges
     inline bool GetTrailingMode() const {
       return static_cast<bool>(GetBits(kTrailing, 1));
+    }
+    /// Enable the detection of leading edges
+    inline void SetLeadingMode(const bool lead=true) {
+      SetBits(kLeading, lead, 1);
+    }
+    /// Extract the status for the detection of leading edges
+    inline bool GetLeadingMode() const {
+      return static_cast<bool>(GetBits(kLeading, 1));
     }
     /// Set the enable status of trigger matching mode
     inline void SetTriggerMatchingMode(const bool trig=true) {
@@ -279,7 +308,7 @@ class TDCConfiguration
     }
     
     /// Ensure that the critical constant values are properly set in the setup word
-    inline void SetConstantValues();
+    void SetConstantValues();
     
     /// Effective trigger latency in number of clock cycles (when no counter roll-over is used)
     inline uint16_t GetTriggerLatency() const {
@@ -317,6 +346,70 @@ class TDCConfiguration
     /// Enable of automatic rejection (should always be enabled if trigger matching mode!)
     inline void SetEnableAutomaticReject(const bool ear=true) {
       SetBits(kEnableAutomaticReject, ear, 1);
+    }
+    inline void SetLowPowerMode(const bool lpm=true) {
+      SetBits(kLowPowerMode, lpm, 1);
+    }
+    inline void SetDLLControl(const uint8_t dc) {
+      SetBits(kDLLControl, dc&0x15, 4);
+    }
+    inline void SetModeRCCompression(const bool mrc=true) {
+      SetBits(kModeRCCompression, mrc, 1);
+    }
+    inline void SetModeRC(const bool mr=true) {
+      SetBits(kModeRC, mr, 1);
+    }
+    inline void SetDLLMode(const DLLSpeedMode dsm) {
+      if (dsm==DLL_Illegal) {
+        std::cerr << "Warning: Using an illegal DLL mode: 0x"
+                  << std::hex << dsm << std::dec << std::endl;
+      }
+      SetBits(kDLLMode, dsm, 2);
+    }
+    inline void SetPLLControl(const uint8_t charge_pump_current=0x4,
+                              const bool power_down_mode=false,
+                              const bool enable_test_outputs=false,
+                              const bool invert_connection_to_status=false) {
+      uint8_t word = (charge_pump_current&0x1F)|((power_down_mode&0x1)<<5);
+      word |= ((enable_test_outputs&0x1)<<6);
+      word |= ((invert_connection_to_status&0x1)<<7);
+      SetBits(kPLLControl, word, 8);
+    }
+    inline void SetSerialClockDelay(const bool delay_clock, const uint8_t delay) {
+      uint8_t word = ((delay&0x7)|((delay_clock&0x1)<<3));
+      SetBits(kSerialClockDelay, word, 4);
+    }
+    inline void SetIOClockDelay(const bool delay_clock, const uint8_t delay) {
+      uint8_t word = ((delay&0x7)|((delay_clock&0x1)<<3));
+      SetBits(kIOClockDelay, word, 4);
+    }
+    inline void SetCoreClockDelay(const bool delay_clock, const uint8_t delay) {
+      uint8_t word = ((delay&0x7)|((delay_clock&0x1)<<3));
+      SetBits(kCoreClockDelay, word, 4);
+    }
+    inline void SetDLLClockDelay(const bool delay_clock, const uint8_t delay) {
+      uint8_t word = ((delay&0x7)|((delay_clock&0x1)<<3));
+      SetBits(kDLLClockDelay, word, 4);
+    }
+    inline void SetSerialClockSource(const SerialClockSource scs) {
+      if (scs==Serial_pll_clock_160 or scs==Serial_pll_clock_40) {
+        std::cerr << "Warning: Using an invalid Serial clock source: 0x"
+                  << std::hex << scs << std::dec << std::endl;
+      }
+      SetBits(kSerialClockSource, scs, 2);
+    }
+    inline void SetIOClockSource(const IOClockSource ics) {
+      if (ics==IO_pll_clock_80 or ics==IO_pll_clock_160) {
+        std::cerr << "Warning: Using an invalid IO clock source: 0x"
+                  << std::hex << ics << std::dec << std::endl;
+      }
+      SetBits(kIOClockSource, ics, 2);
+    }
+    inline void SetCoreClockSource(const CoreClockSource ccs) {
+      SetBits(kCoreClockSource, ccs, 2);
+    }
+    inline void SetDLLClockSource(const DLLClockSource dcs) {
+      SetBits(kDLLClockSource, dcs, 3);
     }
     /// Counter roll over value, defining maximal count value from where counters will be reset to 0
     inline void SetRollOver(const uint16_t ro=0xFFF) {
@@ -383,11 +476,27 @@ class TDCConfiguration
     static const bit kCoarseCountOffset = 447;
     static const bit kDLLTapAdjust0 = 459;
     static const bit kRCAdjust0 = 555;
+    static const bit kLowPowerMode = 570;
     static const bit kWidthSelect = 571;
     static const bit kVernierOffset = 575;
+    static const bit kDLLControl = 580;
     static const bit kDeadTime = 584;
+    static const bit kTestInvert = 586;
+    static const bit kTestMode = 587;
     static const bit kTrailing = 588;
     static const bit kLeading = 589;
+    static const bit kModeRCCompression = 590;
+    static const bit kModeRC = 591;
+    static const bit kDLLMode = 592;
+    static const bit kPLLControl = 594;
+    static const bit kSerialClockDelay = 602;
+    static const bit kIOClockDelay = 606;
+    static const bit kCoreClockDelay = 610;
+    static const bit kDLLClockDelay = 614;
+    static const bit kSerialClockSource = 618;
+    static const bit kIOClockSource = 620;
+    static const bit kCoreClockSource = 622;
+    static const bit kDLLClockSource = 624;
     static const bit kRollOver = 627;
     static const bit kEnableMatching = 639;
     static const bit kEnablePair = 640;
