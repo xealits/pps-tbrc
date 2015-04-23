@@ -16,6 +16,7 @@ typedef std::vector<std::string> VectorValue;
  * \brief Socket-passed message type
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 26 Mar 2015
+ * \ingroup Socket
  */
 class SocketMessage : public Message
 {

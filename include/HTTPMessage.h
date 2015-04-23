@@ -20,6 +20,7 @@ typedef enum
  * 
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 1 Apr 2015
+ * \ingroup Socket
  */
 class HTTPMessage : public Message
 {

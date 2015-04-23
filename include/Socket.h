@@ -39,6 +39,7 @@ typedef std::set< std::pair<int,SocketType> > SocketCollection;
  *
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 23 Mar 2015
+ * \ingroup Socket
  */
 class Socket
 {

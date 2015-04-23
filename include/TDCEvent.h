@@ -7,6 +7,7 @@
  * \brief HPTDC event parser
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 20 Apr 2015
+ * \ingroup HPTDC
  */
 class TDCEvent
 {

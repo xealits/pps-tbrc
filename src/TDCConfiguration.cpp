@@ -38,6 +38,14 @@ TDCConfiguration::GetBits(uint16_t lsb, uint8_t size) const
 }
 
 void
+TDCConfiguration::SetConstantValues()
+{
+  SetEnableOverflowDetect(true);
+  SetEnableRelative(false);
+  SetEnableAutomaticReject(false);
+}
+
+void
 TDCConfiguration::Dump(int verb, std::ostream& os) const
 {
   os << "====================="

@@ -31,10 +31,10 @@ int main(int argc, char* argv[])
   config.SetEnableError(TDCConfiguration::ReadoutFIFOParityError|TDCConfiguration::ReadoutStateError|TDCConfiguration::SetupParityError|TDCConfiguration::ControlParityError|TDCConfiguration::JTAGInstructionParityError);
   config.SetLeadingMode();
   config.SetTrailingMode();
-  config.SetEdgeResolution(TDCConfiguration::E_6p25ns);
+  config.SetEdgeResolution(TDCConfiguration::E_200ps);
   //config.Dump(2);
   cout << "channel offset=0x" << hex << config.GetChannelOffset(0) << dec << endl;
-  cout << "edge resolution=" << config.GetEdgeResolution() << endl;
+  cout << "edge resolution=0x" << hex << config.GetEdgeResolution() << endl;
   
   TDCEvent ev(0x4100000f);
   cout << "event: TDC id=" << ev.GetTDCId() << endl;
@@ -51,17 +51,6 @@ int main(int argc, char* argv[])
 
   cout << " --> Output filename: " << h->GetFilename() << endl;
   cout << endl << "*** Ready for acquisition! ***" << endl << endl;
-
-  /*while (true) {
-    try {
-      h->Send(SocketMessage(GET_CLIENTS));
-      h->Receive();
-      sleep(2);
-    } catch (Exception& e) {
-      e.Dump();
-      //exit(0);
-    }
-  }*/
 
   delete h;
   return 0;

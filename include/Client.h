@@ -12,6 +12,7 @@
  *
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 24 Mar 2015
+ * \ingroup Socket
  */
 class Client : public Socket
 {

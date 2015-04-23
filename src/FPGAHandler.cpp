@@ -54,21 +54,22 @@ FPGAHandler::SendConfiguration()
   
   // First we initiate the communication
   do {
-    WriteUSB(199, USB_WORD_SIZE); attempts++;
-  } while (FetchUSB(USB_WORD_SIZE)!=255 and attempts<3);
+    USBHandler::Write(199, USB_WORD_SIZE); attempts++;
+  } while (USBHandler::Fetch(USB_WORD_SIZE)!=255 and attempts<3);
   
   // Then we feed the configuration words
   for (unsigned int i=0; i<fConfig.GetNumWords(); i++) {
+    //ack = (i%2==0) ? 0 : 255;
     uint32_t word = fConfig.GetWord(i);
     for (unsigned int j=0; j<WORD_SIZE/USB_WORD_SIZE; j++) {
-      WriteUSB((word>>USB_WORD_SIZE*j)&0xFF, USB_WORD_SIZE);
+      USBHandler::Write((word>>USB_WORD_SIZE*j)&0xFF, USB_WORD_SIZE);
     }
   }
   
   // Finally we close the communication
   do {
-    WriteUSB(60, USB_WORD_SIZE); attempts++;
-  } while (FetchUSB(USB_WORD_SIZE)!=255 and attempts<3);
+    USBHandler::Write(60, USB_WORD_SIZE); attempts++;
+  } while (USBHandler::Fetch(USB_WORD_SIZE)!=255 and attempts<3);
 }
 
 void
@@ -80,24 +81,25 @@ FPGAHandler::ReadConfiguration()
   
   // First we initiate the communication
   do {
-    WriteUSB(207, USB_WORD_SIZE); attempts++;
-  } while (FetchUSB(USB_WORD_SIZE)!=255 and attempts<3);
+    USBHandler::Write(207, USB_WORD_SIZE); attempts++;
+  } while (USBHandler::Fetch(USB_WORD_SIZE)!=255 and attempts<3);
   
   // Then we retrieve the configuration words
   do {
     ack = (i%2==0) ? 0 : 255;
-    byte = static_cast<uint8_t>(FetchUSB(USB_WORD_SIZE));  WriteUSB(ack, USB_WORD_SIZE);
+    byte = static_cast<uint8_t>(USBHandler::Fetch(USB_WORD_SIZE));
+    USBHandler::Write(ack, USB_WORD_SIZE);
     word |= (byte<<i*USB_WORD_SIZE);
     if (i%WORD_SIZE==0 and i!=0) {
-      fConfig.SetWord(j, word); word = 0x0;
-      j++;
+      fConfig.SetWord(j, word);
+      word = 0x0; j++;
     }
     i++;
   } while (j<fConfig.GetNumWords() and attempts<3);
   
   // Finally we close the communication
   do {
-    WriteUSB(15, USB_WORD_SIZE); attempts++;
-  } while (FetchUSB(USB_WORD_SIZE)!=255 and attempts<3);
+    USBHandler::Write(15, USB_WORD_SIZE); attempts++;
+  } while (USBHandler::Fetch(USB_WORD_SIZE)!=255 and attempts<3);
 }
 

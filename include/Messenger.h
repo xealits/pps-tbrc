@@ -7,6 +7,7 @@
  * Structure handling its name and type for any listener/client to be used in
  * the socket management parts of this code.
  * \brief Information on a socket's listener
+ * \ingroup Socket
  */
 struct ListenerInfo
 {
@@ -21,6 +22,7 @@ struct ListenerInfo
  *
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 23 Mar 2015
+ * \ingroup Socket
  */
 class Messenger : public Socket
 {
