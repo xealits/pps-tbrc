@@ -36,6 +36,9 @@ int main(int argc, char* argv[])
   cout << "channel offset=0x" << hex << config.GetChannelOffset(0) << dec << endl;
   cout << "edge resolution=0x" << hex << config.GetEdgeResolution() << endl;
   
+  TDCControl control;
+  control.Dump(2);
+  
   TDCEvent ev(0x4100000f);
   cout << "event: TDC id=" << ev.GetTDCId() << endl;
   cout << "event: leading edge? " << (ev.GetType()==TDCEvent::LeadingEdge) << endl;
@@ -43,7 +46,7 @@ int main(int argc, char* argv[])
   
   try {
     h->Connect();
-    h->SetConfiguration(config);
+    //h->SetConfiguration(config);
     h->OpenFile();
   } catch (Exception& e) {
     e.Dump();

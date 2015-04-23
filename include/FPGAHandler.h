@@ -3,7 +3,10 @@
 
 #include "Client.h"
 #include "USBHandler.h"
+
 #include "TDCSetup.h"
+#include "TDCControl.h"
+#include "TDCBoundaryScan.h"
 
 #include <fstream>
 
@@ -45,13 +48,13 @@ class FPGAHandler : public Client, private USBHandler
     
     /// Submit the HPTDC setup word as a TDCSetup object
     inline void SetConfiguration(const TDCSetup& c) {
-      fConfig=c;
+      fTDCSetup=c;
       SendConfiguration();
     }
     /// Retrieve the HPTDC setup word as a TDCSetup object
     inline TDCSetup GetConfiguration() {
       ReadConfiguration();
-      return fConfig;
+      return fTDCSetup;
     }
     
     void ReadBuffer();
@@ -64,9 +67,12 @@ class FPGAHandler : public Client, private USBHandler
     /// Read the setup word from the HPTDC internal setup register
     void ReadConfiguration();
     
+    void ReadBoundaryScanRegister();
+    
     std::string fFilename;
     std::ofstream fOutput;
-    TDCSetup fConfig;
+    TDCSetup fTDCSetup;
+    TDCBoundaryScanRegister fTDCBSR;
     bool fIsFileOpen;
     bool fIsTDCInReadout;
 };

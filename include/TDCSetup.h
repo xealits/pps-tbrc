@@ -5,9 +5,10 @@
 #include <iomanip>
 #include <stdint.h>
 
+#include "TDCRegister.h"
+
 #define NUM_CHANNELS 32
-#define WORD_SIZE 32
-#define BITS_NUM 647
+#define SETUP_BITS_NUM 647
 
 /**
  * \defgroup HPTDC HPTDC chip control
@@ -20,13 +21,9 @@
  * \date 16 Apr 2015
  * \ingroup HPTDC
  */
-class TDCSetup
+class TDCSetup : public TDCRegister
 {
   public:  
-    /// LSB index
-    typedef uint16_t bit;
-    /// Unit of the TDC setup word to be successfully contained on any machine
-    typedef uint32_t word_t;
     typedef enum {
       E_100ps=0, E_200ps, E_400ps, E_800ps, E_1p6ns, E_3p12ns, E_6p25ns, E_12p5ns
     } EdgeResolution;
@@ -72,25 +69,8 @@ class TDCSetup
   public:
     TDCSetup();
     TDCSetup(const TDCSetup& c);
-    inline virtual ~TDCSetup() {;}
-    
-    /// Set one bit(s) subset in the setup word
-    inline void SetWord(const unsigned int i, const word_t word) {
-      if (i<0 or i>=kNumWords) return;
-      fWord[i] = word;
-    }
-    /// Retrieve one subset from the setup word
-    inline word_t GetWord(const unsigned int i) const {
-      if (i<0 or i>=kNumWords) return -1;
-      return fWord[i];
-    }
-    /**
-     * Return the number of words making up the full configuration word.
-     * \brief Number of words in the configuration
-     */
-    inline uint8_t GetNumWords() const {
-      return kNumWords; }
-      
+    virtual ~TDCSetup();
+          
     //////////////////////// Public set'ers and get'ers ////////////////////////
     
     /// Mark events with error if global error signal is set.
@@ -388,23 +368,7 @@ class TDCSetup
     
     void Dump(int verb=1, std::ostream& os=std::cout) const;
     
-  private:
-    /**
-     * Set a fixed amount of bits in the full configuration word
-     * \brief Set bits in the configuration word
-     * \param[in] lsb Least significant bit of the word to set
-     * \param[in] word Word to set
-     * \param[in] size Size of the word to set
-     */
-    void SetBits(uint16_t lsb, uint16_t word, uint8_t size);
-    /**
-     * Extract a fixed amount of bits from the full configuration word
-     * \brief Extract bits from the configuration word
-     * \param[in] lsb Least significant bit of the word to retrieve
-     * \param[in] size Size of the word to retrieve
-     */
-    uint16_t GetBits(uint16_t lsb, uint8_t size) const;
-    
+  private:    
     //////////////////////// Private set'ers and get'ers ////////////////////////
     
     /// Serial transmission speed in single cycle mode
@@ -649,9 +613,6 @@ class TDCSetup
     inline void SetEnableTTLHit(const bool th=true) {
       SetBits(kEnableTTLHit, th, 1);
     }
-    
-    static const uint8_t kNumWords = BITS_NUM/WORD_SIZE+1;
-    word_t fWord[kNumWords];
     
     // List of LSBs for all sub-words in the full ~700-bits setup word
     static const bit kTestSelect = 0;

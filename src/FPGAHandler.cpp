@@ -37,7 +37,7 @@ FPGAHandler::OpenFile()
   th.magic = 0x30535050; // PPS0 in ASCII
   th.run_id = 0;
   th.spill_id = 0;
-  th.config = fConfig;
+  th.config = fTDCSetup;
   fOutput.write((char*)&th, sizeof(file_header_t));
 }
 
@@ -59,9 +59,9 @@ FPGAHandler::SendConfiguration()
   } while (USBHandler::Fetch(USB_WORD_SIZE)!=255 and attempts<3);
   
   // Then we feed the configuration words
-  for (unsigned int i=0; i<fConfig.GetNumWords(); i++) {
+  for (unsigned int i=0; i<fTDCSetup.GetNumWords(); i++) {
     //ack = (i%2==0) ? 0 : 255;
-    uint32_t word = fConfig.GetWord(i);
+    uint32_t word = fTDCSetup.GetWord(i);
     for (unsigned int j=0; j<WORD_SIZE/USB_WORD_SIZE; j++) {
       USBHandler::Write((word>>USB_WORD_SIZE*j)&0xFF, USB_WORD_SIZE);
     }
@@ -97,13 +97,20 @@ FPGAHandler::ReadConfiguration()
       word = 0x0; j++;
     }
     i++;
-  } while (j<fConfig.GetNumWords() and attempts<3);
+  } while (j<fTDCSetup.GetNumWords() and attempts<3);
   
   // Finally we close the communication
   do {
     USBHandler::Write(15, USB_WORD_SIZE); attempts++;
   } while (USBHandler::Fetch(USB_WORD_SIZE)!=255 and attempts<3);
   
-  fConfig = c;
+  fTDCSetup = c;
 }
 
+void
+FPGAHandler::ReadBoundaryScanRegister()
+{
+  TDCBoundaryScanRegister bsr;
+  
+  fTDCBSR = bsr;
+}

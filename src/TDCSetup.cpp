@@ -1,49 +1,21 @@
 #include "TDCSetup.h"
 
-TDCSetup::TDCSetup()
+TDCSetup::TDCSetup() :
+  TDCRegister(SETUP_BITS_NUM)
 {
-  for (uint8_t i=0; i<sizeof(fWord)/sizeof(fWord[0]); i++) {
-    //fWord[i] = (1<<WORD_SIZE)-1;
-    fWord[i] = 0;
-  }
   SetConstantValues();
 }
 
-TDCSetup::TDCSetup(const TDCSetup& c)
+TDCSetup::TDCSetup(const TDCSetup& c) :
+  TDCRegister(SETUP_BITS_NUM)
 {
-  for (uint8_t i=0; i<sizeof(fWord)/sizeof(fWord[0]); i++) {
-    fWord[i] = c.fWord[i];
-  }
+  for (uint8_t i=0; i<GetNumWords(); i++) { fWord[i] = c.fWord[i]; }
   SetConstantValues();
 }
 
-void
-TDCSetup::SetBits(uint16_t lsb, uint16_t word, uint8_t size)
+TDCSetup::~TDCSetup()
 {
-  if (size<=0 or size>16) return;
-  //FIXME FIXME FIXME burp...
-  // See http://www.ioccc.org/ for more information
-  for (uint8_t i=0; i<size; i++) {
-    uint16_t bit = lsb+i;
-    uint8_t bit_rel = bit % WORD_SIZE;
-    uint8_t word_id = (bit-bit_rel)/WORD_SIZE;
-    fWord[word_id] &=~(1<<bit_rel); // first we clear the bit
-    fWord[word_id] |= (((word>>i)&0x1)<<bit_rel); // then we set it
-  }
-}
-
-uint16_t
-TDCSetup::GetBits(uint16_t lsb, uint8_t size) const
-{
-  if (size<=0 or size>16) return -1;
-  uint16_t out = 0x0;
-  for (uint8_t i=0; i<size; i++) {
-    uint16_t bit = lsb+i;
-    uint8_t bit_rel = bit % WORD_SIZE;
-    uint8_t word_id = (bit-bit_rel)/WORD_SIZE;
-    out |= (((fWord[word_id]>>bit_rel)&0x1)<<i);
-  }
-  return out;
+  delete fWord;
 }
 
 void
@@ -117,27 +89,9 @@ void
 TDCSetup::Dump(int verb, std::ostream& os) const
 {
   os << "====================="
-     << " TDC Configuration dump "
-     << "=====================" << std::endl;
-  if (verb>1) {
-    os << std::endl;
-    for (unsigned int i=0; i<sizeof(fWord)/sizeof(fWord[0]); i++) {
-      os << " Word " << std::setw(2) << i << ":  "
-         << std::setw(3) << (i+1)*WORD_SIZE-1 << "-> |";
-      for(int8_t j=WORD_SIZE-1; j>=0; j--) {
-        uint16_t bit = j+i*WORD_SIZE;
-        // bits values
-        if (bit>=BITS_NUM) os << "x";
-        else os << static_cast<bool>((fWord[i] & static_cast<word_t>(1<<j))>>j);
-        // delimiters
-        if (j%16==0 && j!=0) os << "| |";
-        else if (j%8==0) os << "|";
-        else if (j%4==0) os << " ";
-      }
-      os << " <-" << std::setw(3) << i*WORD_SIZE << std::endl;
-    }
-    os << std::endl;
-  }
+     << " TDC Setup register dump "
+     << "====================" << std::endl;
+     if (verb>1) DumpRegister(SETUP_BITS_NUM, os);
   os << " Enabled errors:             ";
   for (unsigned int i=0; i<11; i++) {
     if (static_cast<bool>((GetEnableError()>>i)&0x1)) os << i << " ";
