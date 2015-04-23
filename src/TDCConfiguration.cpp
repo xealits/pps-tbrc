@@ -43,6 +43,12 @@ TDCConfiguration::SetConstantValues()
   SetEnableOverflowDetect(true);
   SetEnableRelative(false);
   SetEnableAutomaticReject(false);
+  SetRollOver(0xFFF);
+  SetEnableTTLSerial(true);
+  SetEnableTTLControl(true);
+  SetEnableTTLReset(true);
+  SetEnableTTLClock(false);
+  SetEnableTTLHit(false);
 }
 
 void

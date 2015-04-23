@@ -25,13 +25,10 @@
 #define SOCKET_ERROR(x) 10000+x
 #define MAX_WORD_LENGTH 5000
 
-typedef enum
-{
-  INVALID=-1, MASTER=0, WEBSOCKET_CLIENT, CLIENT, DETECTOR
-} SocketType;
+/**
+ * \defgroup Socket Socket communication objects
+ */
 
-class Socket;
-typedef std::set< std::pair<int,SocketType> > SocketCollection;
 /**
  * General object providing all useful method to
  * connect/bind/send/receive information through system sockets.
@@ -43,6 +40,13 @@ typedef std::set< std::pair<int,SocketType> > SocketCollection;
  */
 class Socket
 {
+  public:
+    /**
+     * \brief Type of actor playing a role on the socket
+     */
+    typedef enum { INVALID=-1, MASTER=0, WEBSOCKET_CLIENT, CLIENT, DETECTOR } SocketType;
+    typedef std::set< std::pair<int,SocketType> > SocketCollection;
+  
   public:
     inline Socket() {;}
     Socket(int port);

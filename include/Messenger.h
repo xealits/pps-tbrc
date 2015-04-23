@@ -12,7 +12,7 @@
 struct ListenerInfo
 {
   std::string name;
-  SocketType type;
+  Socket::SocketType type;
 };
 
 /**
@@ -75,7 +75,7 @@ class Messenger : public Socket
      * \param[in] force Do we need to force the client out of this socket ?
      */
     void DisconnectClient(int sid, MessageKey key, bool force=false);
-    void SwitchClientType(int sid, SocketType type);
+    void SwitchClientType(int sid, Socket::SocketType type);
     /**
      * \brief Process a message received from the socket
      * \param[in] Unique identifier of the client sending the message

@@ -10,6 +10,10 @@
 #define BITS_NUM 647
 
 /**
+ * \defgroup HPTDC HPTDC chip control
+ */
+
+/**
  * Object handling the configuration word provided by/to the HPTDC chip
  * \brief Setup word to be sent to the HPTDC chip
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
@@ -34,8 +38,8 @@ class TDCConfiguration
       VernierError=0x1, CoarseError=0x2, ChannelSelectError=0x4,
       L1BufferParityError=0x8, TriggerFIFOParityError=0x10,
       TriggerMatchingError=0x20, ReadoutFIFOParityError=0x40,
-      ReadoutStateError=0x80, SetupParityError=0x100, ControlParityError=0x200,
-      JTAGInstructionParityError=0x400
+      ReadoutStateError=0x80, SetupParityError=0x100,
+      ControlParityError=0x200, JTAGInstructionParityError=0x400
     } EnabledError;
   
   public:
@@ -57,25 +61,49 @@ class TDCConfiguration
      * Return the number of words making up the full configuration word.
      * \brief Number of words in the configuration
      */
-    inline uint8_t GetNumWords() const { return kNumWords; }
+    inline uint8_t GetNumWords() const {
+      return kNumWords; }
     
     /// Mark events with error if global error signal is set.
-    inline void SetEnableErrorMark(bool em) { SetBits(kEnableErrorMark, em, 1); }
-    inline bool GetEnableErrorMark() const { return static_cast<bool>(GetBits(kEnableErrorMark, 1)); }
+    inline void SetEnableErrorMark(bool em) {
+      SetBits(kEnableErrorMark, em, 1); }
+    inline bool GetEnableErrorMark() const {
+      return static_cast<bool>(GetBits(kEnableErrorMark, 1));
+    }
     /// Bypass TDC chip if global error signal is set.
-    inline void SetEnableErrorBypass(bool eb) { SetBits(kEnableErrorBypass, eb, 1); }
-    inline bool GetEnableErrorBypass() const { return static_cast<bool>(GetBits(kEnableErrorBypass, 1)); }
+    inline void SetEnableErrorBypass(bool eb) {
+      SetBits(kEnableErrorBypass, eb, 1);
+    }
+    inline bool GetEnableErrorBypass() const {
+      return static_cast<bool>(GetBits(kEnableErrorBypass, 1));
+    }
     /// Enable internal error types for generation of global error signals.
-    inline void SetEnableError(const uint16_t& err) { SetBits(kEnableError, err, 11); }
-    inline uint16_t GetEnableError() const { return static_cast<uint16_t>(GetBits(kEnableError, 11)); }
+    inline void SetEnableError(const uint16_t& err) {
+      SetBits(kEnableError, err, 11);
+    }
+    inline uint16_t GetEnableError() const {
+      return static_cast<uint16_t>(GetBits(kEnableError, 11));
+    }
     /// Enable of serial read-out (otherwise parallel read-out)
-    inline void SetEnableSerial(bool es) { SetBits(kEnableSerial, es, 1); }
-    inline bool GetEnableSerial() const { return static_cast<bool>(GetBits(kEnableSerial, 1)); }
+    inline void SetEnableSerial(bool es) {
+      SetBits(kEnableSerial, es, 1);
+    }
+    inline bool GetEnableSerial() const {
+      return static_cast<bool>(GetBits(kEnableSerial, 1));
+    }
     /// Enable of read-out via JTAG
-    inline void SetEnableJTAGReadout(bool jr) { SetBits(kEnableJTAGReadout, jr, 1); }
-    inline bool GetEnableJTAGReadout() const { return static_cast<bool>(GetBits(kEnableJTAGReadout, 1)); }
-    inline void SetEdgeResolution(const EdgeResolution r) { SetBits(kLeadingResolution, r, 3); }
-    inline EdgeResolution GetEdgeResolution() const { return static_cast<EdgeResolution>(GetBits(kLeadingResolution, 3)); }
+    inline void SetEnableJTAGReadout(bool jr) {
+      SetBits(kEnableJTAGReadout, jr, 1);
+    }
+    inline bool GetEnableJTAGReadout() const {
+      return static_cast<bool>(GetBits(kEnableJTAGReadout, 1));
+    }
+    inline void SetEdgeResolution(const EdgeResolution r) {
+      SetBits(kLeadingResolution, r, 3);
+    }
+    inline EdgeResolution GetEdgeResolution() const {
+      return static_cast<EdgeResolution>(GetBits(kLeadingResolution, 3));
+    }
     /**
      * Set the maximum number of hits that can be recorded for each event.
      * It is always rounded to the next power of 2 (in the range 0-128), and
@@ -108,29 +136,45 @@ class TDCConfiguration
      * Set whether or not hits are rejected once FIFO is full.
      * \brief Reject hits when readout FIFO full.
      */
-    inline void SetRejectFIFOFull(bool rej=true) { SetBits(kRejectFIFOFull, rej, 1); }
+    inline void SetRejectFIFOFull(bool rej=true) {
+      SetBits(kRejectFIFOFull, rej, 1);
+    }
     /**
      * Extract whether or not hits are rejected once FIFO is full.
      * \brief Are hits rejected when readout FIFO is full?
      */
-    inline bool GetRejectFIFOFull() const { return static_cast<bool>(GetBits(kRejectFIFOFull, 1)); }
+    inline bool GetRejectFIFOFull() const {
+      return static_cast<bool>(GetBits(kRejectFIFOFull, 1));
+    }
     /// Enable the readout of buffer occupancies for each event (for debugging purposes)
-    inline void SetEnableReadoutOccupancy(const bool ro=true) { SetBits(kEnableReadoutOccupancy, ro, 1); }
-    inline bool GetEnableReadoutOccupancy() const { return static_cast<bool>(GetBits(kEnableReadoutOccupancy, 1)); }
+    inline void SetEnableReadoutOccupancy(const bool ro=true) {
+      SetBits(kEnableReadoutOccupancy, ro, 1);
+    }
+    inline bool GetEnableReadoutOccupancy() const {
+      return static_cast<bool>(GetBits(kEnableReadoutOccupancy, 1));
+    }
     /// Enable the readout of separators for each event (for debugging purposes, valid if readout of occupancies is enabled)
     inline void SetEnableReadoutSeparator(const bool ro=true) {
       if (!GetEnableReadoutOccupancy()) {
-        std::cerr << "Warning: Trying to enable the separator readout while the occupancy readout is disabled!" << std::endl
-                  << "Enabling this occupancy readout automatically..." << std::endl;
+        std::cerr << "Warning: Trying to enable the separator readout "
+                  << "while the occupancy readout is disabled!" << std::endl
+                  << "Enabling this occupancy readout automatically..."
+                  << std::endl;
         SetEnableReadoutOccupancy(true);
       }
       SetBits(kEnableReadoutSeparator, ro, 1);
     }
-    inline bool GetEnableReadoutSeparator() const { return static_cast<bool>(GetBits(kEnableReadoutSeparator, 1)); }
+    inline bool GetEnableReadoutSeparator() const {
+      return static_cast<bool>(GetBits(kEnableReadoutSeparator, 1));
+    }
     /// Set offset for the trigger time tag counter
-    inline void SetTriggerCountOffset(uint16_t tco) { SetBits(kTriggerCountOffset, tco, 12); }
+    inline void SetTriggerCountOffset(uint16_t tco) {
+      SetBits(kTriggerCountOffset, tco, 12);
+    }
     /// Extract trigger time tag count offset
-    inline uint16_t GetTriggerCountOffset() const { return static_cast<uint16_t>(GetBits(kTriggerCountOffset, 12)); }
+    inline uint16_t GetTriggerCountOffset() const {
+      return static_cast<uint16_t>(GetBits(kTriggerCountOffset, 12));
+    }
     inline void SetChannelOffset(int channel, uint16_t offset) {
       if (channel>=NUM_CHANNELS or channel<0) return;
       SetBits(kOffset0-9*channel, offset, 9);
@@ -145,9 +189,13 @@ class TDCConfiguration
       }
     }
     /// Set offset for the coarse time counter
-    inline void SetCoarseCountOffset(uint16_t cco) { SetBits(kCoarseCountOffset, cco, 12); }
+    inline void SetCoarseCountOffset(uint16_t cco) {
+      SetBits(kCoarseCountOffset, cco, 12);
+    }
     /// Extract offset for the coarse time counter
-    inline uint16_t GetCoarseCountOffset() const { return static_cast<uint16_t>(GetBits(kCoarseCountOffset, 12)); }
+    inline uint16_t GetCoarseCountOffset() const {
+      return static_cast<uint16_t>(GetBits(kCoarseCountOffset, 12));
+    }
     /// Set the DLL taps adjustments with a resolution of ~10 ps
     inline void SetDLLAdjustment(int tap, uint8_t adj) {
       if (tap>=NUM_CHANNELS or tap<0) return;
@@ -170,26 +218,65 @@ class TDCConfiguration
       if (tap>3 or tap<0) return -1;
       return static_cast<uint8_t>(GetBits(kRCAdjust0+3*tap, 3));
     }
-    inline void SetWidthResolution(const WidthResolution r) { SetBits(kWidthSelect, r, 4); }
-    inline WidthResolution GetWidthResolution() const { return static_cast<WidthResolution>(GetBits(kWidthSelect, 4)); }
+    inline void SetWidthResolution(const WidthResolution r) {
+      SetBits(kWidthSelect, r, 4);
+    }
+    inline WidthResolution GetWidthResolution() const {
+      return static_cast<WidthResolution>(GetBits(kWidthSelect, 4));
+    }
     /// Set the offset in vernier decoding
-    inline void SetVernierOffset(const uint8_t vo) { SetBits(kVernierOffset, vo, 5); }
+    inline void SetVernierOffset(const uint8_t vo) {
+      SetBits(kVernierOffset, vo, 5);
+    }
     /// Extract the offset in vernier decoding
-    inline uint8_t GetVernierOffset() const { return static_cast<uint8_t>(GetBits(kVernierOffset, 5)); }
-    inline void SetDeadTime(const DeadTime dt) { SetBits(kDeadTime, dt, 2); }
-    inline DeadTime GetDeadTime() const { return static_cast<DeadTime>(GetBits(kDeadTime, 2)); }
+    inline uint8_t GetVernierOffset() const {
+      return static_cast<uint8_t>(GetBits(kVernierOffset, 5));
+    }
+    inline void SetDeadTime(const DeadTime dt) {
+      SetBits(kDeadTime, dt, 2);
+    }
+    inline DeadTime GetDeadTime() const {
+      return static_cast<DeadTime>(GetBits(kDeadTime, 2));
+    }
     /// Enable the detection of leading edges
-    inline void SetLeadingMode(const bool lead=true) { SetBits(kLeading, lead, 1); }
+    inline void SetLeadingMode(const bool lead=true) {
+      SetBits(kLeading, lead, 1);
+    }
     /// Extract the status for the detection of leading edges
-    inline bool GetLeadingMode() const { return static_cast<bool>(GetBits(kLeading, 1)); }
+    inline bool GetLeadingMode() const {
+      return static_cast<bool>(GetBits(kLeading, 1));
+    }
     /// Enable/disable the detection of trailing edges
-    inline void SetTrailingMode(const bool trail=true) { SetBits(kTrailing, trail, 1); }
+    inline void SetTrailingMode(const bool trail=true) {
+      SetBits(kTrailing, trail, 1);
+    }
     /// Extract the status for the detection of trailing edges
-    inline bool GetTrailingMode() const { return static_cast<bool>(GetBits(kTrailing, 1)); }
-    inline void SetTriggerMatchingMode(const bool trig=true) { SetBits(kEnableMatching, trig, 1); }
-    inline bool GetTriggerMatchingMode() const { return static_cast<bool>(GetBits(kEnableMatching, 1)); }
-    inline void SetEdgesPairing(const bool pair=true) { SetBits(kEnablePair, pair, 1); }
-    inline bool GetEdgesPairing() const { return static_cast<bool>(GetBits(kEnablePair, 1)); }
+    inline bool GetTrailingMode() const {
+      return static_cast<bool>(GetBits(kTrailing, 1));
+    }
+    /// Set the enable status of trigger matching mode
+    inline void SetTriggerMatchingMode(const bool trig=true) {
+      SetBits(kEnableMatching, trig, 1);
+    }
+    /// Extract the enable status of trigger matching mode
+    inline bool GetTriggerMatchingMode() const {
+      return static_cast<bool>(GetBits(kEnableMatching, 1));
+    }
+    /// Enable the pairing of leading and trailing edges (overrides individual enable of leading/trailing edges)
+    inline void SetEdgesPairing(const bool pair=true) {
+      SetBits(kEnablePair, pair, 1);
+    }
+    inline bool GetEdgesPairing() const {
+      return static_cast<bool>(GetBits(kEnablePair, 1));
+    }
+    /// Set the parity of setup data (should be an even parity)
+    inline void SetSetupParity(const bool sp=true) {
+      SetBits(kSetupParity, sp, 1);
+    }
+    /// Extract the parity of setup data (should be an even parity)
+    inline bool GetSetupParity() const {
+      return static_cast<bool>(GetBits(kSetupParity, 1));
+    }
     
     /// Ensure that the critical constant values are properly set in the setup word
     inline void SetConstantValues();
@@ -219,12 +306,60 @@ class TDCConfiguration
     uint16_t GetBits(uint16_t lsb, uint8_t size) const;
     
     /// Enable overflow detection of L1 buffers (should always be enabled!)
-    inline void SetEnableOverflowDetect(const bool eod=true) { SetBits(kEnableOverflowDetect, eod, 1); }
+    inline void SetEnableOverflowDetect(const bool eod=true) {
+      SetBits(kEnableOverflowDetect, eod, 1);
+    }
     /// Enable read-out of relative time to trigger time tag. Only valid when
     /// using trigger matching mode.
-    inline void SetEnableRelative(const bool er=true) { SetBits(kEnableRelative, er, 1); }
+    inline void SetEnableRelative(const bool er=true) {
+      SetBits(kEnableRelative, er, 1);
+    }
     /// Enable of automatic rejection (should always be enabled if trigger matching mode!)
-    inline void SetEnableAutomaticReject(const bool ear=true) { SetBits(kEnableAutomaticReject, ear, 1); }
+    inline void SetEnableAutomaticReject(const bool ear=true) {
+      SetBits(kEnableAutomaticReject, ear, 1);
+    }
+    /// Counter roll over value, defining maximal count value from where counters will be reset to 0
+    inline void SetRollOver(const uint16_t ro=0xFFF) {
+      SetBits(kRollOver, ro, 12);
+    }
+    /** Enable LV TTL input on:
+     * * serial_in,
+     * * serial_bypass_in,
+     * * token_in,
+     * * token_bypass_in,
+     * otherwise uses LVDS input levels.
+     * Disable LVDS drivers on:
+     * * serial_out,
+     * * strobe_out,
+     * * token_out.
+     * \brief Enable LV TTL inputs on serial registers, and disable their drivers
+     */
+    inline void SetEnableTTLSerial(const bool ts=true) {
+      SetBits(kEnableTTLSerial, ts, 1);
+    }
+    /** Enable LV TTL input on:
+     * * trigger,
+     * * bunch_reset,
+     * * event_reset,
+     * * encoded_control,
+     * otherwise uses LVDS input levels.
+     * \brief Enable LV TTL inputs on control registers
+     */
+    inline void SetEnableTTLControl(const bool tc=true) {
+      SetBits(kEnableTTLControl, tc, 1);
+    }
+    /// Enable LV TTL input on reset, otherwise uses LVDS input levels
+    inline void SetEnableTTLReset(const bool tr=true) {
+      SetBits(kEnableTTLReset, tr, 1);
+    }
+    /// Enable LV TTL inputs on: clk, aux_clock, otherwise uses LVDS input levels
+    inline void SetEnableTTLClock(const bool tc=true) {
+      SetBits(kEnableTTLClock, tc, 1);
+    }
+    /// Enable LV TTL input on hit[31:0], otherwise uses LVDS input levels
+    inline void SetEnableTTLHit(const bool th=true) {
+      SetBits(kEnableTTLHit, th, 1);
+    }
     
     static const uint8_t kNumWords = BITS_NUM/WORD_SIZE+1;
     word_t fWord[kNumWords];
@@ -253,8 +388,15 @@ class TDCConfiguration
     static const bit kDeadTime = 584;
     static const bit kTrailing = 588;
     static const bit kLeading = 589;
+    static const bit kRollOver = 627;
     static const bit kEnableMatching = 639;
     static const bit kEnablePair = 640;
+    static const bit kEnableTTLSerial = 641;
+    static const bit kEnableTTLControl = 642;
+    static const bit kEnableTTLReset = 643;
+    static const bit kEnableTTLClock = 644;
+    static const bit kEnableTTLHit = 645;
+    static const bit kSetupParity = 646;
     
 };
 
