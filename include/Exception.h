@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <cstdlib> // exit()
 
 /**
  * \brief Enumeration of exception severities
