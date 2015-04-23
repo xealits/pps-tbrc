@@ -247,6 +247,7 @@ class TDCConfiguration
     inline uint8_t GetVernierOffset() const {
       return static_cast<uint8_t>(GetBits(kVernierOffset, 5));
     }
+    /// Channel dead time between hits
     inline void SetDeadTime(const DeadTime dt) {
       SetBits(kDeadTime, dt, 2);
     }
@@ -347,18 +348,50 @@ class TDCConfiguration
     inline void SetEnableAutomaticReject(const bool ear=true) {
       SetBits(kEnableAutomaticReject, ear, 1);
     }
+    inline void SetEnableSetCountersOnBunchReset(const bool escobr=true) {
+      SetBits(kEnableSetCountersOnBunchReset, escobr, 1);
+    }
+    inline void SetEnableMasterResetCode(const bool emrc=true) {
+      SetBits(kEnableMasterResetCode, emrc, 1);
+    }
+    inline void SetEnableMasterResetOnEventReset(const bool emroer=true) {
+      SetBits(kEnableMasterResetOnEventReset, emroer, 1);
+    }
+    inline void SetEnableResetChannelBufferWhenSeparator(const bool ercbws=true) {
+      SetBits(kEnableResetChannelBufferWhenSeparator, ercbws, 1);
+    }
+    inline void SetEnableSeparatorOnEventReset(const bool esoer=true) {
+      SetBits(kEnableSeparatorOnEventReset, esoer, 1);
+    }
+    inline void SetEnableSeparatorOnBunchReset(const bool esobr=true) {
+      SetBits(kEnableSeparatorOnBunchReset, esobr, 1);
+    }
+    inline void SetEnableDirectEventReset(const bool eder=true) {
+      SetBits(kEnableDirectEventReset, eder, 1);
+    }
+    inline void SetEnableDirectBunchReset(const bool edbr=true) {
+      SetBits(kEnableDirectBunchReset, edbr, 1);
+    }
+    inline void SetEnableDirectTrigger(const bool edt=true) {
+      SetBits(kEnableDirectTrigger, edt, 1);
+    }
+    /// Low power mode of channel buffers
     inline void SetLowPowerMode(const bool lpm=true) {
       SetBits(kLowPowerMode, lpm, 1);
     }
+    /// Control of DLL (DLL charge pump levels)
     inline void SetDLLControl(const uint8_t dc) {
       SetBits(kDLLControl, dc&0x15, 4);
     }
+    /// Perform RC interpolation on-chip (only valid in very high resolution mode)
     inline void SetModeRCCompression(const bool mrc=true) {
       SetBits(kModeRCCompression, mrc, 1);
     }
+    /// Enable of RR delay lines mode (in very high resolution mode) ; only for channels 0-4-8-12-16-20-24-28 active
     inline void SetModeRC(const bool mr=true) {
       SetBits(kModeRC, mr, 1);
     }
+    /// Selection of DLL speed mode
     inline void SetDLLMode(const DLLSpeedMode dsm) {
       if (dsm==DLL_Illegal) {
         std::cerr << "Warning: Using an illegal DLL mode: 0x"
@@ -366,6 +399,7 @@ class TDCConfiguration
       }
       SetBits(kDLLMode, dsm, 2);
     }
+    /// Control of PLL
     inline void SetPLLControl(const uint8_t charge_pump_current=0x4,
                               const bool power_down_mode=false,
                               const bool enable_test_outputs=false,
@@ -375,22 +409,43 @@ class TDCConfiguration
       word |= ((invert_connection_to_status&0x1)<<7);
       SetBits(kPLLControl, word, 8);
     }
+    /**
+     * \brief Delay of internal serial clock
+     * \param[in] delay_clock Use of direct clock (0) or delayed clock (1)
+     * \param[in] delay Delay in steps of (typically) 0.13 ns
+     */
     inline void SetSerialClockDelay(const bool delay_clock, const uint8_t delay) {
       uint8_t word = ((delay&0x7)|((delay_clock&0x1)<<3));
       SetBits(kSerialClockDelay, word, 4);
     }
+    /**
+     * \brief Delay of internal I/O clock
+     * \param[in] delay_clock Use of direct clock (0) or delayed clock (1)
+     * \param[in] delay Delay in steps of (typically) 0.13 ns
+     */
     inline void SetIOClockDelay(const bool delay_clock, const uint8_t delay) {
       uint8_t word = ((delay&0x7)|((delay_clock&0x1)<<3));
       SetBits(kIOClockDelay, word, 4);
     }
+    /**
+     * \brief Delay of internal core clock
+     * \param[in] delay_clock Use of direct clock (0) or delayed clock (1)
+     * \param[in] delay Delay in steps of (typically) 0.13 ns
+     */
     inline void SetCoreClockDelay(const bool delay_clock, const uint8_t delay) {
       uint8_t word = ((delay&0x7)|((delay_clock&0x1)<<3));
       SetBits(kCoreClockDelay, word, 4);
     }
+    /**
+     * \brief Delay of internal DLL clock
+     * \param[in] delay_clock Use of direct clock (0) or delayed clock (1)
+     * \param[in] delay Delay in steps of (typically) 0.13 ns
+     */
     inline void SetDLLClockDelay(const bool delay_clock, const uint8_t delay) {
       uint8_t word = ((delay&0x7)|((delay_clock&0x1)<<3));
       SetBits(kDLLClockDelay, word, 4);
     }
+    /// Selection of source for serial clock
     inline void SetSerialClockSource(const SerialClockSource scs) {
       if (scs==Serial_pll_clock_160 or scs==Serial_pll_clock_40) {
         std::cerr << "Warning: Using an invalid Serial clock source: 0x"
@@ -398,6 +453,7 @@ class TDCConfiguration
       }
       SetBits(kSerialClockSource, scs, 2);
     }
+    /// Selection of clock source for I/O signals
     inline void SetIOClockSource(const IOClockSource ics) {
       if (ics==IO_pll_clock_80 or ics==IO_pll_clock_160) {
         std::cerr << "Warning: Using an invalid IO clock source: 0x"
@@ -405,9 +461,11 @@ class TDCConfiguration
       }
       SetBits(kIOClockSource, ics, 2);
     }
+    /// Selection of clock source for internal logic
     inline void SetCoreClockSource(const CoreClockSource ccs) {
       SetBits(kCoreClockSource, ccs, 2);
     }
+    /// Selection of clock source for DLL
     inline void SetDLLClockSource(const DLLClockSource dcs) {
       SetBits(kDLLClockSource, dcs, 3);
     }
@@ -472,6 +530,15 @@ class TDCConfiguration
     static const bit kEnableRelative = 124;
     static const bit kEnableAutomaticReject = 125;
     static const bit kTriggerCountOffset = 138;
+    static const bit kEnableSetCountersOnBunchReset = 150;
+    static const bit kEnableMasterResetCode = 151;
+    static const bit kEnableMasterResetOnEventReset = 152;
+    static const bit kEnableResetChannelBufferWhenSeparator = 153;
+    static const bit kEnableSeparatorOnEventReset = 154;
+    static const bit kEnableSeparatorOnBunchReset = 155;
+    static const bit kEnableDirectEventReset = 156;
+    static const bit kEnableDirectBunchReset = 157;
+    static const bit kEnableDirectTrigger = 158;
     static const bit kOffset0 = 438;
     static const bit kCoarseCountOffset = 447;
     static const bit kDLLTapAdjust0 = 459;

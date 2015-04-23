@@ -53,8 +53,18 @@ TDCConfiguration::SetConstantValues()
   SetEnableRelative(false);
   SetEnableAutomaticReject(false);
   
+  SetEnableSetCountersOnBunchReset(false); // FIXME not discussed yet...
+  SetEnableResetChannelBufferWhenSeparator(false); // FIXME not discussed yet...
+  SetEnableSeparatorOnEventReset(false);
+  SetEnableSeparatorOnBunchReset(false);
+  SetEnableDirectEventReset(true);
+  SetEnableDirectBunchReset(true);
+  SetEnableDirectTrigger(true);
+  
   SetLowPowerMode(true);
   SetDLLControl(0x1);
+  
+  SetDeadTime(DT_5ns); // FIXME do we force the dead time value?
   
   SetTestInvert(false);
   SetTestMode(false);
