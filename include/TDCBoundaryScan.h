@@ -3,6 +3,12 @@
 
 #include "TDCRegister.h"
 
+/**
+ * 
+ * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+ * \date 24 Apr 2015
+ * \ingroup HPTDC
+ */
 class TDCBoundaryScanRegister : public TDCRegister
 {
   public:

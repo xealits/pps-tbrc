@@ -5,12 +5,18 @@
 
 #define WORD_SIZE 32
 
+/**
+ * \brief General register object to interact with a HPTDC chip
+ * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+ * \date 24 Apr 2015
+ * \ingroup HPTDC
+ */
 class TDCRegister
 {
   public:
     /// LSB index
     typedef uint16_t bit;
-    /// Unit of the TDC setup word to be successfully contained on any machine
+    /// Unit of the TDC register word to be successfully contained on any machine
     typedef uint32_t word_t;
 
   public:
@@ -23,19 +29,19 @@ class TDCRegister
     }
     inline virtual ~TDCRegister() {;}
     
-    /// Set one bit(s) subset in the setup word
+    /// Set one bit(s) subset in the register word
     inline void SetWord(const unsigned int i, const word_t word) {
       if (i<0 or i>=fNumWords) return;
       fWord[i] = word;
     }
-    /// Retrieve one subset from the setup word
+    /// Retrieve one subset from the register word
     inline word_t GetWord(const unsigned int i) const {
       if (i<0 or i>=fNumWords) return -1;
       return fWord[i];
     }
     /**
-     * Return the number of words making up the full configuration word.
-     * \brief Number of words in the configuration
+     * Return the number of words making up the full register word.
+     * \brief Number of words in the register
      */
     inline uint8_t GetNumWords() const { return fNumWords; }
     
@@ -61,8 +67,8 @@ class TDCRegister
     
   protected:
     /**
-     * Set a fixed amount of bits in the full configuration word
-     * \brief Set bits in the configuration word
+     * Set a fixed amount of bits in the full register word
+     * \brief Set bits in the register word
      * \param[in] lsb Least significant bit of the word to set
      * \param[in] word Word to set
      * \param[in] size Size of the word to set
@@ -80,8 +86,8 @@ class TDCRegister
       }
     }
     /**
-     * Extract a fixed amount of bits from the full configuration word
-     * \brief Extract bits from the configuration word
+     * Extract a fixed amount of bits from the full register word
+     * \brief Extract bits from the register word
      * \param[in] lsb Least significant bit of the word to retrieve
      * \param[in] size Size of the word to retrieve
      */
@@ -96,7 +102,6 @@ class TDCRegister
       }
       return out;
     }
-
     
     word_t* fWord;
     size_t fNumWords;
