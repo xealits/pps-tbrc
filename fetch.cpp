@@ -25,14 +25,14 @@ int main(int argc, char* argv[])
   signal(SIGINT, CtrlC);
 
   h = new FPGAHandler(1987, "/dev/usbmon");
-
-  TDCSetup config = h->GetConfiguration();
-  config.SetAllChannelsOffset(255);
-  config.SetEnableError(TDCSetup::ReadoutFIFOParityError|TDCSetup::ReadoutStateError|TDCSetup::SetupParityError|TDCSetup::ControlParityError|TDCSetup::JTAGInstructionParityError);
-  config.SetLeadingMode();
-  config.SetTrailingMode();
-  config.SetEdgeResolution(TDCSetup::E_200ps);
-  config.Dump(2);
+  
+  TDCSetup config = h->GetTDC(0)->GetSetupRegister();
+  //config.SetAllChannelsOffset(255);
+  //config.SetEnableError(TDCSetup::ReadoutFIFOParityError|TDCSetup::ReadoutStateError|TDCSetup::SetupParityError|TDCSetup::ControlParityError|TDCSetup::JTAGInstructionParityError);
+  //config.SetLeadingMode();
+  //config.SetTrailingMode();
+  //config.SetEdgeResolution(TDCSetup::E_200ps);
+  config.Dump();
   cout << "channel offset=0x" << hex << config.GetChannelOffset(0) << dec << endl;
   cout << "edge resolution=0x" << hex << config.GetEdgeResolution() << endl;
   
@@ -46,8 +46,10 @@ int main(int argc, char* argv[])
   
   try {
     h->Connect();
+    std::cout << "hihi" << std::endl;
     //h->SetConfiguration(config);
     h->OpenFile();
+    std::cout << "haha" << std::endl;
   } catch (Exception& e) {
     e.Dump();
   }

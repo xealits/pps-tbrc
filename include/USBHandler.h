@@ -24,7 +24,6 @@ class USBHandler
     
     void DumpDevice(libusb_device* dev, int verb=1, std::ostream& out=std::cout);
     
-  protected:
     /// Write a word to the USB device
     void Write(uint32_t word, uint8_t size) const {
       /*std::cout << __PRETTY_FUNCTION__ << " writing to USB:" << std::endl;

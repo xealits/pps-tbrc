@@ -3,13 +3,9 @@
 
 #include "Client.h"
 #include "USBHandler.h"
+#include "TDC.h"
 
-#include "TDCSetup.h"
-#include "TDCControl.h"
-#include "TDCBoundaryScan.h"
-#include "TDCStatus.h"
-
-#include "TDCConstants.h"
+#define NUM_HPTDC 4 // number of HPTDC per module
 
 #include <fstream>
 
@@ -25,7 +21,7 @@ struct file_header_t {
   uint32_t magic;
   uint32_t run_id;
   uint32_t spill_id;
-  TDCSetup config;
+  TDCSetup* config[NUM_HPTDC];
 };
 
 /**
@@ -49,19 +45,9 @@ class FPGAHandler : public Client, private USBHandler
     /// Retrieve the file name used to store data collected from the FPGA
     inline std::string GetFilename() const { return fFilename; }
     
-    /// Submit the HPTDC setup word as a TDCSetup object
-    inline void SetConfiguration(const TDCSetup& c) {
-      fTDCSetup=c;
-      SendConfiguration();
-    }
-    /// Retrieve the HPTDC setup word as a TDCSetup object
-    inline TDCSetup GetConfiguration() {
-      ReadConfiguration();
-      return fTDCSetup;
-    }
-    
-    void ReadStatus() {
-      fTDCStatus = ReadRegister<TDCStatus>(TDC_STATUS_REGISTER);
+    inline TDC* GetTDC(unsigned int i=0) {
+      if (i<0 or i>=NUM_HPTDC) return 0;
+      return fTDC[i];
     }
     
     bool ErrorState();
@@ -70,23 +56,12 @@ class FPGAHandler : public Client, private USBHandler
     /// Socket actor type retrieval method
     inline SocketType GetType() const { return DETECTOR; }
 
-  private:
-    /// Set the setup word to the HPTDC internal setup register
-    void SendConfiguration();
-    /// Read the setup word from the HPTDC internal setup register
-    void ReadConfiguration();
-    
-    template<class T> void WriteRegister(unsigned int r, const T& v);
-    template<class T> T ReadRegister(unsigned int r);
-    
+  private:    
     std::string fFilename;
     std::ofstream fOutput;
     bool fIsFileOpen;
-        
-    TDCSetup fTDCSetup;
-    TDCControl fTDCControl;
-    TDCBoundaryScan fTDCBS;
-    TDCStatus fTDCStatus;
+    
+    TDC* fTDC[NUM_HPTDC];
     bool fIsTDCInReadout;
 };
 

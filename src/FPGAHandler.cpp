@@ -6,11 +6,17 @@ FPGAHandler::FPGAHandler(int port, const char* dev) :
 {
   USBHandler::Init();
   // Read Id code (0b10000100011100001101101011001110 = 0x8470DACE for HPTDCv1.3)
+  for (unsigned int i=0; i<NUM_HPTDC; i++) {
+    fTDC[i] = new TDC(this);
+  }
 }
 
 FPGAHandler::~FPGAHandler()
 {
   CloseFile();
+  for (unsigned int i=0; i<NUM_HPTDC; i++) {
+    delete fTDC[i];
+  }
 }
 
 void
@@ -38,125 +44,16 @@ FPGAHandler::OpenFile()
   th.magic = 0x30535050; // PPS0 in ASCII
   th.run_id = 0;
   th.spill_id = 0;
-  th.config = fTDCSetup;
+  for (unsigned int i=0; i<NUM_HPTDC; i++) {
+    th.config[i] = new TDCSetup(fTDC[i]->GetSetupRegister());
+  }
   fOutput.write((char*)&th, sizeof(file_header_t));
+
 }
 
 void
 FPGAHandler::CloseFile()
 {
   if (fIsFileOpen) fOutput.close();
-}
-
-void
-FPGAHandler::SendConfiguration()
-{
-  WriteRegister<TDCSetup>(TDC_SETUP_REGISTER, fTDCSetup);
-  WriteRegister<TDCControl>(TDC_CONTROL_REGISTER, fTDCControl);
-  WriteRegister<TDCBoundaryScan>(TDC_BS_REGISTER, fTDCBS);
-}
-
-void
-FPGAHandler::ReadConfiguration()
-{
-  fTDCSetup = ReadRegister<TDCSetup>(TDC_SETUP_REGISTER);
-  fTDCControl = ReadRegister<TDCControl>(TDC_CONTROL_REGISTER);
-  fTDCBS = ReadRegister<TDCBoundaryScan>(TDC_BS_REGISTER);
-}
-
-template<class T> void
-FPGAHandler::WriteRegister(unsigned int r, const T& v)
-{
-  int attempts = 0;
-  // First we initiate the communication
-  do {
-    try {
-      // First we initiate the communication
-      USBHandler::Write(CONFIG_START, USB_WORD_SIZE); attempts++;
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
-      
-      // Specify the register to read
-      USBHandler::Write(CONFIG_REGISTER_NAME, USB_WORD_SIZE);
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
-      USBHandler::Write(r, USB_WORD_SIZE);
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
-      
-      // Retrieve the HPTDC identifier
-      USBHandler::Write(CONFIG_HPTDC_ID, USB_WORD_SIZE);
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
-      /*USBHandler::Write(r, USB_WORD_SIZE);
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }*/
-      
-      // Specify we want to send a stream
-      USBHandler::Write(CONFIG_START_STREAM, USB_WORD_SIZE);
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
-      
-      // Feed the configuration words
-      for (unsigned int i=0; i<fTDCSetup.GetNumWords(); i++) {
-        //ack = (i%2==0) ? 0 : 255;
-        uint32_t word = v.GetWord(i);
-        for (unsigned int j=0; j<WORD_SIZE/USB_WORD_SIZE; j++) {
-          USBHandler::Write((word>>USB_WORD_SIZE*j)&0xFF, USB_WORD_SIZE);
-        }
-      }
-    
-      // Close the communication
-      USBHandler::Write(CONFIG_STOP, USB_WORD_SIZE);
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
-      
-    } catch (Exception& e) { e.Dump(); attempts++; continue; }
-  } while (attempts<3);
-}
-
-template<class T> T
-FPGAHandler::ReadRegister(unsigned int r)
-{
-  T out;
-  unsigned int ack, byte, i, j, word;
-
-  int attempts = 0;
-  do {
-    try {
-      // First we initiate the communication
-      USBHandler::Write(VERIF_START, USB_WORD_SIZE); attempts++;
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
-      
-      // Specify the register to read
-      USBHandler::Write(VERIF_REGISTER_NAME, USB_WORD_SIZE);
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
-      USBHandler::Write(r, USB_WORD_SIZE);
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
-      
-      // Retrieve the HPTDC identifier
-      USBHandler::Write(VERIF_HPTDC_ID, USB_WORD_SIZE);
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
-      /*USBHandler::Write(r, USB_WORD_SIZE);
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }*/
-      
-      i = j = word = 0;
-      // Retrieve the configuration words
-      USBHandler::Write(VERIF_START_STREAM, USB_WORD_SIZE);
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
-      do {
-        ack = (i%2==0) ? 0 : 255;
-        byte = static_cast<uint8_t>(USBHandler::Fetch(USB_WORD_SIZE));
-        USBHandler::Write(ack, USB_WORD_SIZE);
-        word |= (byte<<i*USB_WORD_SIZE);
-        if (i%WORD_SIZE==0 and i!=0) {
-          out.SetWord(j, word);
-          word = 0x0; j++;
-        }
-        i++;
-      }
-      while (j<out.GetNumWords());
-      i = 0;
-      
-      // Close the communication
-      USBHandler::Write(VERIF_STOP, USB_WORD_SIZE);
-      if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
-    } catch (Exception& e) { e.Dump(); attempts++; continue; }
-  } while (attempts<3);
-  
-  return out;
 }
 
