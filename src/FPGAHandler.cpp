@@ -5,6 +5,7 @@ FPGAHandler::FPGAHandler(int port, const char* dev) :
   fIsTDCInReadout(false)
 {
   USBHandler::Init();
+  // Read Id code (0b10000100011100001101101011001110 = 0x8470DACE for HPTDCv1.3)
 }
 
 FPGAHandler::~FPGAHandler()
@@ -53,7 +54,7 @@ FPGAHandler::SendConfiguration()
   // ...
   int attempts = 0;
   
-  do {
+  do { try {
     // Initiate the communication
     USBHandler::Write(CONFIG_START, USB_WORD_SIZE);
     if (USBHandler::Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
@@ -74,42 +75,70 @@ FPGAHandler::SendConfiguration()
     // Close the communication
     USBHandler::Write(CONFIG_STOP, USB_WORD_SIZE);
     if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+    } catch (Exception& e) { e.Dump(); attempts++; continue; }
   } while (attempts<3);
 }
 
 void
 FPGAHandler::ReadConfiguration()
 {
-  TDCSetup c;
+  fTDCSetup = GetRegister<TDCSetup>(TDC_SETUP_REGISTER);
+  fTDCControl = GetRegister<TDCControl>(TDC_CONTROL_REGISTER);
+  fTDCBS = GetRegister<TDCBoundaryScan>(TDC_BS_REGISTER);
+  fTDCStatus = GetRegister<TDCStatus>(TDC_STATUS_REGISTER);
   // ...
-  unsigned int ack, byte, i=0, j=0, word=0x0;
+}
+
+template<class T> T
+FPGAHandler::GetRegister(unsigned int r)
+{
+  T out;
+  unsigned int ack, byte, i, j, word;
+
   int attempts = 0;
-  
   // First we initiate the communication
   do {
-    USBHandler::Write(VERIF_START_STREAM, USB_WORD_SIZE); attempts++;
-    if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
-  
-    // Retrieve the configuration words
-    do {
-      ack = (i%2==0) ? 0 : 255;
-      byte = static_cast<uint8_t>(USBHandler::Fetch(USB_WORD_SIZE));
-      USBHandler::Write(ack, USB_WORD_SIZE);
-      word |= (byte<<i*USB_WORD_SIZE);
-      if (i%WORD_SIZE==0 and i!=0) {
-        c.SetWord(j, word);
-        word = 0x0; j++;
+    try {
+      USBHandler::Write(VERIF_START_STREAM, USB_WORD_SIZE); attempts++;
+      if (USBHandler::Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
+      
+      // Specify the register to read
+      USBHandler::Write(VERIF_REGISTER_NAME, USB_WORD_SIZE);
+      if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+      USBHandler::Write(r, USB_WORD_SIZE);
+      if (USBHandler::Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
+      
+      // Retrieve the HPTDC identifier
+      USBHandler::Write(VERIF_HPTDC_ID, USB_WORD_SIZE);
+      if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+      /*USBHandler::Write(r, USB_WORD_SIZE);
+      if (USBHandler::Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }*/
+      
+      i = j = word = 0;
+      // Retrieve the configuration words
+      USBHandler::Write(VERIF_START_STREAM, USB_WORD_SIZE);
+      if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+      do {
+        ack = (i%2==0) ? 0 : 255;
+        byte = static_cast<uint8_t>(USBHandler::Fetch(USB_WORD_SIZE));
+        USBHandler::Write(ack, USB_WORD_SIZE);
+        word |= (byte<<i*USB_WORD_SIZE);
+        if (i%WORD_SIZE==0 and i!=0) {
+          out.SetWord(j, word);
+          word = 0x0; j++;
+        }
+        i++;
       }
-      i++;
-    }
-    while (j<fTDCSetup.GetNumWords());
-    
-    // Close the communication
-    USBHandler::Write(VERIF_STOP, USB_WORD_SIZE);
-    if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+      while (j<out.GetNumWords());
+      i = 0;
+      
+      // Close the communication
+      USBHandler::Write(VERIF_STOP, USB_WORD_SIZE);
+      if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+    } catch (Exception& e) { e.Dump(); attempts++; continue; }
   } while (attempts<3);
   
-  fTDCSetup = c;
+  return out;
 }
 
 void
@@ -117,8 +146,8 @@ FPGAHandler::SetRegister(const TDCControl::RegisterName& r, unsigned int v)
 {
   switch (r) {
     case TDCControl::R_GlobalReset: fTDCControl.SetGlobalReset(v&0x1); break;
-    case TDCControl::R_DLLReset: fTDCControl.SetDLLReset(v&0x1); break;
-    case TDCControl::R_PLLReset: fTDCControl.SetPLLReset(v&0x1); break;
+    case TDCControl::R_DLLReset:    fTDCControl.SetDLLReset(v&0x1);    break;
+    case TDCControl::R_PLLReset:    fTDCControl.SetPLLReset(v&0x1);    break;
     default:
       break;
   }
@@ -130,17 +159,10 @@ FPGAHandler::ReadRegister(const TDCControl::RegisterName& r)
 {
   switch (r) {
     case TDCControl::R_GlobalReset: return fTDCControl.GetGlobalReset();
-    case TDCControl::R_DLLReset: return fTDCControl.GetDLLReset();
-    case TDCControl::R_PLLReset: return fTDCControl.GetPLLReset();
+    case TDCControl::R_DLLReset:    return fTDCControl.GetDLLReset();
+    case TDCControl::R_PLLReset:    return fTDCControl.GetPLLReset();
     default:
       return -1;
   }
 }
 
-void
-FPGAHandler::ReadBoundaryScanRegister()
-{
-  TDCBoundaryScanRegister bsr;
-  
-  fTDCBSR = bsr;
-}
