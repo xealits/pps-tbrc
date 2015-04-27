@@ -2,6 +2,7 @@
 #define TDCConstants_h
 
 #define TDC_NUM_CHANNELS      32
+
 #define TDC_SETUP_BITS_NUM    647
 #define TDC_CONTROL_BITS_NUM  40
 #define TDC_BS_BITS_NUM       83
@@ -20,5 +21,10 @@
 #define VERIF_STOP            0x0F // 15
 
 #define RO_START              0xDC // 220
+#define RO_HPTDC_ID           0x84 // 132
+#define RO_FIFO_SIZE          0x79 // 121
+#define RO_NUM_BYTES          0x34 // 52
+#define RO_START_STREAM       0x2C // 44
+#define RO_STOP               0x5B // 91
 
 #endif

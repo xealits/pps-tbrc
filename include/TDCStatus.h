@@ -16,9 +16,7 @@ class TDCStatus : public TDCRegister
     inline TDCStatus(const TDCStatus& s) :
       TDCRegister(TDC_STATUS_BITS_NUM, s) { SetConstantValues(); }
     
-    inline void SetConstantValues() {
-      
-    }
+    inline void SetConstantValues() {}
     
   private:
     static const bit kError = 0;
