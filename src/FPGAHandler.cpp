@@ -53,24 +53,28 @@ FPGAHandler::SendConfiguration()
   // ...
   int attempts = 0;
   
-  // First we initiate the communication
   do {
-    USBHandler::Write(199, USB_WORD_SIZE); attempts++;
-  } while (USBHandler::Fetch(USB_WORD_SIZE)!=255 and attempts<3);
-  
-  // Then we feed the configuration words
-  for (unsigned int i=0; i<fTDCSetup.GetNumWords(); i++) {
-    //ack = (i%2==0) ? 0 : 255;
-    uint32_t word = fTDCSetup.GetWord(i);
-    for (unsigned int j=0; j<WORD_SIZE/USB_WORD_SIZE; j++) {
-      USBHandler::Write((word>>USB_WORD_SIZE*j)&0xFF, USB_WORD_SIZE);
+    // Initiate the communication
+    USBHandler::Write(CONFIG_START, USB_WORD_SIZE);
+    if (USBHandler::Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
+    
+    // Specify we want to send a stream
+    USBHandler::Write(CONFIG_START_STREAM, USB_WORD_SIZE);
+    if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+    
+    // Feed the configuration words
+    for (unsigned int i=0; i<fTDCSetup.GetNumWords(); i++) {
+      //ack = (i%2==0) ? 0 : 255;
+      uint32_t word = fTDCSetup.GetWord(i);
+      for (unsigned int j=0; j<WORD_SIZE/USB_WORD_SIZE; j++) {
+        USBHandler::Write((word>>USB_WORD_SIZE*j)&0xFF, USB_WORD_SIZE);
+      }
     }
-  }
   
-  // Finally we close the communication
-  do {
-    USBHandler::Write(60, USB_WORD_SIZE); attempts++;
-  } while (USBHandler::Fetch(USB_WORD_SIZE)!=255 and attempts<3);
+    // Close the communication
+    USBHandler::Write(CONFIG_STOP, USB_WORD_SIZE);
+    if (USBHandler::Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+  } while (attempts<3);
 }
 
 void
@@ -83,7 +87,7 @@ FPGAHandler::ReadConfiguration()
   
   // First we initiate the communication
   do {
-    USBHandler::Write(207, USB_WORD_SIZE); attempts++;
+    USBHandler::Write(VERIF_START_STREAM, USB_WORD_SIZE); attempts++;
   } while (USBHandler::Fetch(USB_WORD_SIZE)!=255 and attempts<3);
   
   // Then we retrieve the configuration words
@@ -101,10 +105,35 @@ FPGAHandler::ReadConfiguration()
   
   // Finally we close the communication
   do {
-    USBHandler::Write(15, USB_WORD_SIZE); attempts++;
+    USBHandler::Write(VERIF_STOP, USB_WORD_SIZE); attempts++;
   } while (USBHandler::Fetch(USB_WORD_SIZE)!=255 and attempts<3);
   
   fTDCSetup = c;
+}
+
+void
+FPGAHandler::SetRegister(const TDCControl::RegisterName& r, unsigned int v)
+{
+  switch (r) {
+    case TDCControl::R_GlobalReset: fTDCControl.SetGlobalReset(v&0x1); break;
+    case TDCControl::R_DLLReset: fTDCControl.SetDLLReset(v&0x1); break;
+    case TDCControl::R_PLLReset: fTDCControl.SetPLLReset(v&0x1); break;
+    default:
+      break;
+  }
+}
+
+
+unsigned int
+FPGAHandler::ReadRegister(const TDCControl::RegisterName& r)
+{
+  switch (r) {
+    case TDCControl::R_GlobalReset: return fTDCControl.GetGlobalReset();
+    case TDCControl::R_DLLReset: return fTDCControl.GetDLLReset();
+    case TDCControl::R_PLLReset: return fTDCControl.GetPLLReset();
+    default:
+      return -1;
+  }
 }
 
 void

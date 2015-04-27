@@ -12,9 +12,14 @@
 class TDCBoundaryScanRegister : public TDCRegister
 {
   public:
-    inline TDCBoundaryScanRegister() : TDCRegister(83) {
+    inline TDCBoundaryScanRegister() : TDCRegister(TDC_BS_BITS_NUM) {
+      SetConstantValues(); }
+    inline TDCBoundaryScanRegister(const TDCBoundaryScanRegister& bs) :
+      TDCRegister(TDC_BS_BITS_NUM, bs) { SetConstantValues(); }
+    
+    inline void SetConstantValues() {
+      
     }
-    inline virtual ~TDCBoundaryScanRegister() {;}
 };
 
 #endif

@@ -1,23 +1,5 @@
 #include "TDCSetup.h"
 
-TDCSetup::TDCSetup() :
-  TDCRegister(SETUP_BITS_NUM)
-{
-  SetConstantValues();
-}
-
-TDCSetup::TDCSetup(const TDCSetup& c) :
-  TDCRegister(SETUP_BITS_NUM)
-{
-  for (uint8_t i=0; i<GetNumWords(); i++) { fWord[i] = c.fWord[i]; }
-  SetConstantValues();
-}
-
-TDCSetup::~TDCSetup()
-{
-  delete fWord;
-}
-
 void
 TDCSetup::SetConstantValues()
 {
@@ -91,7 +73,7 @@ TDCSetup::Dump(int verb, std::ostream& os) const
   os << "====================="
      << " TDC Setup register dump "
      << "====================" << std::endl;
-     if (verb>1) DumpRegister(SETUP_BITS_NUM, os);
+     if (verb>1) DumpRegister(os);
   os << " Enabled errors:             ";
   for (unsigned int i=0; i<11; i++) {
     if (static_cast<bool>((GetEnableError()>>i)&0x1)) os << i << " ";
@@ -102,17 +84,17 @@ TDCSetup::Dump(int verb, std::ostream& os) const
      << " Reject events if FIFO full? " << GetRejectFIFOFull() << std::endl
      << " Channels offset/DLL adjustments:" << std::endl
      << "   +---------------------------------------------------------+" << std::endl;
-  for (unsigned int i=0; i<NUM_CHANNELS/2; i++ ) {
+  for (unsigned int i=0; i<TDC_NUM_CHANNELS/2; i++ ) {
     os << "   |  Ch.  " << std::setw(2) << i
        << ":   0x" << std::setfill('0')
        << std::setw(3) << std::hex << static_cast<int>(GetChannelOffset(i))
        << " / 0x"
        << std::setw(3) << static_cast<int>(GetDLLAdjustment(i)) << std::dec << std::setfill(' ')
-       << "   |  Ch.  " << std::setw(2) << i+NUM_CHANNELS/2
+       << "   |  Ch.  " << std::setw(2) << i+TDC_NUM_CHANNELS/2
        << ":   0x" << std::setfill('0')
-       << std::setw(3) << std::hex << static_cast<int>(GetChannelOffset(i+NUM_CHANNELS/2))
+       << std::setw(3) << std::hex << static_cast<int>(GetChannelOffset(i+TDC_NUM_CHANNELS/2))
        << " / 0x"
-       << std::setw(3) << static_cast<int>(GetDLLAdjustment(i+NUM_CHANNELS/2)) << std::dec << std::setfill(' ')
+       << std::setw(3) << static_cast<int>(GetDLLAdjustment(i+TDC_NUM_CHANNELS/2)) << std::dec << std::setfill(' ')
        << " |" << std::endl;
   }
   os << "   +---------------------------------------------------------+" << std::endl

@@ -6,16 +6,10 @@
 #include <stdint.h>
 
 #include "TDCRegister.h"
-
-#define NUM_CHANNELS 32
-#define SETUP_BITS_NUM 647
+#include "TDCConstants.h"
 
 /**
- * \defgroup HPTDC HPTDC chip control
- */
-
-/**
- * Object handling the configuration word provided by/to the HPTDC chip
+ * Object handling the setup word provided by/to the HPTDC chip
  * \brief Setup word to be sent to the HPTDC chip
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 16 Apr 2015
@@ -23,7 +17,7 @@
  */
 class TDCSetup : public TDCRegister
 {
-  public:  
+  public:
     typedef enum {
       E_100ps=0, E_200ps, E_400ps, E_800ps, E_1p6ns, E_3p12ns, E_6p25ns, E_12p5ns
     } EdgeResolution;
@@ -67,9 +61,10 @@ class TDCSetup : public TDCRegister
     } ReadoutSingleCycleSpeed;
   
   public:
-    TDCSetup();
-    TDCSetup(const TDCSetup& c);
-    virtual ~TDCSetup();
+    TDCSetup() : TDCRegister(TDC_SETUP_BITS_NUM) { SetConstantValues(); }
+    TDCSetup(const TDCSetup& c) : TDCRegister(TDC_SETUP_BITS_NUM, c) { 
+      SetConstantValues();
+    }
           
     //////////////////////// Public set'ers and get'ers ////////////////////////
     
@@ -233,17 +228,17 @@ class TDCSetup : public TDCRegister
     }
     /// Set the time offset for one single channel
     inline void SetChannelOffset(int channel, uint16_t offset) {
-      if (channel>=NUM_CHANNELS or channel<0) return;
+      if (channel>=TDC_NUM_CHANNELS or channel<0) return;
       SetBits(kOffset0-9*channel, offset, 9);
     }
     /// Return the offset for one single channel
     inline uint16_t GetChannelOffset(int channel) const {
-      if (channel>=NUM_CHANNELS or channel<0) return -1;
+      if (channel>=TDC_NUM_CHANNELS or channel<0) return -1;
       return static_cast<uint16_t>(GetBits(kOffset0-9*channel, 9));
     }
     /// Set the time offset for all channels
     inline void SetAllChannelsOffset(uint16_t offset) {
-      for (int i=0; i<NUM_CHANNELS; i++) {
+      for (int i=0; i<TDC_NUM_CHANNELS; i++) {
         SetChannelOffset(i, offset);
       }
     }
@@ -257,17 +252,17 @@ class TDCSetup : public TDCRegister
     }
     /// Set the DLL taps adjustments with a resolution of ~10 ps
     inline void SetDLLAdjustment(int tap, uint8_t adj) {
-      if (tap>=NUM_CHANNELS or tap<0) return;
+      if (tap>=TDC_NUM_CHANNELS or tap<0) return;
       SetBits(kDLLTapAdjust0+3*tap, adj, 3);
     }
     /// Set the adjustment of DLL taps
     inline uint8_t GetDLLAdjustment(int tap) const {
-      if (tap>=NUM_CHANNELS or tap<0) return -1;
+      if (tap>=TDC_NUM_CHANNELS or tap<0) return -1;
       return static_cast<uint8_t>(GetBits(kDLLTapAdjust0+3*tap, 3));
     }
     /// Extract the adjustment of DLL taps
     inline void SetAllTapsDLLAdjustment(uint8_t adj) {
-      for (int i=0; i<NUM_CHANNELS; i++) {
+      for (int i=0; i<TDC_NUM_CHANNELS; i++) {
         SetDLLAdjustment(i, adj);
       }
     }

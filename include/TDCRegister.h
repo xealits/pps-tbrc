@@ -6,6 +6,9 @@
 #define WORD_SIZE 32
 
 /**
+ * \defgroup HPTDC HPTDC chip control
+ *
+ *
  * \brief General register object to interact with a HPTDC chip
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 24 Apr 2015
@@ -20,14 +23,19 @@ class TDCRegister
     typedef uint32_t word_t;
 
   public:
-    inline TDCRegister(const size_t size) : fNumWords(ceil(size/WORD_SIZE)+1) {
+    inline TDCRegister(const unsigned int size) :
+      fNumWords(ceil(size/WORD_SIZE)+1), fWordSize(size) {
       fWord = new word_t[fNumWords];
-      for (uint8_t i=0; i<fNumWords; i++) {
-        //fWord[i] = (1<<WORD_SIZE)-1;
-        fWord[i] = 0;
-      }
+      Clear();
     }
-    inline virtual ~TDCRegister() {;}
+    inline TDCRegister(const unsigned int size, const TDCRegister& r) :
+      fNumWords(ceil(size/WORD_SIZE)+1), fWordSize(size) {
+      fWord = new word_t[fNumWords];
+      for (unsigned int i=0; i<GetNumWords(); i++) { fWord[i] = r.fWord[i]; }
+    }
+    inline virtual ~TDCRegister() {
+      delete [] fWord;
+    }
     
     /// Set one bit(s) subset in the register word
     inline void SetWord(const unsigned int i, const word_t word) {
@@ -45,7 +53,7 @@ class TDCRegister
      */
     inline uint8_t GetNumWords() const { return fNumWords; }
     
-    inline void DumpRegister(bit max_bits=-1, std::ostream& os=std::cout) const {
+    inline void DumpRegister(std::ostream& os=std::cout, const bit max_bits=-1) const {
       os << std::endl;
       for (unsigned int i=0; i<fNumWords; i++) {
         os << " Word " << std::setw(2) << i << ":  "
@@ -53,7 +61,7 @@ class TDCRegister
         for(int8_t j=WORD_SIZE-1; j>=0; j--) {
           uint16_t bit = j+i*WORD_SIZE;
           // bits values
-          if (max_bits>0 and bit>=max_bits) os << "x";
+          if (bit>fWordSize or (max_bits>0 and bit>=max_bits)) os << "x";
           else os << static_cast<bool>((fWord[i] & static_cast<word_t>(1<<j))>>j);
           // delimiters
           if (j%16==0 && j!=0) os << "| |";
@@ -64,6 +72,9 @@ class TDCRegister
       }
       os << std::endl;
     }
+    /// Ensure that the critical constant values are properly set in the
+    /// register word
+    virtual void SetConstantValues()=0;
     
   protected:
     /**
@@ -102,9 +113,18 @@ class TDCRegister
       }
       return out;
     }
+    /// Set all bits in this register to '0'
+    inline void Clear() {
+      for (uint8_t i=0; i<fNumWords; i++) { fWord[i] = 0; }
+    }
     
+    /// Pointer to this register's word
     word_t* fWord;
-    size_t fNumWords;
+    /// Number of words to fit the \a fWordSize bits of this register to this
+    /// object
+    unsigned int fNumWords;
+    /// Number of bits in this register
+    unsigned int fWordSize;
 };
 
 #endif

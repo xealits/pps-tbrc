@@ -7,6 +7,9 @@
 #include "TDCSetup.h"
 #include "TDCControl.h"
 #include "TDCBoundaryScan.h"
+#include "TDCStatus.h"
+
+#include "TDCConstants.h"
 
 #include <fstream>
 
@@ -57,6 +60,8 @@ class FPGAHandler : public Client, private USBHandler
       return fTDCSetup;
     }
     
+    bool ErrorState();
+    
     void ReadBuffer();
     /// Socket actor type retrieval method
     inline SocketType GetType() const { return DETECTOR; }
@@ -67,14 +72,20 @@ class FPGAHandler : public Client, private USBHandler
     /// Read the setup word from the HPTDC internal setup register
     void ReadConfiguration();
     
+    void SetRegister(const TDCControl::RegisterName& r, unsigned int v);
+    unsigned int ReadRegister(const TDCControl::RegisterName& r);
+    
     void ReadBoundaryScanRegister();
     
     std::string fFilename;
     std::ofstream fOutput;
-    TDCSetup fTDCSetup;
-    TDCBoundaryScanRegister fTDCBSR;
     bool fIsFileOpen;
     bool fIsTDCInReadout;
+    
+    TDCSetup fTDCSetup;
+    TDCControl fTDCControl;
+    TDCBoundaryScanRegister fTDCBSR;
+    TDCStatus fTDCStatus;    
 };
 
 #endif
