@@ -35,4 +35,10 @@
 #define RO_START_STREAM       0x2C // 44
 #define RO_STOP               0x5B // 91
 
+#define FW_START              0xA3 // 163
+#define FW_GET_VERSION        0x6B // 107
+#define FW_STOP               0x29 // 41
+
+#define RESET_WORD            0x99 // 153
+
 #endif

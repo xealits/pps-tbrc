@@ -9,10 +9,13 @@
 
 #define USB_WORD_SIZE 8
 
+#define DEBUG
+
 /**
  * \brief Generic USB communication handler
  * \date 21 Apr 2015
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+ * \ingroup FPGA
  */
 class USBHandler
 {
@@ -26,18 +29,22 @@ class USBHandler
     
     /// Write a word to the USB device
     void Write(uint32_t word, uint8_t size) const {
-      /*std::cout << __PRETTY_FUNCTION__ << " writing to USB:" << std::endl;
+#ifdef DEBUG
+      std::cout << __PRETTY_FUNCTION__ << " writing to USB:" << std::endl;
       std::cout << " Size: " << static_cast<int>(size) << std::endl;
-      std::cout << " Word: 0x" << std::setw(4) << std::hex << word << std::dec << " (";
+      std::cout << " Word: 0x" << std::setw(4) << std::setfill('0') << std::hex << word << std::dec << " (";
       for (unsigned int i=0; i<size; i++) std::cout << ((word>>i)&0x1);
-      std::cout << ")" << std::endl;*/
+      std::cout << ")" << std::endl;
+#endif
     }
     /// Receive a word from the USB device
     uint32_t Fetch(uint8_t size) const {
       uint32_t out = 0x0;
       // ...
-      /*std::cout << __PRETTY_FUNCTION__ << " fetching from USB:" << std::endl;
-      std::cout << " Size: " << static_cast<int>(size) << std::endl;*/
+#ifdef DEBUG
+      std::cout << __PRETTY_FUNCTION__ << " fetching from USB:" << std::endl;
+      std::cout << " Size: " << static_cast<int>(size) << std::endl;
+#endif
       return (out&((1<<size)-1));
     }
     

@@ -8,6 +8,9 @@
 #define NUM_HPTDC 4 // number of HPTDC per module
 
 #include <fstream>
+/**
+ * \defgroup FPGA FPGA board control
+ */
 
 /**
  * General header to store in each collected data file for offline readout. It
@@ -21,7 +24,7 @@ struct file_header_t {
   uint32_t magic;
   uint32_t run_id;
   uint32_t spill_id;
-  TDCSetup* config[NUM_HPTDC];
+  TDCSetup config[NUM_HPTDC];
 };
 
 /**
@@ -30,6 +33,7 @@ struct file_header_t {
  * \brief Driver for timing detectors' FPGA readout
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 14 Apr 2015
+ * \ingroup FPGA
  */
 class FPGAHandler : public Client, private USBHandler
 {
@@ -48,6 +52,11 @@ class FPGAHandler : public Client, private USBHandler
     inline TDC* GetTDC(unsigned int i=0) {
       if (i<0 or i>=NUM_HPTDC) return 0;
       return fTDC[i];
+    }
+    inline void SetTDCSetup(const TDCSetup& s) {
+      for (unsigned int i=0; i<NUM_HPTDC; i++) {
+        fTDC[i]->SetSetupRegister(s);
+      }
     }
     
     bool ErrorState();

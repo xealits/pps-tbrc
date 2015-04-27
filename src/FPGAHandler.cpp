@@ -7,7 +7,7 @@ FPGAHandler::FPGAHandler(int port, const char* dev) :
   USBHandler::Init();
   // Read Id code (0b10000100011100001101101011001110 = 0x8470DACE for HPTDCv1.3)
   for (unsigned int i=0; i<NUM_HPTDC; i++) {
-    fTDC[i] = new TDC(this);
+    fTDC[i] = new TDC(i, this);
   }
 }
 
@@ -45,7 +45,7 @@ FPGAHandler::OpenFile()
   th.run_id = 0;
   th.spill_id = 0;
   for (unsigned int i=0; i<NUM_HPTDC; i++) {
-    th.config[i] = new TDCSetup(fTDC[i]->GetSetupRegister());
+    th.config[i] = fTDC[i]->GetSetupRegister();
   }
   fOutput.write((char*)&th, sizeof(file_header_t));
 

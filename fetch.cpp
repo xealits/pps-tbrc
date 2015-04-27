@@ -39,17 +39,15 @@ int main(int argc, char* argv[])
   TDCControl control;
   control.Dump(2);
   
-  TDCEvent ev(0x4100000f);
+  /*TDCEvent ev(0x4100000f);
   cout << "event: TDC id=" << ev.GetTDCId() << endl;
   cout << "event: leading edge? " << (ev.GetType()==TDCEvent::LeadingEdge) << endl;
-  cout << "event: trailing edge? " << (ev.GetType()==TDCEvent::TrailingEdge) << endl;
+  cout << "event: trailing edge? " << (ev.GetType()==TDCEvent::TrailingEdge) << endl;*/
   
   try {
     h->Connect();
-    std::cout << "hihi" << std::endl;
-    //h->SetConfiguration(config);
+    h->SetTDCSetup(config);
     h->OpenFile();
-    std::cout << "haha" << std::endl;
   } catch (Exception& e) {
     e.Dump();
   }

@@ -6,12 +6,10 @@
 #define WORD_SIZE 32
 
 /**
- * \defgroup HPTDC HPTDC chip control
- *
- *
  * \brief General register object to interact with a HPTDC chip
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 24 Apr 2015
+ *
  * \ingroup HPTDC
  */
 class TDCRegister
@@ -34,7 +32,19 @@ class TDCRegister
       for (unsigned int i=0; i<GetNumWords(); i++) { fWord[i] = r.fWord[i]; }
     }
     inline virtual ~TDCRegister() {
-      delete [] fWord;
+      if (fWord) delete [] fWord;
+    }
+    inline TDCRegister& operator=(const TDCRegister& r) {
+      if (&r!=this) {
+        fWordSize = r.fWordSize;
+        fNumWords = r.fNumWords;
+        word_t* newWord = fNumWords ? new word_t[fNumWords] : 0;
+        std::copy(r.fWord, r.fWord+fNumWords, newWord);
+        // replace the old data (all are non-throwing)
+        delete [] fWord;
+        fWord = newWord;
+      }
+      return *this;
     }
     
     /// Set one bit(s) subset in the register word

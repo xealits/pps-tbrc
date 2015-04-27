@@ -28,7 +28,6 @@
 /**
  * \defgroup Socket Socket communication objects
  */
-
 /**
  * General object providing all useful method to
  * connect/bind/send/receive information through system sockets.

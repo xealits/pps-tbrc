@@ -1,5 +1,10 @@
 #include "TDC.h"
 
+TDC::TDC(unsigned int id, USBHandler* h) : fId(id), fUSB(h)
+{
+  ReadConfiguration();
+}
+
 void
 TDC::SendConfiguration()
 {
@@ -16,15 +21,53 @@ TDC::ReadConfiguration()
   fBS = ReadRegister<TDCBoundaryScan>(TDC_BS_REGISTER);
 }
 
+bool
+TDC::CheckFirmwareVersion() const
+{
+  int attempts = 0;
+  unsigned int version = 0;
+  do {
+    try {
+      // First we initiate the communication
+      fUSB->Write(FW_START, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
+      
+      // Request version
+      fUSB->Write(FW_GET_VERSION, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+      
+      // Retrieve the firmware version
+      version = fUSB->Fetch(USB_WORD_SIZE);
+    
+      // Close the communication
+      fUSB->Write(FW_STOP, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+      
+    } catch (Exception& e) { e.Dump(); attempts++; continue; }
+  } while (attempts<3);
+  return version==TDC_FIRMWARE_VERSION;
+}
+
+void
+TDC::SoftReset()
+{
+  int attempts = 0;
+  do {
+    try {
+      fUSB->Write(RESET_WORD, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
+    } catch (Exception& e) { e.Dump(); attempts++; continue; }
+  } while (attempts<3);
+}
+
 template<class T> void
 TDC::WriteRegister(unsigned int r, const T& v)
 {
   int attempts = 0;
-  // First we initiate the communication
   do {
     try {
       // First we initiate the communication
-      fUSB->Write(CONFIG_START, USB_WORD_SIZE); attempts++;
+      fUSB->Write(CONFIG_START, USB_WORD_SIZE);
       if (fUSB->Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
       
       // Specify the register to read
@@ -36,8 +79,8 @@ TDC::WriteRegister(unsigned int r, const T& v)
       // Retrieve the HPTDC identifier
       fUSB->Write(CONFIG_HPTDC_ID, USB_WORD_SIZE);
       if (fUSB->Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
-      /*fUSB->Write(r, USB_WORD_SIZE);
-      if (fUSB->Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }*/
+      fUSB->Write(fId, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
       
       // Specify we want to send a stream
       fUSB->Write(CONFIG_START_STREAM, USB_WORD_SIZE);
@@ -70,7 +113,7 @@ TDC::ReadRegister(unsigned int r)
   do {
     try {
       // First we initiate the communication
-      fUSB->Write(VERIF_START, USB_WORD_SIZE); attempts++;
+      fUSB->Write(VERIF_START, USB_WORD_SIZE);
       if (fUSB->Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
       
       // Specify the register to read
@@ -82,8 +125,8 @@ TDC::ReadRegister(unsigned int r)
       // Retrieve the HPTDC identifier
       fUSB->Write(VERIF_HPTDC_ID, USB_WORD_SIZE);
       if (fUSB->Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
-      /*fUSB->Write(r, USB_WORD_SIZE);
-      if (fUSB->Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }*/
+      fUSB->Write(fId, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
       
       i = j = word = 0;
       // Retrieve the configuration words

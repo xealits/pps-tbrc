@@ -65,7 +65,7 @@ class TDCSetup : public TDCRegister
     TDCSetup(const TDCSetup& c) : TDCRegister(TDC_SETUP_BITS_NUM, c) { 
       SetConstantValues();
     }
-          
+    
     //////////////////////// Public set'ers and get'ers ////////////////////////
     
     /// Mark events with error if global error signal is set.
