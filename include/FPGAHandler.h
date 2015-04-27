@@ -60,6 +60,10 @@ class FPGAHandler : public Client, private USBHandler
       return fTDCSetup;
     }
     
+    void ReadStatus() {
+      fTDCStatus = ReadRegister<TDCStatus>(TDC_STATUS_REGISTER);
+    }
+    
     bool ErrorState();
     
     void ReadBuffer();
@@ -72,10 +76,8 @@ class FPGAHandler : public Client, private USBHandler
     /// Read the setup word from the HPTDC internal setup register
     void ReadConfiguration();
     
-    template<class T> T GetRegister(unsigned int r);
-    
-    void SetRegister(const TDCControl::RegisterName& r, unsigned int v);
-    unsigned int ReadRegister(const TDCControl::RegisterName& r);
+    template<class T> void WriteRegister(unsigned int r, const T& v);
+    template<class T> T ReadRegister(unsigned int r);
     
     std::string fFilename;
     std::ofstream fOutput;
