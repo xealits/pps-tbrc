@@ -44,6 +44,7 @@ FPGAHandler::OpenFile()
   th.magic = 0x30535050; // PPS0 in ASCII
   th.run_id = 0;
   th.spill_id = 0;
+  th.num_hptdc = NUM_HPTDC;
   for (unsigned int i=0; i<NUM_HPTDC; i++) {
     th.config[i] = fTDC[i]->GetSetupRegister();
   }

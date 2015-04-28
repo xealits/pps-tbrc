@@ -5,7 +5,7 @@
 #include "USBHandler.h"
 #include "TDC.h"
 
-#define NUM_HPTDC 4 // number of HPTDC per module
+#define NUM_HPTDC 4 // number of HPTDC per FPGA readout
 
 #include <fstream>
 /**
@@ -24,6 +24,7 @@ struct file_header_t {
   uint32_t magic;
   uint32_t run_id;
   uint32_t spill_id;
+  uint8_t num_hptdc;
   TDCSetup config[NUM_HPTDC];
 };
 
