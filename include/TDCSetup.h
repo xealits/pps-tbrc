@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include <stdint.h>
 
 #include "TDCRegister.h"
 #include "TDCConstants.h"

@@ -2,6 +2,7 @@
 #define TDCRegister_h
 
 #include <math.h> // ceil
+#include <stdint.h>
 
 #define WORD_SIZE 32
 

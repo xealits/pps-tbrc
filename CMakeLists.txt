@@ -14,6 +14,7 @@ include_directories("${PROJECT_SOURCE_DIR}/external")
 
 add_executable(ppsRun main.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
 add_executable(listener listener.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
+add_executable(reader test/reader.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
 
 #find_package(libusb-1.0 REQUIRED)
 set(CMAKE_CXX_FLAGS "-lusb-1.0")

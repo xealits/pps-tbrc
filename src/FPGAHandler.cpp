@@ -45,9 +45,9 @@ FPGAHandler::OpenFile()
   th.run_id = 0;
   th.spill_id = 0;
   th.num_hptdc = NUM_HPTDC;
-  for (unsigned int i=0; i<NUM_HPTDC; i++) {
+  /*for (unsigned int i=0; i<NUM_HPTDC; i++) {
     th.config[i] = fTDC[i]->GetSetupRegister();
-  }
+  }*/
   fOutput.write((char*)&th, sizeof(file_header_t));
 
 }
