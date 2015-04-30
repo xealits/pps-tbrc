@@ -1,6 +1,8 @@
 #ifndef TDCEvent_h
 #define TDCEvent_h
 
+#include <vector>
+
 /**
  * Object enabling to decipher any measurement/error/debug event returned by the
  * HPTDC chip
@@ -15,8 +17,11 @@ class TDCEvent
     typedef enum { Invalid=-1, GroupHeader=0, GroupTrailer, TDCHeader, TDCTrailer, LeadingEdge, TrailingEdge, Error, Debug } EventType;
   
   public:
+    TDCEvent() : fWord(0) {;}
     TDCEvent(const uint32_t& word) : fWord(word) {;}
     inline virtual ~TDCEvent() {;}
+    
+    inline void SetWord(const uint32_t& word) { fWord = word; }
     
     /// Type of packet read out from the TDC
     inline EventType GetType() const {
@@ -66,5 +71,7 @@ class TDCEvent
   private:
     uint32_t fWord;
 };
+typedef std::vector<TDCEvent> TDCEventCollection;
+
 
 #endif

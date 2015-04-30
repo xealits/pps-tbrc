@@ -7,6 +7,7 @@
 #include "TDCControl.h"
 #include "TDCBoundaryScan.h"
 #include "TDCStatus.h"
+#include "TDCEvent.h"
 
 #include "TDCConstants.h"
 
@@ -32,6 +33,7 @@ class TDC
     
     bool CheckFirmwareVersion() const;
     void SoftReset();
+    TDCEventCollection FetchEvents();
     
     void ReadStatus() {
       fStatus = ReadRegister<TDCStatus>(TDC_STATUS_REGISTER);

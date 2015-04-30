@@ -45,6 +45,38 @@ Messenger::Disconnect()
 }
 
 void
+Messenger::AddClient()
+{
+  Socket s;
+  try {
+    AcceptConnections(s);
+    Message message = FetchMessage(s.GetSocketId());
+    if (message.IsFromWeb()) {
+      message.Dump();
+      // Feed the handshake to the WebSocket object
+      fWS->parseHandshake((unsigned char*)message.GetString().c_str(), message.GetString().size());
+      Send(Message(fWS->answerHandshake()), s.GetSocketId());
+      // From now on handle a WebSocket connection
+      SwitchClientType(s.GetSocketId(), WEBSOCKET_CLIENT);
+    }
+    else {
+      // if not a WebSocket connection
+      SocketMessage m(message);
+      if (m.GetKey()==ADD_CLIENT) {
+        SocketType type = static_cast<SocketType>(m.GetIntValue());
+        if (type!=CLIENT) SwitchClientType(s.GetSocketId(), type);
+      }
+    }
+    // Send the client's unique identifier
+    Send(SocketMessage(SET_CLIENT_ID, s.GetSocketId()), s.GetSocketId());
+    std::cout << "after sending the client id=" << s.GetSocketId() << "!" << std::endl;
+    //SocketMessage(SET_CLIENT_ID, s.GetSocketId()).Dump();
+  } catch (Exception& e) {
+    e.Dump();
+  }
+}
+
+void
 Messenger::DisconnectClient(int sid, MessageKey key, bool force)
 {
   SocketType type;
@@ -57,11 +89,10 @@ Messenger::DisconnectClient(int sid, MessageKey key, bool force)
   std::ostringstream o; o << "Disconnecting client # " << sid;
   if (type==WEBSOCKET_CLIENT) o << " (web socket)";
   Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump();
+  
   if (type==WEBSOCKET_CLIENT) {
     try {
       Send(SocketMessage(key, sid), sid);
-      //std::ostringstream o; o << 0xFF << 0x00;
-      //Send(Message(o.str()), sid);
     } catch (Exception& e) {
       e.Dump();
       if (e.ErrorNumber()==10032 or force) {
@@ -78,6 +109,19 @@ Messenger::DisconnectClient(int sid, MessageKey key, bool force)
   }
   fSocketsConnected.erase(std::pair<int,SocketType>(sid, type));
   FD_CLR(sid, &fMaster);
+}
+
+void
+Messenger::SwitchClientType(int sid, SocketType type)
+{
+  SocketType oldtype;
+  try {
+    oldtype = GetSocketType(sid);
+    fSocketsConnected.erase (std::pair<int,SocketType>(sid, oldtype));
+    fSocketsConnected.insert(std::pair<int,SocketType>(sid, type));    
+  } catch (Exception& e) {
+    e.Dump();
+  }
 }
 
 void
@@ -139,51 +183,6 @@ Messenger::Receive()
 }
 
 void
-Messenger::AddClient()
-{
-  Socket s;
-  try {
-    AcceptConnections(s);
-    Message message = FetchMessage(s.GetSocketId());
-    if (message.IsFromWeb()) {
-      message.Dump();
-      // Feed the handshake to the WebSocket object
-      fWS->parseHandshake((unsigned char*)message.GetString().c_str(), message.GetString().size());
-      Send(Message(fWS->answerHandshake()), s.GetSocketId());
-      // From now on handle a WebSocket connection
-      SwitchClientType(s.GetSocketId(), WEBSOCKET_CLIENT);
-    }
-    else {
-      // if not a WebSocket connection
-      SocketMessage m(message);
-      if (m.GetKey()==ADD_CLIENT) {
-        SocketType type = static_cast<SocketType>(m.GetIntValue());
-        if (type!=CLIENT) SwitchClientType(s.GetSocketId(), type);
-      }
-    }
-    // Send the client's unique identifier
-    Send(SocketMessage(SET_CLIENT_ID, s.GetSocketId()), s.GetSocketId());
-    std::cout << "after sending the client id=" << s.GetSocketId() << "!" << std::endl;
-    //SocketMessage(SET_CLIENT_ID, s.GetSocketId()).Dump();
-  } catch (Exception& e) {
-    e.Dump();
-  }
-}
-
-void
-Messenger::SwitchClientType(int sid, SocketType type)
-{
-  SocketType oldtype;
-  try {
-    oldtype = GetSocketType(sid);
-    fSocketsConnected.erase (std::pair<int,SocketType>(sid, oldtype));
-    fSocketsConnected.insert(std::pair<int,SocketType>(sid, type));    
-  } catch (Exception& e) {
-    e.Dump();
-  }
-}
-
-void
 Messenger::ProcessMessage(SocketMessage m, int sid)
 {
   if (m.GetKey()==REMOVE_CLIENT) {
@@ -197,9 +196,9 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
       return;
     }
     
-    if (sid==m.GetIntValue()) key = THIS_CLIENT_DELETED;
-    else key = OTHER_CLIENT_DELETED;
+    key = (sid==m.GetIntValue()) ? THIS_CLIENT_DELETED : OTHER_CLIENT_DELETED;
     DisconnectClient(m.GetIntValue(), key);
+    return;
   }
   else if (m.GetKey()==PING_CLIENT) {
     int toping = m.GetIntValue();

@@ -4,18 +4,6 @@
 #include "Socket.h"
 
 /**
- * Structure handling its name and type for any listener/client to be used in
- * the socket management parts of this code.
- * \brief Information on a socket's listener
- * \ingroup Socket
- */
-struct ListenerInfo
-{
-  std::string name;
-  Socket::SocketType type;
-};
-
-/**
  * Messenger/broadcaster object used by the server to send/receive commands from
  * the clients/listeners.
  * \brief Base master object for the socket
@@ -83,7 +71,6 @@ class Messenger : public Socket
     void ProcessMessage(SocketMessage m, int sid);
     WebSocket* fWS;
     int fNumAttempts;
-    std::vector<ListenerInfo> fListenersInfo;
 };
 
 #endif

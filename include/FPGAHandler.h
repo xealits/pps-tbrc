@@ -8,6 +8,8 @@
 
 #include <fstream>
 
+#define NUM_HPTDC 4 // number of HPTDC per FPGA readout
+
 /**
  * \defgroup FPGA FPGA board control
  */
@@ -43,6 +45,7 @@ class FPGAHandler : public Client, private USBHandler
         fTDC[i]->SetSetupRegister(s);
       }
     }
+    bool FetchEvent();
     
     bool ErrorState();
     

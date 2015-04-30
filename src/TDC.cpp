@@ -60,6 +60,64 @@ TDC::SoftReset()
   } while (attempts<3);
 }
 
+TDCEventCollection
+TDC::FetchEvents()
+{
+  int attempts = 0;
+  TDCEventCollection ev;
+  do {
+    try {
+      // First we initiate the communication
+      fUSB->Write(RO_START, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
+      
+      // Specify the HPTDC to read
+      fUSB->Write(RO_HPTDC_ID, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+      fUSB->Write(fId, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
+      
+      // FIFO depth retrieval
+      fUSB->Write(RO_FIFO_SIZE, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+      int size = fUSB->Fetch(USB_WORD_SIZE);
+      fUSB->Write(0, USB_WORD_SIZE); // FIXME introduce checks on this size
+      
+      // Specify the number of bytes to retrieve
+      unsigned int to_retrieve = std::min(size, 256);
+      fUSB->Write(RO_NUM_BYTES, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+      fUSB->Write((to_retrieve>>USB_WORD_SIZE)&0xFF, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=0) { attempts++; continue; }
+      fUSB->Write(to_retrieve&0xFF, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+      
+      // Retrieve the data
+      uint32_t word;
+      unsigned int bit = 0;
+      for (unsigned int i=0; i<to_retrieve; i++) {
+        if (bit>0 and bit==32/USB_WORD_SIZE) {
+          TDCEvent e(word);
+          word = 0x0;
+          ev.push_back(e);
+          bit = 0;
+        }
+        unsigned int ack = (i%2==0) ? 0 : 255;
+        unsigned short byte = fUSB->Fetch(USB_WORD_SIZE);
+        fUSB->Write(ack, USB_WORD_SIZE);
+        word |= ((byte&0xFF)<<(bit*USB_WORD_SIZE));
+      }
+      
+      // Close the communication
+      fUSB->Write(CONFIG_STOP, USB_WORD_SIZE);
+      if (fUSB->Fetch(USB_WORD_SIZE)!=255) { attempts++; continue; }
+      
+    } catch (Exception& e) { e.Dump(); attempts++; continue; }
+  } while (attempts<3);
+  
+  return ev;
+}
+
 template<class T> void
 TDC::WriteRegister(unsigned int r, const T& v)
 {

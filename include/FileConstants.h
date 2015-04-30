@@ -2,9 +2,6 @@
 #define FileConstants_h
 
 #include <stdint.h>
-//#include "TDCSetup.h"
-
-#define NUM_HPTDC 4 // number of HPTDC per FPGA readout
 
 /**
  * General header to store in each collected data file for offline readout. It
@@ -19,7 +16,6 @@ struct file_header_t {
   uint32_t run_id;
   uint32_t spill_id;
   uint8_t num_hptdc;
-  //TDCSetup config[NUM_HPTDC];
 };
 
 #endif

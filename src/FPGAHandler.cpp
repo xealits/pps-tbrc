@@ -45,11 +45,24 @@ FPGAHandler::OpenFile()
   th.run_id = 0;
   th.spill_id = 0;
   th.num_hptdc = NUM_HPTDC;
-  /*for (unsigned int i=0; i<NUM_HPTDC; i++) {
-    th.config[i] = fTDC[i]->GetSetupRegister();
-  }*/
   fOutput.write((char*)&th, sizeof(file_header_t));
+  
+  for (unsigned int i=0; i<NUM_HPTDC; i++) {
+    TDCSetup s = fTDC[i]->GetSetupRegister();
+    fOutput.write((char*)&s, sizeof(TDCSetup));
+  }
+}
 
+bool
+FPGAHandler::FetchEvent()
+{
+  for (unsigned int i=0; i<NUM_HPTDC; i++) {
+    TDCEventCollection ev = fTDC[i]->FetchEvents();
+    for (TDCEventCollection::iterator e=ev.begin(); e!=ev.end(); e++) {
+      fOutput.write((char*)&(*e), sizeof(TDCEvent));
+    }
+  }
+  return true;
 }
 
 void
