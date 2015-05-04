@@ -1,5 +1,5 @@
-#ifndef TDCV1x90_H 
-#define TDCV1x90_H
+#ifndef VMETDCV1x90_H 
+#define VMETDCV1x90_H
 
 #define DEBUG
 #include <iostream>
@@ -19,7 +19,7 @@
 #include "CAENVMEoslib.h"
 #include "CAENVMEtypes.h"
 
-#include "tdcV1x90Opcodes.h"
+#include "VMETDCV1x90Opcodes.h"
 
 typedef enum {
   MATCH_WIN_WIDTH        = 0,
@@ -147,11 +147,11 @@ struct trailead_t {
   
 };*/
 
-class tdcV1x90
+class VMETDCV1x90
 {
   public:
-    tdcV1x90(int32_t, uint32_t, acq_mode, det_mode);
-    ~tdcV1x90();
+    VMETDCV1x90(int32_t, uint32_t, acq_mode, det_mode);
+    ~VMETDCV1x90();
     
     uint32_t getModel();
     uint32_t getOUI();
@@ -272,5 +272,5 @@ class tdcV1x90
 
 };
 
-#endif /* TDCV1x90_H */
+#endif
 

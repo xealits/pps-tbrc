@@ -1,7 +1,8 @@
-#ifndef __TDCV1x90OPCODES_H
-#define __TDCV1x90OPCODES_H
+#ifndef VMETDCV1x90OPCODES_H
+#define VMETDCV1x90OPCODES_H
 
-namespace tdcV1x90Opcodes {
+namespace VMETDCV1x90Opcodes
+{
   
   #define Opcode static const unsigned short
   
@@ -84,6 +85,6 @@ namespace tdcV1x90Opcodes {
   // TODO
 };
 
-#endif /* __TDCV1x90OPCODES_H */
+#endif
 
 

@@ -11,7 +11,7 @@
  * \brief class defining the VME bridge
  *  This class initializes the CAEN V1718 VME bridge in order to control the crate.
  */
-class bridgeV1718 {
+class VMEBridgeV1718 {
   public:
     /* device : /dev/xxx */
     /**
@@ -19,12 +19,12 @@ class bridgeV1718 {
      * \brief Constructor
      * \param[in] Device identifier on the VME crate
      */
-    bridgeV1718(const char *device);
+    VMEBridgeV1718(const char *device);
     /**
      * Bridge class destructor
      * \brief Destructor
      */
-    ~bridgeV1718();
+    ~VMEBridgeV1718();
     /**
      * Gives bhandle value
      * \brief Gets bhandle
