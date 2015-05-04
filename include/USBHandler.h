@@ -25,6 +25,7 @@ class USBHandler
     virtual ~USBHandler();
     
     void Init();
+    void Reset() const;
     
     void DumpDevice(libusb_device* dev, int verb=1, std::ostream& out=std::cout);
     

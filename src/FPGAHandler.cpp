@@ -5,7 +5,9 @@ FPGAHandler::FPGAHandler(int port, const char* dev) :
   fFilename(""), fIsFileOpen(false),
   fIsTDCInReadout(false)
 {
-  USBHandler::Init();
+  try {
+    USBHandler::Init();
+  } catch (Exception& e) { e.Dump(); }
   // Read Id code (0b10000100011100001101101011001110 = 0x8470DACE for HPTDCv1.3)
   for (unsigned int i=0; i<NUM_HPTDC; i++) {
     fTDC[i] = new TDC(i, this);

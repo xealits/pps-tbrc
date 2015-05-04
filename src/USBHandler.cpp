@@ -12,7 +12,14 @@ USBHandler::USBHandler(const unsigned int vendor_id, const unsigned int product_
 
 USBHandler::~USBHandler()
 {
-  if (fHandle) {
+  int ret;
+  if (fHandle!=NULL) {
+    if ((ret=libusb_release_interface(fHandle, 0))!=0) {
+      std::ostringstream o;
+      o << "Failed to release interface! Returned value: " << ret;
+      throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
+    }
+    libusb_close(fHandle);
     // ...
   }
   fIsStopping = true;
@@ -43,10 +50,35 @@ USBHandler::Init()
   Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump(std::cout);
 #endif
   fHandle = libusb_open_device_with_vid_pid(usb_context, fVendorId, fProductId);
-  //throw Exception(__PRETTY_FUNCTION__, "Error while opening the device!", Fatal);
+  if (fHandle==NULL) {
+    std::ostringstream o;
+    o << "Error while opening the device!\n\t"
+      << "Vendor: " << fVendorId << ", product: " << fProductId;
+    throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal); // FIXME
+  }
+  //DumpDevice(libusb_get_device(fHandle)); // FIXME
+  if ((ret=libusb_claim_interface(fHandle, 0))!=0) {
+    std::ostringstream o;
+    o << "Failed to claim interface! Returned value: " << ret;
+    throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
+  }
   
   libusb_free_device_list(all_devices, 1);
   libusb_exit(usb_context);
+}
+
+void
+USBHandler::Reset() const
+{
+  if (fHandle==NULL) {
+    throw Exception(__PRETTY_FUNCTION__, "Failed to reset the device!", JustWarning);
+  }
+  int ret;
+  if ((ret=libusb_reset_device(fHandle))!=0) {
+    std::ostringstream o;
+    o << "Failed to reset the device! Returned value: " << ret;
+    throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);    
+  }
 }
 
 void
