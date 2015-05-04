@@ -1,15 +1,14 @@
 #ifndef VMETDCV1x90_H 
 #define VMETDCV1x90_H
 
-#define DEBUG
+//#define DEBUG
 #include <iostream>
 #include <iomanip>
-#include <fstream>
+#include <sstream>
+
 #include <cmath>
 #include <string>
-#include <vector>
 #include <map>
-#include <list>
 
 #include <stdint.h>
 #include <string.h>
@@ -20,6 +19,8 @@
 #include "CAENVMEtypes.h"
 
 #include "VMETDCV1x90Opcodes.h"
+#include "TDCEvent.h"
+#include "Exception.h"
 
 typedef enum {
   MATCH_WIN_WIDTH        = 0,
@@ -96,7 +97,7 @@ typedef enum {
   MCSTBase                = 0x1010, // D16 R/W
   MCSTControl             = 0x1012, // D16 R/W
   ModuleReset             = 0x1014, // D16 W
-  SoftwareClear           = 0x1016, // D16 W
+  kSoftwareClear           = 0x1016, // D16 W
   EventCounter            = 0x101c, // D32 R
   EventStored             = 0x1020, // D16 R
   BLTEventNumber          = 0x1024, // D16 R/W
@@ -142,119 +143,116 @@ struct trailead_t {
   uint32_t ettt;
 };
 
-/*struct event_t {
-  int32_t id;
-  
-};*/
-
 class VMETDCV1x90
 {
   public:
-    VMETDCV1x90(int32_t, uint32_t, acq_mode, det_mode);
+    VMETDCV1x90(int32_t, uint32_t, acq_mode acqm=TRIG_MATCH, det_mode detm=TRAILEAD);
     ~VMETDCV1x90();
+    void SetVerboseLevel(unsigned short verb=0) { fVerb=verb; }
     
-    uint32_t getModel();
-    uint32_t getOUI();
-    uint32_t getSerNum();
-    bool checkConfiguration();
+    uint32_t GetModel();
+    uint32_t GetOUI();
+    uint32_t GetSerialNumber();
+    void CheckConfiguration();
     
-    void setPoI(uint16_t);
-    void setLSBTraileadEdge(trailead_edge_lsb);
-    void setAcquisitionMode(acq_mode);
-    bool setTriggerMatching();
-    bool isTriggerMatching();
-    bool setContinuousStorage();
-    void getFirmwareRev();
+    void SetPoI(uint16_t);
+    void SetLSBTraileadEdge(trailead_edge_lsb);
+    void SetAcquisitionMode(acq_mode);
+    bool SetTriggerMatching();
+    bool IsTriggerMatching();
+    bool SetContinuousStorage();
+    void GetFirmwareRev();
     
-    void setGlobalOffset(uint16_t,uint16_t);
-    glob_offs readGlobalOffset();
+    void SetGlobalOffset(uint16_t,uint16_t);
+    glob_offs ReadGlobalOffset();
     
-    void setRCAdjust(int,uint16_t);
-    uint16_t readRCAdjust(int);
+    void SetRCAdjust(int,uint16_t);
+    uint16_t ReadRCAdjust(int);
     
-    uint32_t getEventCounter();
-    uint16_t getEventStored();
+    uint32_t GetEventCounter();
+    uint16_t GetEventStored();
     
-    void setDetection(det_mode);
-    det_mode readDetection();
+    void SetDetection(det_mode);
+    det_mode ReadDetection();
     
-    void setTDCEncapsulation(bool);
-    bool getTDCEncapsulation();
-    void setTDCErrorMarks(bool);
-    //bool getTDCErrorMarks();
+    void SetTDCEncapsulation(bool);
+    bool GetTDCEncapsulation();
+    void SetTDCErrorMarks(bool);
+    //bool GetTDCErrorMarks();
     
-    void readResolution(det_mode);
-    void setPairModeResolution(int,int);
+    void ReadResolution(det_mode);
+    void SetPairModeResolution(int,int);
 
-    void setBLTEventNumberRegister(uint16_t);
-    uint16_t getBLTEventNumberRegister();
+    void SetBLTEventNumberRegister(uint16_t);
+    uint16_t GetBLTEventNumberRegister();
     
-    void setWindowWidth(uint16_t);
-    void setWindowOffset(int16_t);
+    void SetWindowWidth(uint16_t);
+    void SetWindowOffset(int16_t);
 
-    uint16_t readTrigConf(trig_conf);
+    uint16_t ReadTrigConf(trig_conf);
 
-    bool waitMicro(micro_handshake);
-    bool softwareClear();
-    bool softwareReset();
-    bool hardwareReset();
+    bool WaitMicro(micro_handshake);
+    bool SoftwareClear();
+    bool SoftwareReset();
+    bool HardwareReset();
     
-    bool getStatusRegister(stat_reg);
-    void setStatusRegister(stat_reg,bool);
-    bool getCtlRegister(ctl_reg);
-    void setCtlRegister(ctl_reg,bool);
+    bool GetStatusRegister(stat_reg);
+    void SetStatusRegister(stat_reg,bool);
+    bool GetCtlRegister(ctl_reg);
+    void SetCtlRegister(ctl_reg,bool);
     
-    void setETTT(bool);
-    bool getETTT();
+    void SetETTT(bool);
+    bool GetETTT();
     
-    bool getEvents(std::fstream *);
+    TDCEventCollection GetEvents();
 
-    bool isEventFIFOReady();
-    void setFIFOSize(uint16_t);
-    void readFIFOSize();
+    //bool IsEventFIFOReady();
+    void SetFIFOSize(uint16_t);
+    void ReadFIFOSize();
     
     // Close/Clean everything before exit
     void abort();
-
-   /*!\brief Write on register
-    *
-    * Write a word in the register
-    * \param[in] addr register
-    * \param[in] data word
-    * \return 0 on success
-    * \return -1 on error
-    */
-    int writeRegister(mod_reg,uint16_t*);
-    int writeRegister(mod_reg,uint32_t*);
+    
+    /**
+     * Write a 16-bit word in the register
+     * \brief Write on register
+     * \param[in] addr register
+     * \param[in] data word
+     */
+    void WriteRegister(mod_reg,uint16_t*);
+    /**
+     * Write a 32-bit word in the register
+     * \brief Write on register
+     * \param[in] addr register
+     * \param[in] data word
+     */
+    void WriteRegister(mod_reg,uint32_t*);
     /**
      * Read a 16-bit word in the register
      * \brief Read on register
      * \param[in] addr register
      * \param[out] data word
-     * \return 0 on success
-     * \return -1 on error
      */  
-    int readRegister(mod_reg,uint16_t*);
+    void ReadRegister(mod_reg,uint16_t*);
     /**
      * Read a 32-bit word in the register
      * \brief Read on register
      * \param[in] addr register
      * \param[out] data word
-     * \return 0 on success
-     * \return -1 on error
      */  
-    int readRegister(mod_reg,uint32_t*);
+    void ReadRegister(mod_reg,uint32_t*);
 
   private:
-    uint32_t baseaddr;
-    int32_t bhandle;
+    uint32_t fBaseAddr;
+    int32_t fHandle;
+    det_mode fDetMode;
+    unsigned short fVerb;
+    
     CVAddressModifier am; // Address modifier
     CVAddressModifier am_blt; // Address modifier (Block Transfert)
     
-    uint32_t* buffer;
-
-    std::vector<uint32_t> raw_events;
-  
+    uint32_t* fBuffer;
+      
     det_mode detm;
     acq_mode acqm;
     
@@ -267,8 +265,6 @@ class VMETDCV1x90
     std::string pair_lead_res[8]; 
     std::string pair_width_res[16];
     std::string trailead_edge_res[4];
-
-
 
 };
 

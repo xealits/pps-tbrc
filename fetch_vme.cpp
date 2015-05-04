@@ -47,37 +47,47 @@ int main(int argc, char *argv[]) {
  
   signal(SIGINT, CtrlC);
   
-  tdc = new VMETDCV1x90(bhandle,0x000d0000,TRIG_MATCH,TRAILEAD);
-  tdc->getFirmwareRev();
+  try {
+    tdc = new VMETDCV1x90(bhandle,0x000d0000,TRIG_MATCH,TRAILEAD);
+    tdc->GetFirmwareRev();
+    
+    // TDC configuration
+    tdc->SetWindowWidth(2040);
+    tdc->SetWindowOffset(-2045);
+    
+    tdc->WaitMicro(WRITE_OK);
+    //tdc->softwareClear(); //FIXME don't forget to erase
+    //std::cout << "Are header and trailer bytes sent in BLT? " << tdc->getTDCEncapsulation() << std::endl;
+    //FIXME: Need to check the user input
+   	out_file.open(argv[1],std::fstream::out | std::ios::binary );	
+    if (!out_file.is_open()) {
+      std::cerr << argv[0] << ": error opening file " << argv[1] << std::endl;
+      return -1;
+    }
+    file_header_t fh;
+    fh.magic = 0x47544B30; //ASCII: GTK0 
+    fh.run_id = 0;
+    fh.spill_id = 0;
+    
+    std::cout << std::endl << "*** Ready for acquisition! ***" << std::endl;
+    
+    out_file.write((char*)&fh, sizeof(file_header_t));
+    while (true) {
+      TDCEventCollection ec = tdc->GetEvents();
+      if (ec.size()==0) continue;
+      for (TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
+        out_file.write((char*)&(*e), sizeof(TDCEvent));
+      }
+    }
+    
+    out_file.close();
   
-  // TDC configuration
-  tdc->setWindowWidth(2040);
-  tdc->setWindowOffset(-2045);
-  
-  tdc->waitMicro(WRITE_OK);
-  //tdc->softwareClear(); //FIXME don't forget to erase
-  //std::cout << "Are header and trailer bytes sent in BLT? " << tdc->getTDCEncapsulation() << std::endl;
-  //FIXME: Need to check the user input
- 	out_file.open(argv[1],std::fstream::out | std::ios::binary );	
-  if (!out_file.is_open()) {
-    std::cerr << argv[0] << ": error opening file " << argv[1] << std::endl;
-    return -1;
+    delete tdc;
+  } catch (Exception& e) {
+    e.Dump();
   }
-  file_header_t fh;
-  fh.magic = 0x47544B30; //ASCII: GTK0 
-  fh.run_id = 0;
-  fh.spill_id = 0;
   
-  std::cout << std::endl << "*** Ready for acquisition! ***" << std::endl;
   
-  out_file.write((char*)&fh,sizeof(file_header_t));
-  while (true) {
-    tdc->getEvents(&out_file);
-  }
-  
-  out_file.close();
-  
-  delete tdc;
   delete bridge;
   return 0;
 }
