@@ -24,6 +24,7 @@
 
 #define SOCKET_ERROR(x) 10000+x
 #define MAX_WORD_LENGTH 5000
+#define MAX_SOCKET_ATTEMPTS 2
 
 /**
  * \defgroup Socket Socket communication objects

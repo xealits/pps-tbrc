@@ -26,7 +26,7 @@ FileReader::FileReader(std::string file)
     throw Exception(__PRETTY_FUNCTION__, "Can not read file header!", Fatal);
   }
   fFile.read((char*)&fHeader, sizeof(file_header_t));
-  if (fHeader.magic != 0x30535050) {
+  if (fHeader.magic!=0x30535050) {
     fFile.close();
     throw Exception(__PRETTY_FUNCTION__, "Wrong magic number!", Fatal);
   }

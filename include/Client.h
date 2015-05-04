@@ -30,6 +30,14 @@ class Client : public Socket
   
     /// Send a message to the master through the socket
     inline void Send(const Message& m) const { SendMessage(m); }
+    inline SocketMessage SendAndReceive(const SocketMessage& m, const MessageKey& a) const {
+      SocketMessage msg; int i = 0;
+      try {
+        SendMessage(m);
+        do { msg = FetchMessage(); i++; } while (msg.GetKey()!=a and i<MAX_SOCKET_ATTEMPTS);
+      } catch (Exception& e) { e.Dump(); throw e; }
+      return msg;
+    }
     /// Receive a socket message from the master
     void Receive();
     

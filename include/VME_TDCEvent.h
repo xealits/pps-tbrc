@@ -100,6 +100,10 @@ namespace VME
         if (GetType()!=TDCMeasurement or !IsTrailing()) return -1;
         return static_cast<uint32_t>(fWord&0x7FFFF);
       }
+      inline uint8_t GetStatus() const {
+        if (GetType()!=GlobalTrailer) return -1;
+        return static_cast<uint8_t>((fWord>>24)&0x7);
+      }
       /// Return error flags if an error condition has been detected
       inline uint16_t GetErrorFlags() const {
         if (GetType()!=TDCError) return -1;

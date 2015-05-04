@@ -80,11 +80,9 @@ Client::Receive()
   try {
     msg = FetchMessage();
   } catch (Exception& e) {
-    if (e.ErrorNumber()!=11000) // client has been disconnected
-      e.Dump();
-    else {
+    if (e.ErrorNumber()==11000) // client has been disconnected
       throw Exception(__PRETTY_FUNCTION__, "Some other socket asked for this client's disconnection. Obtemperating...", Fatal);
-    }
+    else e.Dump();
   }
   if (msg.GetKey()==MASTER_DISCONNECT) {
     throw Exception(__PRETTY_FUNCTION__, "Master disconnected!", Fatal);

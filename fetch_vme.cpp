@@ -1,6 +1,4 @@
-#include "VME_BridgeVx718.h"
-#include "VME_TDCV1x90.h"
-#include "VME_TDCEvent.h"
+#include "VMEReader.h"
 #include "FileConstants.h"
 
 #include <iostream>
@@ -10,16 +8,15 @@
 
 using namespace std;
 
-VME::BridgeVx718 *bridge;
-VME::TDCV1x90* tdc;
-std::fstream out_file;
+VMEReader* vme;
+fstream out_file;
 int gEnd = 0;
 
 void CtrlC(int aSig) {
   if (gEnd==0) {
     cout << endl << "[C-c] Trying a clean exit!" << endl;
     out_file.close();
-    tdc->abort();
+    vme->GetTDC()->abort();
   }
   else if (gEnd>=5) {
     cout << endl << "[C-c > 5 times] ... Forcing exit!" << endl;
@@ -29,43 +26,41 @@ void CtrlC(int aSig) {
 }
 
 int main(int argc, char *argv[]) {
-    
-  int32_t bhandle;
+  
   unsigned int num_events;
+  VME::TDCEventCollection ec;
+  string filename;
+  
   signal(SIGINT, CtrlC);
-
+  
+  file_header_t fh;
+  fh.magic = 0x30535050; // PPS0 in ASCII
+  fh.run_id = 0;
+  fh.spill_id = 0;
+  
   try {
-    bridge = new VME::BridgeVx718("/dev/usb/v1718_0", 1718);
-    bhandle = bridge->GetHandle();
-     
-    tdc = new VME::TDCV1x90(bhandle,0x000d0000, VME::TRIG_MATCH, VME::TRAILEAD);
-    tdc->GetFirmwareRev();
+    vme = new VMEReader("/dev/usb/v1718_0", 1718);
     
     // TDC configuration
-    tdc->SetWindowWidth(2040);
-    tdc->SetWindowOffset(-2045);
+    vme->GetTDC()->SetWindowWidth(2040);
+    vme->GetTDC()->SetWindowOffset(-2045);
+    vme->GetTDC()->WaitMicro(VME::WRITE_OK);
     
-    tdc->WaitMicro(VME::WRITE_OK);
-    //tdc->SoftwareClear(); //FIXME don't forget to erase
-    //std::cout << "Are header and trailer bytes sent in BLT? " << tdc->GetTDCEncapsulation() << std::endl;
-    //FIXME: Need to check the user input
-    std::string filename = GenerateFileName(0);
-    out_file.open(filename.c_str(), std::fstream::out | std::ios::binary );	
+    filename = GenerateFileName(0);
+    out_file.open(filename.c_str(), fstream::out | ios::binary );	
     if (!out_file.is_open()) {
-      std::cerr << argv[0] << ": error opening file " << argv[1] << std::endl;
-      return -1;
+      ostringstream o; o << "Error opening file " << filename;
+      throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
     }
-    file_header_t fh;
-    fh.magic = 0x47544B30; //ASCII: GTK0 
-    fh.run_id = 0;
-    fh.spill_id = 0;
     
-    std::cout << std::endl << "*** Ready for acquisition! ***" << std::endl;
+    fh.run_id = vme->GetRunNumber();
+    
+    cout << endl << "*** Ready for acquisition! ***" << endl;
     
     num_events = 0;
     out_file.write((char*)&fh, sizeof(file_header_t));
     while (true) {
-      VME::TDCEventCollection ec = tdc->GetEvents();
+      ec = vme->GetTDC()->GetEvents();
       if (ec.size()==0) continue;
       for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
         out_file.write((char*)&(*e), sizeof(VME::TDCEvent));
@@ -74,10 +69,9 @@ int main(int argc, char *argv[]) {
     }
     out_file.close();
     
-    std::cout << "Acquired " << num_events << " in this run" << std::endl;
+    cout << "Acquired " << num_events << " in this run" << endl;
   
-    delete tdc;
-    delete bridge;
+    delete vme;
   } catch (Exception& e) {
     e.Dump();
     return -1;

@@ -69,7 +69,6 @@ Messenger::AddClient()
     }
     // Send the client's unique identifier
     Send(SocketMessage(SET_CLIENT_ID, s.GetSocketId()), s.GetSocketId());
-    std::cout << "after sending the client id=" << s.GetSocketId() << "!" << std::endl;
     //SocketMessage(SET_CLIENT_ID, s.GetSocketId()).Dump();
   } catch (Exception& e) {
     e.Dump();
@@ -172,12 +171,13 @@ Messenger::Receive()
       try { m = SocketMessage(h_msg); } catch (Exception& e) {;}
     }
     else m = SocketMessage(msg.GetString());
-
     // Message was successfully decoded
     fNumAttempts = 0;
     
-    try { ProcessMessage(m, s->first); } catch (Exception& e) {
-      e.Dump();
+    try {
+      ProcessMessage(m, s->first);
+    } catch (Exception& e) {
+      if (e.ErrorNumber()==11001) break;
     }
   }
 }
@@ -198,13 +198,13 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     
     key = (sid==m.GetIntValue()) ? THIS_CLIENT_DELETED : OTHER_CLIENT_DELETED;
     DisconnectClient(m.GetIntValue(), key);
-    return;
+    throw Exception(__PRETTY_FUNCTION__, "Removing socket client", Info, 11001);
   }
   else if (m.GetKey()==PING_CLIENT) {
     int toping = m.GetIntValue();
     Send(SocketMessage(PING_CLIENT), toping);
     SocketMessage msg; int i=0;
-    do { msg = FetchMessage(toping); i++; } while (msg.GetKey()!=PING_ANSWER && i<2);
+    do { msg = FetchMessage(toping); i++; } while (msg.GetKey()!=PING_ANSWER && i<MAX_SOCKET_ATTEMPTS);
     Send(SocketMessage(PING_ANSWER, msg.GetValue()), sid);
   } 
   else if (m.GetKey()==GET_CLIENTS) {
@@ -220,21 +220,11 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     int i = 0; SocketType type;
     std::ostringstream os;
     for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++, i++) {
-      if (it->first==GetSocketId()) type = MASTER; // master (us)
-      else type = it->second;
-      /*else {
-        Send(SocketMessage(GET_CLIENT_TYPE), it->first);
-        SocketMessage msg; int i=0;
-        do { msg = FetchMessage(it->first); i++; } while (msg.GetKey()!=CLIENT_TYPE && i<2);
-        type = static_cast<SocketType>(msg.GetIntValue());
-      }*/
-      
+      type = (it->first==GetSocketId()) ? MASTER : it->second;
       if (i!=0) os << ";";
-      
       os << it->first << ",";
       if (it->first==GetSocketId()) os << "Master,";
       else os << "Client" << it->first << ",";
-      
       os << static_cast<int>(type);
     }
     try {
@@ -242,6 +232,17 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     } catch (Exception& e) {
       e.Dump();
     }
+  }
+  else if (m.GetKey()==GET_RUN_NUMBER) {
+    try {
+      Send(SocketMessage(RUN_NUMBER, static_cast<int>(time(NULL))), sid);
+    } catch (Exception& e) { e.Dump(); }
+  }
+  else {
+    try { Send(SocketMessage(INVALID_KEY), sid); } catch (Exception& e) { e.Dump(); }
+    std::ostringstream o;
+    o << "Received an invalid message: " << m.GetString();
+    throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
   }
 }
 
