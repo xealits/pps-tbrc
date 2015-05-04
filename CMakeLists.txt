@@ -17,6 +17,9 @@ add_executable(listener listener.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:
 add_executable(reader test/reader.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
 
 #find_package(libusb-1.0 REQUIRED)
-set(CMAKE_CXX_FLAGS "-lusb-1.0")
-add_executable(ppsFetch fetch.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
+#set(CMAKE_CXX_FLAGS "-lusb-1.0")
+set(CMAKE_CXX_FLAGS "-lusb-1.0 -lCAENVME -I$(TOP)/$(VMEd)/CAENVMELib -I$(TOP)/$(VMEd)/CAENVMETool -DLINUX")
+
+add_executable(ppsFetch2 fetch.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
+add_executable(ppsFetch fetch_vme.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
 

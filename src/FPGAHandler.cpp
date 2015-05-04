@@ -25,17 +25,7 @@ FPGAHandler::~FPGAHandler()
 void
 FPGAHandler::OpenFile()
 {
-  // Generate a random file name
-  srand(time(NULL));
-  const char az[] =
-    "0123456789"
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "abcdefghijklmnopqrstuvwxyz";
-  std::string filename; const size_t len = 5;
-  fFilename = "events_";
-  //for (size_t i=0; i<len; i++) { fFilename += az[rand()%(sizeof(az)-1)]; } //FIXME commented out for debugging purposes...
-  fFilename += ".dat";
-  
+  fFilename = GenerateFileName(5);
   std::cout << "Filename: " << fFilename << std::endl;
   
   fOutput.open(fFilename.c_str(), std::fstream::out|std::ios::binary);
