@@ -1,5 +1,5 @@
-#include "VMEBridgeV1718.h"
-#include "VMETDCV1x90.h"
+#include "VME_BridgeVx718.h"
+#include "VME_TDCV1x90.h"
 #include "TDCEvent.h"
 #include "FileConstants.h"
 
@@ -10,8 +10,8 @@
 
 using namespace std;
 
-VMEBridgeV1718 *bridge;
-VMETDCV1x90* tdc;
+VME::BridgeVx718 *bridge;
+VME::TDCV1x90* tdc;
 std::fstream out_file;
 int gEnd = 0;
 
@@ -31,20 +31,21 @@ void CtrlC(int aSig) {
 int main(int argc, char *argv[]) {
     
   int32_t bhandle;
+  unsigned int num_events;
   signal(SIGINT, CtrlC);
 
   try {
-    bridge = new VMEBridgeV1718("/dev/usb/v1718_0");
-    bhandle = bridge->GetBHandle();
+    bridge = new VME::BridgeVx718("/dev/usb/v1718_0", 1718);
+    bhandle = bridge->GetHandle();
      
-    tdc = new VMETDCV1x90(bhandle,0x000d0000,TRIG_MATCH,TRAILEAD);
+    tdc = new VME::TDCV1x90(bhandle,0x000d0000, VME::TRIG_MATCH, VME::TRAILEAD);
     tdc->GetFirmwareRev();
     
     // TDC configuration
     tdc->SetWindowWidth(2040);
     tdc->SetWindowOffset(-2045);
     
-    tdc->WaitMicro(WRITE_OK);
+    tdc->WaitMicro(VME::WRITE_OK);
     //tdc->SoftwareClear(); //FIXME don't forget to erase
     //std::cout << "Are header and trailer bytes sent in BLT? " << tdc->GetTDCEncapsulation() << std::endl;
     //FIXME: Need to check the user input
@@ -61,6 +62,7 @@ int main(int argc, char *argv[]) {
     
     std::cout << std::endl << "*** Ready for acquisition! ***" << std::endl;
     
+    num_events = 0;
     out_file.write((char*)&fh, sizeof(file_header_t));
     while (true) {
       TDCEventCollection ec = tdc->GetEvents();
@@ -68,9 +70,11 @@ int main(int argc, char *argv[]) {
       for (TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
         out_file.write((char*)&(*e), sizeof(TDCEvent));
       }
+      num_events += ec.size();
     }
-    
     out_file.close();
+    
+    std::cout << "Acquired " << num_events << " in this run" << std::endl;
   
     delete tdc;
     delete bridge;
