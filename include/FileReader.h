@@ -10,7 +10,7 @@
 #include "FileConstants.h"
 #include "Exception.h"
 
-#include "TDCEvent.h"
+#include "VME_TDCEvent.h"
 
 class FileReader
 {
@@ -20,7 +20,7 @@ class FileReader
     
     inline unsigned int GetNumTDCs() const { return fHeader.num_hptdc; }
     
-    inline TDCEvent GetNextEvent();
+    inline VME::TDCEvent GetNextEvent();
     
   private:
     std::ifstream fFile;

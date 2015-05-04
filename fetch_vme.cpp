@@ -1,6 +1,6 @@
 #include "VME_BridgeVx718.h"
 #include "VME_TDCV1x90.h"
-#include "TDCEvent.h"
+#include "VME_TDCEvent.h"
 #include "FileConstants.h"
 
 #include <iostream>
@@ -65,10 +65,10 @@ int main(int argc, char *argv[]) {
     num_events = 0;
     out_file.write((char*)&fh, sizeof(file_header_t));
     while (true) {
-      TDCEventCollection ec = tdc->GetEvents();
+      VME::TDCEventCollection ec = tdc->GetEvents();
       if (ec.size()==0) continue;
-      for (TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
-        out_file.write((char*)&(*e), sizeof(TDCEvent));
+      for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
+        out_file.write((char*)&(*e), sizeof(VME::TDCEvent));
       }
       num_events += ec.size();
     }

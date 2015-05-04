@@ -19,7 +19,7 @@
 #include "CAENVMEtypes.h"
 
 #include "VME_TDCV1x90Opcodes.h"
-#include "TDCEvent.h"
+#include "VME_TDCEvent.h"
 #include "Exception.h"
 
 namespace VME

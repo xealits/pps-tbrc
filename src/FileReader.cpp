@@ -41,11 +41,11 @@ FileReader::~FileReader()
   if (fFile.is_open()) fFile.close();
 }
 
-TDCEvent
+VME::TDCEvent
 FileReader::GetNextEvent()
 {
-  TDCEvent ev;
-  fFile.read((char*)&ev, sizeof(TDCEvent));
+  VME::TDCEvent ev;
+  fFile.read((char*)&ev, sizeof(VME::TDCEvent));
   if (fFile) return ev;
   return 0;
 }
