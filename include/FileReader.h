@@ -10,7 +10,6 @@
 #include "FileConstants.h"
 #include "Exception.h"
 
-#include "TDCSetup.h"
 #include "TDCEvent.h"
 
 class FileReader
@@ -20,14 +19,12 @@ class FileReader
     ~FileReader();
     
     inline unsigned int GetNumTDCs() const { return fHeader.num_hptdc; }
-    //inline TDCSetup GetTDCSetup() const { return fTDCSetup; }
     
     inline TDCEvent GetNextEvent();
     
   private:
     std::ifstream fFile;
     file_header_t fHeader;
-    std::vector<TDCSetup> fSetupCollection;
 };
 
 #endif

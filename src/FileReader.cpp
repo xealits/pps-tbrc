@@ -34,11 +34,6 @@ FileReader::FileReader(std::string file)
   s << "File written on: " << asctime(localtime(&(st.st_mtime)));
   Exception(__PRETTY_FUNCTION__, s.str(), Info).Dump();
   
-  for (unsigned int i=0; i<fHeader.num_hptdc; i++) {
-    TDCSetup set; fFile.read((char*)&set, sizeof(TDCSetup));
-    set.Dump();
-    fSetupCollection.push_back(set);
-  }
 }
 
 FileReader::~FileReader()
