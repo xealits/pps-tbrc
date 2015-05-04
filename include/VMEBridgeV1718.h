@@ -5,7 +5,10 @@
 
 #include "CAENVMElib.h"
 #include <iostream>
+#include <sstream>
 #include <map>
+
+#include "Exception.h"
 
 /*! \class Bridge
  * \brief class defining the VME bridge
@@ -30,22 +33,20 @@ class VMEBridgeV1718 {
      * \brief Gets bhandle
      * \return bhandle value
      */ 
-    int32_t getBHandle();
+    int32_t GetBHandle();
 
     /**
      * \brief Set and control the output lines
-     * \return 0 upon success, -1 otherwise
      */
-    int outputConf(CVOutputSelect output);
-    int outputOn(CVOutputSelect output);
-    int outputOff(CVOutputSelect output);
+    void OutputConf(CVOutputSelect output);
+    void OutputOn(CVOutputSelect output);
+    void OutputOff(CVOutputSelect output);
 
     /**
      * \brief Set and read the input lines
-     * \return 0 upon success, -1 otherwise
      */
-    int inputConf(CVInputSelect input);
-    int inputRead(CVInputSelect input);
+    void InputConf(CVInputSelect input);
+    void InputRead(CVInputSelect input);
 
     private:
     /// Map output lines [0,4] to corresponding register.

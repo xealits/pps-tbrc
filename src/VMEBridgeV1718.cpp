@@ -4,8 +4,7 @@ VMEBridgeV1718::VMEBridgeV1718(const char *device)
 {
   int dev = atoi(device); 
   if(CAENVME_Init(cvV1718, 0, dev, &bhandle) != cvSuccess) {
-    std::cout << "[VME] <Bridge::Bridge> ERROR: Opening the device" << std::endl;
-    //exit(1);
+    throw Exception(__PRETTY_FUNCTION__, "Error opening the VME bridge", Fatal);
   }
 #ifdef DEBUG
   std::cout << "[VME] <Bridge::Bridge> Debug: BHandle " << (int)bhandle << std::endl;
@@ -20,7 +19,7 @@ VMEBridgeV1718::VMEBridgeV1718(const char *device)
 }
 
 int32_t
-VMEBridgeV1718::getBHandle()
+VMEBridgeV1718::GetBHandle()
 {
 #ifdef DEBUG
   std::cout << "[VME] <Bridge::getBHandle> Debug: BHandle " << (int)bhandle << std::endl;
@@ -33,57 +32,58 @@ VMEBridgeV1718::~VMEBridgeV1718() {
 }
 
 // output := cvOutput[0,4] 
-int
-VMEBridgeV1718::outputConf(CVOutputSelect output)
+void
+VMEBridgeV1718::OutputConf(CVOutputSelect output)
 {
   if(CAENVME_SetOutputConf(bhandle,output,cvDirect,cvActiveHigh,cvManualSW) != cvSuccess) {
-    std::cout << "[VME] <Bridge::outputConf> ERROR: config of output " << (int)output << " failed" << std::endl; 	
-    return -1;
+    std::ostringstream o;
+    o << "Failed to configure output register #" << static_cast<int>(output);
+    throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
   }
-  return 0;
 }
 
 // output := cvOutput[0,4]
-int
-VMEBridgeV1718::outputOn(CVOutputSelect output)
+void
+VMEBridgeV1718::OutputOn(CVOutputSelect output)
 {
   if(CAENVME_SetOutputRegister(bhandle,map_port[output]) != cvSuccess) {
-    std::cout << "[VME] <Bridge::outputOn> ERROR: set register failed" << std::endl;
-    return -1;
+    std::ostringstream o;
+    o << "Failed to enable output register #" << static_cast<int>(output);
+    throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
   }
-  return 0;
 }
-int
-VMEBridgeV1718::outputOff(CVOutputSelect output)
+
+void
+VMEBridgeV1718::OutputOff(CVOutputSelect output)
 {
   if(CAENVME_ClearOutputRegister(bhandle,map_port[output]) != cvSuccess) {
-    std::cout << "[VME] <Bridge::outputOn> ERROR: set register failed" << std::endl;
-    return -1;
+    std::ostringstream o;
+    o << "Failed to disable output register #" << static_cast<int>(output);
+    throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
   }
-  return 0;
 }
 
 // input := cvInput[0,1]
-int
-VMEBridgeV1718::inputConf(CVInputSelect input)
+void
+VMEBridgeV1718::InputConf(CVInputSelect input)
 {
   if(CAENVME_SetInputConf(bhandle,input,cvDirect,cvActiveHigh) != cvSuccess) {
-    std::cout << "[VME] <Bridge::inputConf> ERROR: config of input " << (int)input << " failed" << std::endl;
-    return -1;
+    std::ostringstream o;
+    o << "Failed to configure input register #" << static_cast<int>(input);
+    throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
   }
-  return 0;
 }
 
-int
-VMEBridgeV1718::inputRead(CVInputSelect input)
+void
+VMEBridgeV1718::InputRead(CVInputSelect input)
 {
   unsigned int data;
   if(CAENVME_ReadRegister(bhandle,cvInputReg,&data) != cvSuccess) {
-    std::cout << "[VME] <Bridge::inputRead> ERROR: read input register failed" << std::endl;
-    return -1;
+    std::ostringstream o;
+    o << "Failed to read data input register #" << static_cast<int>(input);
+    throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
   }
   // decoding with CVInputRegisterBits
   std::cout << "Input line 0 status: " << ((data&cvIn0Bit) >> 0) << std::endl;
   std::cout << "Input line 1 status: " << ((data&cvIn1Bit) >> 1) << std::endl;
-  return 0;
 }

@@ -1,6 +1,7 @@
 #include "VMEBridgeV1718.h"
 #include "VMETDCV1x90.h"
 #include "TDCEvent.h"
+#include "FileConstants.h"
 
 #include <iostream>
 #include <fstream>
@@ -8,12 +9,6 @@
 #include <signal.h>
 
 using namespace std;
-
-struct file_header_t {
-  uint32_t magic;
-  uint32_t run_id;
-  uint32_t spill_id;
-};
 
 VMEBridgeV1718 *bridge;
 VMETDCV1x90* tdc;
@@ -34,20 +29,14 @@ void CtrlC(int aSig) {
 }
 
 int main(int argc, char *argv[]) {
-  
-  if(argc != 2) {
-    std::cout << "Usage: " << argv[0] << " FILENAME" << std::endl;
-    exit(-1);
-  }
-  //FIXME: Checks on the filename !!!
-  
+    
   int32_t bhandle;
-  bridge = new VMEBridgeV1718("/dev/usb/v1718_0");
-  bhandle = bridge->getBHandle();
- 
   signal(SIGINT, CtrlC);
-  
+
   try {
+    bridge = new VMEBridgeV1718("/dev/usb/v1718_0");
+    bhandle = bridge->GetBHandle();
+     
     tdc = new VMETDCV1x90(bhandle,0x000d0000,TRIG_MATCH,TRAILEAD);
     tdc->GetFirmwareRev();
     
@@ -56,10 +45,11 @@ int main(int argc, char *argv[]) {
     tdc->SetWindowOffset(-2045);
     
     tdc->WaitMicro(WRITE_OK);
-    //tdc->softwareClear(); //FIXME don't forget to erase
-    //std::cout << "Are header and trailer bytes sent in BLT? " << tdc->getTDCEncapsulation() << std::endl;
+    //tdc->SoftwareClear(); //FIXME don't forget to erase
+    //std::cout << "Are header and trailer bytes sent in BLT? " << tdc->GetTDCEncapsulation() << std::endl;
     //FIXME: Need to check the user input
-   	out_file.open(argv[1],std::fstream::out | std::ios::binary );	
+    std::string filename = GenerateFileName(0);
+    out_file.open(filename.c_str(), std::fstream::out | std::ios::binary );	
     if (!out_file.is_open()) {
       std::cerr << argv[0] << ": error opening file " << argv[1] << std::endl;
       return -1;
@@ -83,11 +73,11 @@ int main(int argc, char *argv[]) {
     out_file.close();
   
     delete tdc;
+    delete bridge;
   } catch (Exception& e) {
     e.Dump();
+    return -1;
   }
-  
-  
-  delete bridge;
+    
   return 0;
 }
