@@ -1,7 +1,8 @@
 #include "FPGAHandler.h"
 
 FPGAHandler::FPGAHandler(int port, const char* dev) :
-  Client(port), USBHandler(dev), fFilename(""), fIsFileOpen(false),
+  Client(port), /*USBHandler(dev),*/ USBHandler(FPGA_VENDOR_ID, FPGA_DEVICE_ID),
+  fFilename(""), fIsFileOpen(false),
   fIsTDCInReadout(false)
 {
   USBHandler::Init();
@@ -15,7 +16,7 @@ FPGAHandler::~FPGAHandler()
 {
   CloseFile();
   for (unsigned int i=0; i<NUM_HPTDC; i++) {
-    delete fTDC[i];
+    if (fTDC[i]) delete fTDC[i];
   }
 }
 
@@ -53,16 +54,27 @@ FPGAHandler::OpenFile()
   }
 }
 
-bool
-FPGAHandler::FetchEvent()
+int
+FPGAHandler::ReadBuffer()
 {
+  TDCEventCollection ev;
+  unsigned int nevts = 0;
+  
+  if (USBHandler::fIsStopping) {
+    std::cout << __PRETTY_FUNCTION__
+              << " USB handler in a stopping state! Finishing the readout."
+              << std::endl;
+    return -1;
+  }
+  
   for (unsigned int i=0; i<NUM_HPTDC; i++) {
-    TDCEventCollection ev = fTDC[i]->FetchEvents();
+    ev = fTDC[i]->FetchEvents();
+    nevts += ev.size();
     for (TDCEventCollection::iterator e=ev.begin(); e!=ev.end(); e++) {
       fOutput.write((char*)&(*e), sizeof(TDCEvent));
     }
   }
-  return true;
+  return nevts;
 }
 
 void

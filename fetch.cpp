@@ -11,9 +11,7 @@ int gEnd = 0;
 void CtrlC(int aSig) {
   if (gEnd==0) {
     cout << endl << "[C-c] Trying a clean exit!" << endl;
-    if (h) {
-      delete h; exit(0);
-    }
+    if (h) h->Stop();
   }
   else if (gEnd>=5) {
     cout << endl << "[C-c > 5 times] ... Forcing exit!" << endl;
@@ -39,11 +37,14 @@ int main(int argc, char* argv[])
   cout << " --> Output filename: " << h->GetFilename() << endl;
   cout << endl << "*** Ready for acquisition! ***" << endl << endl;
   
-  int ev = 0;
-  do {
-    ev++;
-  } while (h->FetchEvent());
-  cout << "Number of events collected: " << ev << endl;
+  int total_nevts = 0, nevts;
+  while (true) {
+    if (!h) return -1;
+    nevts = h->ReadBuffer();
+    if (nevts<0) break;
+    total_nevts += nevts;
+  }
+  cout << "Number of events collected: " << total_nevts << endl;
   
   delete h;
   return 0;

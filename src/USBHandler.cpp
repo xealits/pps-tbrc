@@ -1,8 +1,22 @@
 #include "USBHandler.h"
 
 USBHandler::USBHandler(const char* dev) :
-  fDevice(dev), fHandle(0)
+  fIsStopping(false), fDevice(dev), fVendorId(-1), fProductId(-1),
+  fHandle(0)
 {}
+
+USBHandler::USBHandler(const unsigned int vendor_id, const unsigned int product_id) :
+  fIsStopping(false), fDevice(""), fVendorId(vendor_id), fProductId(product_id),
+  fHandle(0)
+{}
+
+USBHandler::~USBHandler()
+{
+  if (fHandle) {
+    // ...
+  }
+  fIsStopping = true;
+}
 
 void
 USBHandler::Init()
@@ -21,15 +35,43 @@ USBHandler::Init()
     std::ostringstream o; o << "Error while extracting the list of USB devices. Returned value is " << ret;
     throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
   }
+#ifdef DEBUG
   std::ostringstream o; o << "Dumping the list of USB devices attached to this machine:\n\t";
   for (int i=0; i<ret; i++) {
     DumpDevice(all_devices[i], 1, o);
   }
   Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump(std::cout);
-  //fHandle = libusb_open_device_with_vid_pid(usb_context, 5118, 7424);
+#endif
+  fHandle = libusb_open_device_with_vid_pid(usb_context, fVendorId, fProductId);
+  //throw Exception(__PRETTY_FUNCTION__, "Error while opening the device!", Fatal);
   
   libusb_free_device_list(all_devices, 1);
   libusb_exit(usb_context);
+}
+
+void
+USBHandler::Write(uint32_t word, uint8_t size) const
+{
+#ifdef DEBUG
+  std::cout << __PRETTY_FUNCTION__ << " writing to USB:" << std::endl;
+  std::cout << " Size: " << static_cast<int>(size) << std::endl;
+  std::cout << " Word: 0x" << std::setw(4) << std::setfill('0') << std::hex << word << std::dec << " (";
+  for (unsigned int i=0; i<size; i++) std::cout << ((word>>i)&0x1);
+  std::cout << ")" << std::endl;
+#endif
+}
+
+
+uint32_t
+USBHandler::Fetch(uint8_t size) const
+{
+  uint32_t out = 0x0;
+  // ...
+#ifdef DEBUG
+  std::cout << __PRETTY_FUNCTION__ << " fetching from USB:" << std::endl;
+  std::cout << " Size: " << static_cast<int>(size) << std::endl;
+#endif
+  return (out&((1<<size)-1));
 }
 
 void

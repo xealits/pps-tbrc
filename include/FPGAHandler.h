@@ -9,6 +9,8 @@
 #include <fstream>
 
 #define NUM_HPTDC 4 // number of HPTDC per FPGA readout
+#define FPGA_VENDOR_ID 42
+#define FPGA_DEVICE_ID 12
 
 /**
  * \defgroup FPGA FPGA board control
@@ -27,7 +29,8 @@ class FPGAHandler : public Client, private USBHandler
   public:
     /// Bind to a FPGA through the USB protocol, and to the socket
     FPGAHandler(int port, const char* dev);
-    virtual ~FPGAHandler();
+    ~FPGAHandler();
+    void Stop() { USBHandler::fIsStopping = true; }
     
     /// Open an output file to store header/HPTDC events
     void OpenFile();
@@ -45,11 +48,9 @@ class FPGAHandler : public Client, private USBHandler
         fTDC[i]->SetSetupRegister(s);
       }
     }
-    bool FetchEvent();
-    
     bool ErrorState();
     
-    void ReadBuffer();
+    int ReadBuffer();
     /// Socket actor type retrieval method
     inline SocketType GetType() const { return DETECTOR; }
 
