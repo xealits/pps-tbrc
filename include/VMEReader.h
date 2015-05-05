@@ -25,6 +25,7 @@ class VMEReader : public Client
     /// Return the TDC
     void AddTDC(uint32_t address);
     VME::TDCV1x90* GetTDC(uint32_t address) {
+      if (fTDCCollection.count(address)==0) return 0;
       return fTDCCollection[address];
     }
     /// Ask the socket master a run number
