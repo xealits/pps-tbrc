@@ -12,6 +12,9 @@
 
 namespace VME
 {
+  /// Compatible bridge types
+  enum BridgeType { CAEN_V1718, CAEN_V2718 };
+  
   /**
    * This class initializes the CAEN V1718 VME bridge in order to control the crate.
    * \brief class defining the VME bridge
@@ -28,7 +31,7 @@ namespace VME
        * \param[in] device Device identifier on the VME crate
        * \param[in] type Device type (1718/2718)
        */
-      BridgeVx718(const char *device, unsigned int type);
+      BridgeVx718(const char *device, BridgeType type);
       /**
        * Bridge class destructor
        * \brief Destructor

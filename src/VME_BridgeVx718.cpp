@@ -2,15 +2,15 @@
 
 namespace VME
 {
-  BridgeVx718::BridgeVx718(const char *device, unsigned int type)
+  BridgeVx718::BridgeVx718(const char *device, BridgeType type)
   {
     int dev = atoi(device);
     CVBoardTypes tp;
     std::ostringstream o;
     
     switch (type) {
-      case 1718: tp = cvV1718; break;
-      case 2718: tp = cvV2718; break;
+      case CAEN_V1718: tp = cvV1718; break;
+      case CAEN_V2718: tp = cvV2718; break;
       default:
         o << "Invalid VME bridge type: " << type;
         throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
