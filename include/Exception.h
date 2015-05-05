@@ -5,6 +5,8 @@
 #include <string>
 #include <cstdlib> // exit()
 
+#define PrintInfo(m) Exception(__PRETTY_FUNCTION__, m, Info).Dump();
+
 /**
  * \brief Enumeration of exception severities
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>

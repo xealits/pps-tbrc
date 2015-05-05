@@ -63,7 +63,7 @@ namespace VME
   uint32_t
   TDCV1x90::GetModel()
   {
-    uint32_t model;
+    uint32_t model = 0x0;
     uint16_t data[3];
     mod_reg addr[3] = {ROMBoard0, ROMBoard1, ROMBoard2};
     try {
@@ -73,9 +73,10 @@ namespace VME
       model = (((data[2]&0xff) << 16)+((data[1]&0xff) << 8)+(data[0]&0xff));
     } catch (Exception& e) { e.Dump(); }
     
-    if (fVerb>1)
-      std::cout << "[VME] <TDC::GetModel> Debug: Model is " 
-                << std::dec << model << std::endl;
+    if (fVerb>1) {
+      std::ostringstream o; o << "Debug: Model is " << std::dec << model;
+      PrintInfo(o.str());
+    }
     
     return model;
   }
@@ -94,8 +95,9 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::GetOUI> Debug: OUI manufacturer number is " 
-                << std::dec << oui << std::endl;
+      std::ostringstream o;
+      o << "Debug: OUI manufacturer number is " << std::dec << oui;
+      PrintInfo(o.str());
     }
     
     return oui;
@@ -115,8 +117,8 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::GetSerialNumber> Debug: Serial number is " 
-                << std::dec << sn << std::endl;
+      std::ostringstream o; o << "Debug: Serial number is " << std::dec << sn;
+      PrintInfo(o.str());
     }
     
     return sn;
@@ -135,8 +137,9 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::GetFirmwareRev> Debug: Firmware revision is " 
-                << std::dec << fr[1] << "." << fr[0] << std::endl;
+      std::ostringstream o;
+      o << "Debug: Firmware revision is " << std::dec << fr[1] << "." << fr[0];
+      PrintInfo(o.str());
     }
   }
 
@@ -186,13 +189,14 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::SetLSBTraileadEdge> Debug: ";
+      std::stringstream o; o << "Debug: ";
       switch(conf){
-        case r800ps: std::cout << "800ps" << std::endl; break;
-        case r200ps: std::cout << "200ps" << std::endl; break;
-        case r100ps: std::cout << "100ps" << std::endl; break;
-        case r25ps: std::cout << "25ps" << std::endl; break;
+        case r800ps: o << "800ps"; break;
+        case r200ps: o << "200ps"; break;
+        case r100ps: o << "100ps"; break;
+        case r25ps: o << "25ps"; break;
       }
+      PrintInfo(o.str());
     }
   }
 
@@ -210,9 +214,11 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::SetGlobalOffset> Debug: " << std::endl;
-      std::cout << "             coarse counter offset: " << word1 << std::endl;
-      std::cout << "               fine counter offset: " << word2 << std::endl;
+      std::ostringstream o;
+      o << "Debug: " << std::endl
+        << "\tcoarse counter offset: " << word1 << std::endl
+        << "\t  fine counter offset: " << word2 << std::endl;
+      PrintInfo(o.str());
     }
   }
 
@@ -232,9 +238,11 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::ReadGlobalOffset> Debug: " << std::endl;
-      std::cout << "              coarse counter offset: " << data[0] << std::endl;
-      std::cout << "                fine counter offset: " << data[1] << std::endl;
+      std::ostringstream o;
+      o << "Debug: " << std::endl
+        << "\tcoarse counter offset: " << data[0] << std::endl
+        << "\t  fine counter offset: " << data[1] << std::endl;
+      PrintInfo(o.str());
     }
     glob_offs ret;
     ret.fine = data[1];
@@ -261,8 +269,8 @@ namespace VME
     WaitMicro(WRITE_OK);
     WriteRegister(Micro,&word); */
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::SetRCAdjust> Debug: TDC " << tdc
-                << ", value " << value << std::endl;
+      std::ostringstream o; o << "Debug: TDC " << tdc << ", value " << value;
+      PrintInfo(o.str());
     }
   }
 
@@ -279,17 +287,17 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC:ReadRCAdjust> Debug: value for TDC " << tdc << std::endl;
-      double i;
-      for(i=0;i<12;i++) {
-        std::cout << "   bit " << std::setw(2) << i << ": ";
+      std::ostringstream o; o << "Debug: value for TDC " << tdc << std::endl;
+      for(int i=0; i<12; i++) {
+        o << "\t  bit " << std::setw(2) << i << ": ";
         char bit = (data&(uint16_t)(std::pow(2,i)));
         switch(bit) {
-          case 0: std::cout << "contact open"; break;
-          case 1: std::cout << "contact closed"; break;
+          case 0: o << "contact open"; break;
+          case 1: o << "contact closed"; break;
         }
-        std::cout << std::endl;
+        if (i<11) o << std::endl;
       }
+      PrintInfo(o.str());
     }
     return data;
   }
@@ -307,13 +315,14 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::SetDetection> Debug: ";
+      std::ostringstream o; o << "Debug: ";
       switch(mode){
-        case PAIR: std::cout << "pair mode" << std::endl; break;
-        case OTRAILING: std::cout << "only trailing" << std::endl; break;
-        case OLEADING: std::cout << "only leading" << std::endl; break;
-        case TRAILEAD: std::cout << "trailing and leading" << std::endl; break;
+        case PAIR: o << "pair mode"; break;
+        case OTRAILING: o << "only trailing"; break;
+        case OLEADING: o << "only leading"; break;
+        case TRAILEAD: o << "trailing and leading"; break;
       }
+      PrintInfo(o.str());
     }
   }
 
@@ -330,13 +339,14 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC:ReadDetection> Debug: ";
+      std::ostringstream o; o << "Debug: ";
       switch(data){
-        case PAIR: std::cout << "pair mode" << std::endl; break;
-        case OTRAILING: std::cout << "only trailing" << std::endl; break;
-        case OLEADING: std::cout << "only leading" << std::endl; break;
-        case TRAILEAD: std::cout << "trailing and leading" << std::endl; break;
+        case PAIR: o << "pair mode"; break;
+        case OTRAILING: o << "only trailing"; break;
+        case OLEADING: o << "only leading"; break;
+        case TRAILEAD: o << "trailing and leading"; break;
       }
+      PrintInfo(o.str());
     }
     return (det_mode)data;
   }
@@ -397,7 +407,7 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC:ReadResolution> Debug: ";
+      std::cout << __PRETTY_FUNCTION__ << " Debug: ";
       switch(det) {
         case PAIR: 
           std::cout << "(pair mode) leading edge res.: " << pair_lead_res[data&0x7]
@@ -437,16 +447,15 @@ namespace VME
     acqm = mode;
     switch(mode){
       case CONT_STORAGE:
-        if (!(SetContinuousStorage()))
-          std::cerr << "[VME] <TDC::SetContinuousStorage> ERROR: while entering the continuous storage mode" << std::endl;
+        if (!SetContinuousStorage())
+          throw Exception(__PRETTY_FUNCTION__, "Error while entering the continuous storage mode", Fatal);
         break;
       case TRIG_MATCH:
-        if (!(SetTriggerMatching()))
-          std::cerr << "[VME] <TDC::SetTriggerMatching> ERROR: while entering the trigger matching mode" << std::endl;
+        if (!SetTriggerMatching())
+          throw Exception(__PRETTY_FUNCTION__, "Error while entering the trigger matching mode", Fatal);
         break;
       default:
-        std::cerr << "[VME] <TDC> ERROR: Wrong acquisition mode" << std::endl;
-        break;
+        throw Exception(__PRETTY_FUNCTION__, "Wrong acquisition mode", Fatal);
     }
   }
 
@@ -461,8 +470,7 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::SetTriggerMatching> Debug: trigger matching mode"
-                << std::endl;
+      PrintInfo("Debug: trigger matching mode");
     }
     return true;
   }
@@ -484,14 +492,14 @@ namespace VME
       ReadRegister(Micro,&data);
     } catch (Exception& e) { e.Dump(); }
     if (fVerb>1) {  
-      std::cout << "[VME] <TDC::isTriggerMatching> Debug: value: "
-          << data << " (";
+      std::ostringstream o; o << "Debug: value: " << data << " (";
       switch(data) {
-        case 0: std::cout << "continuous storage"; break;
-        case 1: std::cout << "trigger matching"; break;
-        default: std::cout << "wrong answer!"; break;
+        case 0: o << "continuous storage"; break;
+        case 1: o << "trigger matching"; break;
+        default: o << "wrong answer!"; break;
       }
-      std::cout << ")" << std::endl;
+      o << ")";
+      PrintInfo(o.str());
     }
     return (bool)data;
   }
@@ -506,7 +514,7 @@ namespace VME
       WaitMicro(WRITE_OK); } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::SetContinuousStorage> Debug: continuous storage mode" << std::endl;
+      PrintInfo("Debug: continuous storage mode");
     }
     return true;
   }
@@ -609,8 +617,6 @@ namespace VME
       case 256: word=7; break;
       default: exit(0);
     }
-    std::cout << "[VME] <TDC::WriteFIFOSize> Debug: WRITE_FIFO_SIZE: "
-              << word << std::endl;
     uint16_t opcode = TDCV1x90Opcodes::SET_FIFO_SIZE;
     try { 
       WaitMicro(WRITE_OK);
@@ -620,8 +626,8 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::WriteFIFOSize> Debug: WRITE_FIFO_SIZE: "
-                << word << std::endl;
+      std::ostringstream o; o << "Debug: WRITE_FIFO_SIZE: " << word;
+      PrintInfo(o.str());
     }
   }
 
@@ -638,8 +644,8 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::ReadFIFOSize> Debug: READ_FIFO_SIZE: "
-                << std::dec << std::pow(2,data+1) << std::endl;
+      std::ostringstream o; o << "Debug: READ_FIFO_SIZE: " << std::dec << std::pow(2,data+1);
+      PrintInfo(o.str());
     }
   }
 
@@ -663,8 +669,7 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::SetTDCEncapsulation> Debug: Enabled? "
-                << mode << std::endl;
+      std::ostringstream o; o << "Debug: Enabled? " << mode; PrintInfo(o.str());
     }
   }
 
@@ -681,8 +686,8 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::GetTDCEncapsulation> Debug: READ_HEAD_TRAILER: "
-                << enc << std::endl;
+      std::ostringstream o; o << "Debug: READ_HEAD_TRAILER: " << enc;
+      PrintInfo(o.str());
     }
     return enc;
   }
@@ -721,8 +726,7 @@ namespace VME
     WriteRegister(Micro,&opcode);
     
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::SetTDCErrorMarks> Debug: Enabled? "
-                << mode << std::endl;
+      std::ostringstream o; o << "Debug: Enabled? " << mode; PrintInfo(o.str());
     }
   }
 
@@ -735,8 +739,7 @@ namespace VME
   {
     try { WriteRegister(BLTEventNumber,&value); } catch (Exception& e) { e.Dump(); }
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::SetBLTEventNumberRegister> Debug: value: "
-                << value << std::endl;
+      std::ostringstream o; o << "Debug: value: " << value; PrintInfo(o.str());
     }
   }
 
@@ -746,8 +749,7 @@ namespace VME
     uint16_t value;
     try { ReadRegister(BLTEventNumber,&value); } catch (Exception& e) { e.Dump(); }
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::GetBLTEventNumberRegister> Debug: value: "
-                << value << std::endl;
+      std::ostringstream o; o << "Debug: value: " << value; PrintInfo(o.str());
     }
     return value;
   }
@@ -758,8 +760,7 @@ namespace VME
     SetCtlRegister(EXTENDED_TRIGGER_TIME_TAG_ENABLE,mode);
     outBufTDCTTT = mode;
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::SetETTT> Debug: Enabled? "
-                << mode << std::endl;
+      std::ostringstream o; o << "Debug: Enabled? " << mode; PrintInfo(o.str());
     }
   }
 
@@ -770,7 +771,7 @@ namespace VME
   }
 
   TDCEventCollection
-  TDCV1x90::GetEvents()
+  TDCV1x90::FetchEvents()
   {
     TDCEventCollection ec;
     // Start Readout (check if BERR is set to 0)
@@ -789,7 +790,7 @@ namespace VME
     finished = ((ret==cvSuccess)||(ret==cvBusError)||(ret==cvCommError)); //FIXME investigate...
     if (finished && gEnd) {
       if (fVerb>1) {
-        std::cout << "[VME] <TDC::GetEvents> Debug: Exit requested!" << std::endl;
+        PrintInfo("Debug: Exit requested!");
       }
       exit(0);
     }
@@ -809,7 +810,7 @@ namespace VME
   TDCV1x90::abort()
   {
     if (fVerb>1) {
-      std::cout << "[VME] <TDC::abort> Debug: received abort signal" << std::endl;
+      PrintInfo("Debug: received abort signal");
     }
     // Raise flag
     gEnd = true;

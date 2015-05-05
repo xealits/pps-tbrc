@@ -212,7 +212,7 @@ namespace VME
       void SetETTT(bool);
       bool GetETTT();
       
-      TDCEventCollection GetEvents();
+      TDCEventCollection FetchEvents();
 
       //bool IsEventFIFOReady();
       void SetFIFOSize(uint16_t);

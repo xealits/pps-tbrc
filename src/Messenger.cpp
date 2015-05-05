@@ -87,7 +87,7 @@ Messenger::DisconnectClient(int sid, MessageKey key, bool force)
   }
   std::ostringstream o; o << "Disconnecting client # " << sid;
   if (type==WEBSOCKET_CLIENT) o << " (web socket)";
-  Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump();
+  PrintInfo(o.str());
   
   if (type==WEBSOCKET_CLIENT) {
     try {

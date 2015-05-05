@@ -60,8 +60,8 @@ int main(int argc, char *argv[]) {
     num_events = 0;
     out_file.write((char*)&fh, sizeof(file_header_t));
     while (true) {
-      ec = vme->GetTDC()->GetEvents();
-      if (ec.size()==0) continue;
+      ec = vme->GetTDC()->FetchEvents();
+      if (ec.size()==0) continue; // no events were fetched
       for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
         out_file.write((char*)&(*e), sizeof(VME::TDCEvent));
       }

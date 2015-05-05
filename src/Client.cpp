@@ -96,7 +96,7 @@ Client::Receive()
   else if (msg.GetKey()==PING_CLIENT) {
     ostringstream os; os << "Pong. My name is " << GetSocketId() << " and I feel fine, thank you!";
     Send(SocketMessage(PING_ANSWER, os.str()));
-    Exception(__PRETTY_FUNCTION__, "Got a ping, answering...", Info).Dump();
+    PrintInfo("Got a ping, answering...");
   } 
   else if (msg.GetKey()==CLIENTS_LIST) {
     VectorValue vals = msg.GetVectorValue();
@@ -105,7 +105,7 @@ Client::Receive()
       if (i!=0) o << ", ";
       o << *v;
     }
-    Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump();
+    PrintInfo(o.str());
   }
   else {
     ParseMessage(msg);
