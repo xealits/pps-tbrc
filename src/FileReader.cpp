@@ -19,7 +19,7 @@ FileReader::FileReader(std::string file)
     fFile.close();
     throw Exception(__PRETTY_FUNCTION__, s.str(), Fatal);
   }
-  int data_payload_size = st.st_size-sizeof(file_header_t);
+  //int data_payload_size = st.st_size-sizeof(file_header_t);
   
   if (!fFile.good()) {
     fFile.close();

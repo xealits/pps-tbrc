@@ -22,6 +22,8 @@
 #include "VME_TDCEvent.h"
 #include "Exception.h"
 
+#define TDC_ACQ_STOP 20000
+
 namespace VME
 {
   typedef enum {

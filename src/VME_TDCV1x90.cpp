@@ -773,6 +773,8 @@ namespace VME
   TDCEventCollection
   TDCV1x90::FetchEvents()
   {
+    if (gEnd)
+      throw Exception(__PRETTY_FUNCTION__, "Abort state detected... quitting", JustWarning, TDC_ACQ_STOP);
     TDCEventCollection ec;
     // Start Readout (check if BERR is set to 0)
     // Nw words are transmitted until the global TRAILER

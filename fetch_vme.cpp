@@ -14,7 +14,6 @@ int gEnd = 0;
 
 void CtrlC(int aSig) {
   if (gEnd==0) { cout << endl << "[C-c] Trying a clean exit!" << endl;
-    out_file.close();
     vme->Abort();
   }
   else if (gEnd>=5) { cout << endl << "[C-c > 5 times] ... Forcing exit!" << endl;
@@ -38,7 +37,8 @@ int main(int argc, char *argv[]) {
   
   try {
     bool with_socket = false;
-    vme = new VMEReader("/dev/usb/v1718_0", VME::CAEN_V1718, with_socket);
+    //vme = new VMEReader("/dev/usb/v1718_0", VME::CAEN_V1718, with_socket);
+    vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
     
     fh.run_id = vme->GetRunNumber();
     
@@ -74,6 +74,11 @@ int main(int argc, char *argv[]) {
   
     delete vme;
   } catch (Exception& e) {
+    if (e.ErrorNumber()==TDC_ACQ_STOP) {
+      if (out_file.is_open()) out_file.close();
+      cout << endl << "*** Acquisition stopped! ***" << endl;
+      return 0;
+    }
     e.Dump();
     return -1;
   }

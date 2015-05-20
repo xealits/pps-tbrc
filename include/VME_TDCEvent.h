@@ -40,45 +40,45 @@ namespace VME
       }
       /// Programmed identifier of master TDC providing the event
       inline uint8_t GetTDCId() const {
-        if (GetType()!=TDCHeader and GetType()!=TDCTrailer and GetType()!=TDCError) return -1;
+        if (GetType()!=TDCHeader and GetType()!=TDCTrailer and GetType()!=TDCError) return 0;
         return static_cast<uint8_t>((fWord>>24)&0x3);
       }
       /// Event identifier from event counter
       inline uint16_t GetEventId() const {
-        if (GetType()!=TDCHeader and GetType()!=TDCTrailer) return -1;
+        if (GetType()!=TDCHeader and GetType()!=TDCTrailer) return 0;
         return static_cast<uint16_t>((fWord>>12)&0xFFF);
       }
       /// Total number of words in event (including headers and trailers)
       inline uint16_t GetWordCount() const {
-        if (GetType()!=TDCTrailer) return -1;
+        if (GetType()!=TDCTrailer) return 0;
         return static_cast<uint16_t>(fWord&0xFFF);
       }
       inline uint8_t GetGeo() const {
-        if (GetType()!=TDCTrailer) return -1;
+        if (GetType()!=TDCTrailer) return 0;
         return static_cast<uint8_t>(fWord&0x1F);
       }
       inline uint8_t GetChannelId() const {
-        if (GetType()!=TDCMeasurement) return -1;
+        if (GetType()!=TDCMeasurement) return 0;
         return static_cast<uint8_t>((fWord>>19)&0x7F);
       }
       /// Total number of events
       inline uint32_t GetEventCount() const {
-        if (GetType()!=TDCTrailer) return -1;
+        if (GetType()!=TDCTrailer) return 0;
         return static_cast<uint32_t>((fWord>>5)&0x3FFFF);
       }
       /// Bunch identifier of trigger (or trigger time tag)
       inline uint16_t GetBunchId() const {
-        if (GetType()!=TDCHeader) return -1;
+        if (GetType()!=TDCHeader) return 0;
         return static_cast<uint16_t>(fWord&0xFFF);
       }
       /// Are we dealing with a trailing or a leading measurement?
       inline bool IsTrailing() const {
-        if (GetType()!=TDCMeasurement) return -1;
+        if (GetType()!=TDCMeasurement) return 0;
         return static_cast<bool>((fWord>>26)&0x1);
       }
       /// Extended trigger time tag
       inline uint32_t GetETTT() const {
-        if (GetType()!=ETTT) return -1;
+        if (GetType()!=ETTT) return 0;
         return static_cast<uint32_t>(fWord&0x3FFFFFF);
       }
       /**
@@ -86,27 +86,27 @@ namespace VME
        * \param[in] pair Are we dealing with a pair measurement?
        */
       inline uint32_t GetLeadingTime(bool pair=false) const {
-        if (GetType()!=TDCMeasurement or IsTrailing()) return -1;
+        if (GetType()!=TDCMeasurement or IsTrailing()) return 0;
         if (pair) return static_cast<uint32_t>(fWord&0xFFF);
         else return static_cast<uint32_t>(fWord&0x7FFFF);
       }
       /// Width of pulse in programmed time resolution
       inline uint8_t GetWidth() const {
-        if (GetType()!=TDCMeasurement) return -1;
+        if (GetType()!=TDCMeasurement) return 0;
         return static_cast<uint8_t>((fWord>>12)&0x7F);
       }
       /// Trailing edge measurement in programmed time resolution
       inline uint32_t GetTrailingTime() const {
-        if (GetType()!=TDCMeasurement or !IsTrailing()) return -1;
+        if (GetType()!=TDCMeasurement or !IsTrailing()) return 0;
         return static_cast<uint32_t>(fWord&0x7FFFF);
       }
       inline uint8_t GetStatus() const {
-        if (GetType()!=GlobalTrailer) return -1;
+        if (GetType()!=GlobalTrailer) return 0;
         return static_cast<uint8_t>((fWord>>24)&0x7);
       }
       /// Return error flags if an error condition has been detected
       inline uint16_t GetErrorFlags() const {
-        if (GetType()!=TDCError) return -1;
+        if (GetType()!=TDCError) return 0;
         return static_cast<uint16_t>(fWord&0x7FFF);
       }
       
