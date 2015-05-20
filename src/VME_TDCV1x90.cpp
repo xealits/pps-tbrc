@@ -290,7 +290,7 @@ namespace VME
       std::ostringstream o; o << "Debug: value for TDC " << tdc << std::endl;
       for(int i=0; i<12; i++) {
         o << "\t  bit " << std::setw(2) << i << ": ";
-        char bit = (data&(uint16_t)(std::pow(2,i)));
+        char bit = ((data>>i)&0x1);
         switch(bit) {
           case 0: o << "contact open"; break;
           case 1: o << "contact closed"; break;
@@ -553,8 +553,8 @@ namespace VME
     try { 
       ReadRegister(Status,&buff);
       switch(value) {
-        case true: buff+=std::pow(2,(double)reg); break;
-        case false: buff-=std::pow(2,(double)reg); break;
+        case true: buff+=(1<<reg); break;
+        case false: buff-=(1<<reg); break;
       }
       WriteRegister(Status,&buff);
     } catch (Exception& e) { e.Dump(); }
@@ -578,8 +578,8 @@ namespace VME
     try {
       ReadRegister(Control,&buff);
       switch(value) {
-        case true: buff+=std::pow(2,(double)reg); break;
-        case false: buff-=std::pow(2,(double)reg); break;
+        case true: buff+=(1<<reg); break;
+        case false: buff-=(1<<reg); break;
       }
       WriteRegister(Control,&buff);
     } catch (Exception& e) { e.Dump(); }
@@ -644,7 +644,7 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::ostringstream o; o << "Debug: READ_FIFO_SIZE: " << std::dec << std::pow(2,data+1);
+      std::ostringstream o; o << "Debug: READ_FIFO_SIZE: " << std::dec << (1<<(data+1));
       PrintInfo(o.str());
     }
   }
