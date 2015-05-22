@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(PPS_TB_RC)
 
-set(CAEN_LOCATION "/home/ppstb/external/CAENVMELib-2.41")
+set(CAEN_LOCATION "/opt/xdaq/lib")
 set(GCC_COMPILE_FLAGS "-Wall -fPIC -O2")
 add_definitions(${GCC_COMPILE_FLAGS})
 
@@ -18,10 +18,10 @@ add_executable(listener listener.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:
 add_executable(reader test/reader.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
 
 # CAEN stuff
-include_directories("${CAEN_LOCATION}/include")
-link_directories("${CAEN_LOCATION}/lib")
+add_library(caen SHARED IMPORTED)
+set_property(TARGET caen PROPERTY IMPORTED_LOCATION "${CAEN_LOCATION}/libCAENVME.so")
 set(CMAKE_CXX_FLAGS "-DLINUX")
 set(CMAKE_CXX_LINK_FLAGS "-lCAENVME -Wl")
 
 add_executable(ppsFetch fetch_vme.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
-
+target_link_libraries(ppsFetch caen)
