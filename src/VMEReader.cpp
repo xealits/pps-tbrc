@@ -11,7 +11,6 @@ VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
 
 VMEReader::~VMEReader()
 {
-  //delete fTDC;
   delete fBridge;
 }
 

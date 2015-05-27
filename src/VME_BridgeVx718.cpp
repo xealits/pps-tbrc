@@ -6,19 +6,43 @@ namespace VME
   {
     int dev = atoi(device);
     CVBoardTypes tp;
+    CVErrorCodes ret; 
     std::ostringstream o;
-    
+   
+    char rel[20];
+    CAENVME_SWRelease(rel);
+    o.str("");
+    o << "Initializing the VME bridge\n\t"
+      << "CAEN library release: " << rel;
+    PrintInfo(o.str());
+
     switch (type) {
       case CAEN_V1718: tp = cvV1718; break;
       case CAEN_V2718: tp = cvV2718; break;
       default:
+        o.str("");
         o << "Invalid VME bridge type: " << type;
         throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
     }
-    
-    if (CAENVME_Init(tp, 0, dev, &fHandle)!=cvSuccess) {
-      throw Exception(__PRETTY_FUNCTION__, "Error opening the VME bridge", Fatal);
+   
+    ret = CAENVME_Init(tp, 0x0, dev, &fHandle);
+    if (ret!=cvSuccess) {
+      o.str("");
+      o << "Error opening the VME bridge!\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(ret);
+      throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
     }
+
+    ret = CAENVME_BoardFWRelease(fHandle, rel);
+    if (ret!=cvSuccess) {
+      o.str("");
+      o << "Failed to retrieve the board FW release!\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(ret);
+      throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
+    }
+    o.str("");
+    o << "Bridge firmware version: " << rel;
+    PrintInfo(o.str());
     
     //Map output lines [0,4] to corresponding register.
     fPortMapping[cvOutput0] = cvOut0Bit;
@@ -26,10 +50,29 @@ namespace VME
     fPortMapping[cvOutput2] = cvOut2Bit;
     fPortMapping[cvOutput3] = cvOut3Bit;
     fPortMapping[cvOutput4] = cvOut4Bit;
+
+    CheckConfiguration();
   }
 
-  BridgeVx718::~BridgeVx718() {
+  BridgeVx718::~BridgeVx718()
+  {
     CAENVME_End(fHandle);
+  }
+
+  void
+  BridgeVx718::CheckConfiguration() const
+  {
+    CVErrorCodes ret;
+    CVDisplay config;
+    std::ostringstream o;
+    ret = CAENVME_ReadDisplay(fHandle, &config);
+    if (ret!=cvSuccess) {
+      o.str("");
+      o << "Failed to retrieve configuration displayed on\n\t"
+        << "module's front panel\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(ret);
+      throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
+    }
   }
 
   // output := cvOutput[0,4] 

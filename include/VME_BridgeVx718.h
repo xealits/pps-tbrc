@@ -37,12 +37,14 @@ namespace VME
        * \brief Destructor
        */
       ~BridgeVx718();
+
       /**
        * Gives bhandle value
        * \brief Gets bhandle
        * \return bhandle value
        */ 
       inline int32_t GetHandle() const { return fHandle; }
+      void CheckConfiguration() const;
 
       /**
        * \brief Set and control the output lines

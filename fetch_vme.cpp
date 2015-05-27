@@ -43,8 +43,10 @@ int main(int argc, char *argv[]) {
     fh.run_id = vme->GetRunNumber();
     
     // TDC configuration
-    vme->AddTDC(0x000d0000);
-    tdc = vme->GetTDC(0x000d0000);
+    const uint16_t tdc_address = 0x000d0000;
+    //const uint16_t tdc_address = 0x000b0000;
+    vme->AddTDC(tdc_address);
+    tdc = vme->GetTDC(tdc_address);
     tdc->SetWindowWidth(2040);
     tdc->SetWindowOffset(-2045);
     tdc->WaitMicro(VME::WRITE_OK);
