@@ -803,8 +803,9 @@ namespace VME
     }
     
     for (i=0; i<count; i++) { // FIXME need to use the knowledge of the TDCEvent behaviour there...
-      if ((fBuffer[i]>>27)==0x18) continue; // Filter out filler data
-      ec.push_back(TDCEvent(fBuffer[i]));
+      TDCEvent ev(fBuffer[i]);
+      if (ev.GetType()==TDCEvent::Filler) continue; // Filter out filler data
+      ec.push_back(ev);
     }
     return ec;
   }
