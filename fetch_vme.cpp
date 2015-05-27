@@ -4,6 +4,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <iomanip>
+#include <ctime>
 #include <signal.h>
 
 using namespace std;
@@ -58,7 +60,9 @@ int main(int argc, char *argv[]) {
       throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
     }
     
-    cout << endl << "*** Ready for acquisition! ***" << endl;
+    std::time_t t = std::time(0);
+    cout << endl << "*** Ready for acquisition! ***" << endl
+         << "Local time: " << asctime(std::localtime(&t));
     
     num_events = 0;
     out_file.write((char*)&fh, sizeof(file_header_t));
@@ -78,7 +82,10 @@ int main(int argc, char *argv[]) {
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
       if (out_file.is_open()) out_file.close();
-      cout << endl << "*** Acquisition stopped! ***" << endl;
+      std::time_t t = std::time(0);
+      cout << endl << "*** Acquisition stopped! ***" << endl
+           << "Local time: " << asctime(std::localtime(&t))
+           << endl;
       return 0;
     }
     e.Dump();

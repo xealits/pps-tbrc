@@ -794,7 +794,8 @@ namespace VME
       if (fVerb>1) {
         PrintInfo("Debug: Exit requested!");
       }
-      exit(0);
+      //exit(0);
+      throw Exception(__PRETTY_FUNCTION__, "Abort state detected... quitting", JustWarning, TDC_ACQ_STOP);
     }
     if (acqm!=TRIG_MATCH) {
       std::ostringstream o; o << "Wrong acquisition mode: " << acqm;
