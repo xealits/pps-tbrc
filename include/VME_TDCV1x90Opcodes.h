@@ -71,19 +71,41 @@ namespace VME
     
     Opcode SET_GLOB_OFFS      (0x5000);
     Opcode READ_GLOB_OFFS     (0x5100);
-    // TODO
+    Opcode SET_ADJUST_CH      (0x5200);
+    Opcode READ_ADJUST_CH     (0x5200);
     Opcode SET_RC_ADJ         (0x5400);
     Opcode READ_RC_ADJ        (0x5500);
     Opcode SAVE_RC_ADJ        (0x5600);
 
     // Miscellaneous
-    // TODO
+
+    Opcode READ_TDC_ID        (0x6000);
+    Opcode READ_MICRO_REV     (0x6100);
+    Opcode RESET_DLL_PLL      (0x6200);
     
     // Advanced
-    // TODO
+
+    Opcode WRITE_SETUP_REG    (0x7000);
+    Opcode READ_SETUP_REG     (0x7100);
+    Opcode UPDATE_SETUP_REG   (0x7200);
+    Opcode DEFAULT_SETUP_REG  (0x7300);
+    Opcode READ_ERROR_STATUS  (0x7400);
+    Opcode READ_DLL_LOCK      (0x7500);
+    Opcode READ_STATUS_STREAM (0x7600);
+    Opcode UPDATE_SETUP_TDC   (0x7700);
     
     // Debug and test
-    // TODO
+    
+    Opcode WRITE_EEPROM       (0xc000);
+    Opcode READ_EEPROM        (0xc100);
+    Opcode REV_DATE_MICRO_FW  (0xc200);
+    Opcode WRITE_SPARE        (0xc300);
+    Opcode READ_SPARE         (0xc400);
+    Opcode ENABLE_TEST_MODE   (0xc500);
+    Opcode DISABLE_TEST_MODE  (0xc600);
+    Opcode SET_TDC_TSET_OUTPUT(0xc700);
+    Opcode SET_DLL_CLOCK      (0xc800);
+    Opcode READ_SETUP_SCANPATH(0xc900);
   };
 }
 
