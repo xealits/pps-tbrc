@@ -164,8 +164,11 @@ namespace VME
       uint32_t GetOUI();
       uint32_t GetSerialNumber();
       void CheckConfiguration();
-      
+     
+      void EnableChannel(short);
+      void DisableChannel(short);
       void SetPoI(uint16_t);
+
       void SetLSBTraileadEdge(trailead_edge_lsb);
       void SetAcquisitionMode(acq_mode);
       bool SetTriggerMatching();

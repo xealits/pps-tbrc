@@ -178,14 +178,45 @@ namespace VME
     // ...
   }
 
-  void TDCV1x90::SetLSBTraileadEdge(trailead_edge_lsb conf) {
+  void
+  TDCV1x90::EnableChannel(short channel_id)
+  {
+    uint16_t value = TDCV1x90Opcodes::EN_CHANNEL+(channel_id&0xFF);
+    try {
+      WaitMicro(WRITE_OK);
+      WriteRegister(Micro, &value);
+    } catch (Exception& e) { e.Dump(); }
+    
+    if (fVerb>1) {
+      std::ostringstream o; o << "Debug: Channel " << channel_id << " enabled";
+      PrintInfo(o.str());
+    }
+  }
+
+  void
+  TDCV1x90::DisableChannel(short channel_id)
+  {
+    uint16_t value = TDCV1x90Opcodes::DIS_CHANNEL+(channel_id&0xFF);
+    try {
+      WaitMicro(WRITE_OK);
+      WriteRegister(Micro, &value);
+    } catch (Exception& e) { e.Dump(); }
+    
+    if (fVerb>1) {
+      std::ostringstream o; o << "Debug: Channel " << channel_id << " disabled";
+      PrintInfo(o.str());
+    }
+  }
+
+  void TDCV1x90::SetLSBTraileadEdge(trailead_edge_lsb conf)
+  {
     uint16_t word = conf;
     uint16_t value = TDCV1x90Opcodes::SET_TR_LEAD_LSB;
     try {
       WaitMicro(WRITE_OK);
-      WriteRegister(Micro,&value);
+      WriteRegister(Micro, &value);
       WaitMicro(WRITE_OK);
-      WriteRegister(Micro,&word);
+      WriteRegister(Micro, &word);
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
@@ -552,10 +583,8 @@ namespace VME
     uint16_t buff;
     try { 
       ReadRegister(Status,&buff);
-      switch(value) {
-        case true: buff+=(1<<reg); break;
-        case false: buff-=(1<<reg); break;
-      }
+      if (value) buff += (1<<reg);
+      else       buff -= (1<<reg);
       WriteRegister(Status,&buff);
     } catch (Exception& e) { e.Dump(); }
   }
@@ -577,10 +606,8 @@ namespace VME
     uint16_t buff;
     try {
       ReadRegister(Control,&buff);
-      switch(value) {
-        case true: buff+=(1<<reg); break;
-        case false: buff-=(1<<reg); break;
-      }
+      if (value) buff += (1<<reg);
+      else       buff -= (1<<reg);
       WriteRegister(Control,&buff);
     } catch (Exception& e) { e.Dump(); }
   }
@@ -653,16 +680,9 @@ namespace VME
   TDCV1x90::SetTDCEncapsulation(bool mode)
   {
     uint16_t opcode;
-    switch(mode){
-      case false:
-        opcode = TDCV1x90Opcodes::DIS_HEAD_TRAILER;
-        outBufTDCHeadTrail=false;
-        break;
-      case true:
-        opcode = TDCV1x90Opcodes::EN_HEAD_TRAILER;
-        outBufTDCHeadTrail=true;
-        break;
-    }
+    if (mode) opcode = TDCV1x90Opcodes::EN_HEAD_TRAILER;
+    else      opcode = TDCV1x90Opcodes::DIS_HEAD_TRAILER;
+    outBufTDCHeadTrail = mode;
     try { 
       WaitMicro(WRITE_OK);
       WriteRegister(Micro,&opcode);
@@ -712,16 +732,9 @@ namespace VME
   TDCV1x90::SetTDCErrorMarks(bool mode)
   {
     uint16_t opcode;
-    switch(mode){
-      case false:
-        opcode = TDCV1x90Opcodes::DIS_ERROR_MARK;
-        outBufTDCErr=false;
-        break;
-      case true:
-        opcode = TDCV1x90Opcodes::EN_ERROR_MARK;
-        outBufTDCErr=true;
-        break;
-    }
+    if (mode) opcode = TDCV1x90Opcodes::EN_ERROR_MARK;
+    else      opcode = TDCV1x90Opcodes::DIS_ERROR_MARK;
+    outBufTDCErr = mode;
     WaitMicro(WRITE_OK);
     WriteRegister(Micro,&opcode);
     
