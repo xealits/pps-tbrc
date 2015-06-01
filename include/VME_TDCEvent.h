@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "Exception.h"
+
 namespace VME
 {
   /**
@@ -31,6 +33,18 @@ namespace VME
       TDCEvent() : fWord(0) {;}
       TDCEvent(const uint32_t& word) : fWord(word) {;}
       inline virtual ~TDCEvent() {;}
+
+      inline void Dump() const {
+        std::stringstream ss;
+        ss << "Event dump\n\t"
+           << "Type: 0x" << std::hex << GetType() << std::dec << "\n\t"
+           << "Word:\n\t";
+        for (unsigned int i=0; i<32; i++) {
+          if (i%4==0) ss << " ";
+          ss << (unsigned int)((fWord>>i)&0x1);
+        }
+        PrintInfo(ss.str());
+      }
       
       inline void SetWord(const uint32_t& word) { fWord = word; }
       

@@ -158,7 +158,7 @@ namespace VME
     public:
       TDCV1x90(int32_t, uint32_t, acq_mode acqm=TRIG_MATCH, det_mode detm=TRAILEAD);
       ~TDCV1x90();
-      void SetVerboseLevel(unsigned short verb=0) { fVerb=verb; }
+      void SetVerboseLevel(unsigned short verb=1) { fVerb=verb; }
       
       uint32_t GetModel();
       uint32_t GetOUI();

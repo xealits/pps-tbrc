@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
     
     vme->AddTDC(tdc_address);
     tdc = vme->GetTDC(tdc_address);
+    tdc->SetAcquisitionMode(VME::CONT_STORAGE);
     tdc->SetWindowWidth(2040);
     tdc->SetWindowOffset(-2045);
     tdc->WaitMicro(VME::WRITE_OK);
@@ -70,6 +71,7 @@ int main(int argc, char *argv[]) {
       ec = tdc->FetchEvents();
       if (ec.size()==0) continue; // no events were fetched
       for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
+        e->Dump();
         out_file.write((char*)&(*e), sizeof(VME::TDCEvent));
       }
       num_events += ec.size();
