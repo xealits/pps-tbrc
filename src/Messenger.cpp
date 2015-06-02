@@ -52,7 +52,6 @@ Messenger::AddClient()
     AcceptConnections(s);
     Message message = FetchMessage(s.GetSocketId());
     if (message.IsFromWeb()) {
-      message.Dump();
       // Feed the handshake to the WebSocket object
       fWS->parseHandshake((unsigned char*)message.GetString().c_str(), message.GetString().size());
       Send(Message(fWS->answerHandshake()), s.GetSocketId());
@@ -69,7 +68,6 @@ Messenger::AddClient()
     }
     // Send the client's unique identifier
     Send(SocketMessage(SET_CLIENT_ID, s.GetSocketId()), s.GetSocketId());
-    //SocketMessage(SET_CLIENT_ID, s.GetSocketId()).Dump();
   } catch (Exception& e) {
     e.Dump();
   }
@@ -130,8 +128,8 @@ Messenger::Send(const Message& m, int sid) const
   try {
     ws = IsWebSocket(sid);
     Message tosend = (ws) ? HTTPMessage(fWS, m, EncodeMessage) : m;
-    std::cout << "Sending a message to socket # " << sid << " (WS? " << ws << "):" << std::endl;
-    tosend.Dump();
+    /*std::cout << "Sending a message to socket # " << sid << " (web? " << ws << "):" << std::endl;
+    m.Dump();*/
     SendMessage(tosend, sid);
   } catch (Exception& e) {
     e.Dump();
@@ -164,6 +162,7 @@ Messenger::Receive()
     
     // Handle data from a client
     try { msg = FetchMessage(s->first); } catch (Exception& e) {
+      e.Dump();
       if (e.ErrorNumber()==11000) { DisconnectClient(s->first, THIS_CLIENT_DELETED); return; }
     }
     if (s->second==WEBSOCKET_CLIENT) {

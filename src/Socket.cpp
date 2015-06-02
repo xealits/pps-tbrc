@@ -49,8 +49,13 @@ void
 Socket::Configure()
 {
   const int on = 1/*, off = 0*/;
-  if (setsockopt(fSocketId, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(on))!=0) {
-    throw Exception(__PRETTY_FUNCTION__, "Cannot modify socket options", Fatal, SOCKET_ERROR(errno));
+  struct timeval timeout;      
+  timeout.tv_sec = 10;
+  timeout.tv_usec = 0;
+  if (setsockopt(fSocketId, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout))!=0
+   or setsockopt(fSocketId, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout))!=0
+   or setsockopt(fSocketId, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(on))!=0) {
+    throw Exception(__PRETTY_FUNCTION__, "Cannot modify socket options", Fatal, SOCKET_ERROR(errno));    
   }
 }
 

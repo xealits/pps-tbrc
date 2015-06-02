@@ -1,3 +1,4 @@
+var port = 1987;
 var listener_id, connection;
 var upper_fields;
 var bind_button, unbind_button, refresh_button, time_field;
@@ -59,7 +60,8 @@ function bind_socket() {
     connection = 0;
     return;
   }
-  connection = new WebSocket('ws://localhost:1987');
+  
+  connection = new WebSocket('ws://localhost:'+port);
 
   bind_button.disabled = true;
   built_clients = [];
@@ -76,13 +78,14 @@ function bind_socket() {
     unbind_socket();
   }
   connection.onopen = function () {
-    //console.log(event);
-    connection.onmessage = function(event) {
-      console.log("new message received:");
-      console.log(event);
-      parse_message(event);
-    };
+    console.log("haha"+connection.readyState);
   };
+  connection.onmessage = function(event) {
+    console.log("new message received:");
+    console.log(event);
+    parse_message(event);
+  };
+  //};
   connection.onclose = function() { 
     bind_socket();
   };
@@ -119,10 +122,9 @@ function socket_close() {
 }
 
 function parse_message(event) {
-  console_log.value = event.data;
-  console.log(event);
-  var d = event.data;
-  console.log(d);
+  var d = event.data.slice(0,-1);
+  console_log.value = d;
+  
   if (d.indexOf("SET_CLIENT_ID")>-1) {
     listener_id = parseInt(d.substr(d.indexOf(":")+1));
     socket_id.value = listener_id;
@@ -213,7 +215,8 @@ function create_block(obj) {
   button_ping.innerHTML = "Ping";
   block.appendChild(button_ping);
   
-  var logger = document.createElement("input[type=text]");
+  var logger = document.createElement("textarea");
+  logger.className = "socket_block_logger";
   logger.setAttribute('id', 'logger_'+obj.id);
   logger.disabled = true;
   block.appendChild(logger);
