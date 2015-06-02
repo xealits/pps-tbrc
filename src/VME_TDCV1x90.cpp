@@ -799,6 +799,8 @@ namespace VME
     int blts = 1024;
     bool finished;
     int i;
+    int value, channel, trailing, width; // for continuous storage mode
+    std::ostringstream o;
 
     CVErrorCodes ret;
     ret = CAENVME_BLTReadCycle(fHandle, fBaseAddr+0x0000, (char *)fBuffer, blts, am_blt, cvD32, &count);
@@ -810,16 +812,58 @@ namespace VME
       //exit(0);
       throw Exception(__PRETTY_FUNCTION__, "Abort state detected... quitting", JustWarning, TDC_ACQ_STOP);
     }
-    if (acqm!=TRIG_MATCH) {
-      std::ostringstream o; o << "Wrong acquisition mode: " << acqm;
+    switch (acqm) {
+    case TRIG_MATCH:
+      for (i=0; i<count; i++) { // FIXME need to use the knowledge of the TDCEvent behaviour there...
+        TDCEvent ev(fBuffer[i]);
+        if (ev.GetType()==TDCEvent::Filler) continue; // Filter out filler data
+        ec.push_back(ev);
+      }
+      return ec;
+
+    case CONT_STORAGE:
+      for (i=0; i<count; i++) {
+        TDCEvent ev(fBuffer[i]);
+        trailing = ev.IsTrailing();
+        value = (trailing) ? ev.GetTrailingTime() : ev.GetLeadingTime();
+        channel = ev.GetChannelId();
+        if (value != 0) {
+          ec.push_back(ev);
+          std::cout << std::dec
+                    << "event " << i << "\t"
+                    << "channel " << channel << "\t";
+          switch(detm) {
+            case PAIR:
+              width = (fBuffer[i]&0x7F000)>>12;
+              value = fBuffer[i]&0xFFF;
+              std::cout << "width " << std::hex << width << "\t\t"
+                        << "value " << std::dec << value;
+            break;
+          case OTRAILING:
+          case OLEADING:
+            std::cout << std::dec
+                      << "value " << value << "\t"
+                      << "trailing? " << trailing;
+            break;
+          case TRAILEAD:
+            std::cout << std::dec 
+                      << "value " << value << "\t"
+                      << "trailing? " << trailing;
+            break;
+          default:
+            o.str(""); o << "Wrong detection mode: " << detm;
+            throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+          }
+          std::cout << std::endl;
+        }
+      }
+      return ec;
+      
+    default:
+      o.str(""); o << "Wrong acquisition mode: " << acqm;
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
     
-    for (i=0; i<count; i++) { // FIXME need to use the knowledge of the TDCEvent behaviour there...
-      if ((fBuffer[i]>>27)==0x18) continue; // Filter out filler data
-      ec.push_back(TDCEvent(fBuffer[i]));
-    }
-    return ec;
   }
 
   void
