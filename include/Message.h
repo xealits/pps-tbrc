@@ -30,7 +30,7 @@ class Message
     
     /// Extract from any message its potential arrival from a WebSocket protocol
     inline bool IsFromWeb() const {
-      if (fString.find("WebSocket")!=std::string::npos) return true;
+      if (fString.find("User-Agent")!=std::string::npos) return true;
       return false;
     }
     

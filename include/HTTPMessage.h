@@ -4,7 +4,7 @@
 #include "Message.h"
 #include "WebSocket/WebSocket.h"
 
-#define MAX_WS_MESSAGE_SIZE 5000
+#define MAX_WS_MESSAGE_SIZE 10000
 
 typedef enum
 {
@@ -50,7 +50,7 @@ class HTTPMessage : public Message
       memset(outbuf, 0, MAX_WS_MESSAGE_SIZE);
       int size = fWS->makeFrame(TEXT_FRAME, (unsigned char*)fString.c_str(), fString.size(), outbuf, MAX_WS_MESSAGE_SIZE);
       std::string out((const char*)outbuf);
-      fString = out.substr(0, size);
+      fString = out.substr(0, size)+'\0';
     }
     inline MessageKey GetKey() const { return WEBSOCKET_KEY; }
         

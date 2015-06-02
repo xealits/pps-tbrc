@@ -1,6 +1,7 @@
 body
 {
   font-size: 11pt;
+  background-color: #fff;
 }
 
 h1
@@ -28,4 +29,16 @@ input
   font-size: 12pt;
   padding: 2px;
   text-align: center;
+}
+
+.socket_block_logger
+{
+  font-size: 9pt;
+  width: 12em;
+  height: 2em;
+}
+
+#time_field
+{
+  font-size: 9pt;
 }
