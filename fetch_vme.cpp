@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
   fh.run_id = 0;
   fh.spill_id = 0;
   
-  std::time_t t_beg = std::time(0);
+  std::time_t t_beg;
   num_events = 0;
   try {
     bool with_socket = false;
@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
       throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
     }
     
+    t_beg = std::time(0);
     std::string acqmode;
     switch (tdc->GetAcquisitionMode()) {
       case VME::CONT_STORAGE: acqmode = "Continuous storage"; break;
