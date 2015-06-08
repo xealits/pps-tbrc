@@ -37,6 +37,8 @@ int main(int argc, char *argv[]) {
   fh.run_id = 0;
   fh.spill_id = 0;
   
+  std::time_t t_beg = std::time(0);
+  num_events = 0;
   try {
     bool with_socket = false;
     //vme = new VMEReader("/dev/usb/v1718_0", VME::CAEN_V1718, with_socket);
@@ -49,6 +51,7 @@ int main(int argc, char *argv[]) {
     
     vme->AddTDC(tdc_address);
     tdc = vme->GetTDC(tdc_address);
+    tdc->SetVerboseLevel(0);
     tdc->SetAcquisitionMode(VME::CONT_STORAGE);
     tdc->SetWindowWidth(2040);
     tdc->SetWindowOffset(-2045);
@@ -61,11 +64,16 @@ int main(int argc, char *argv[]) {
       throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
     }
     
-    std::time_t t = std::time(0);
+    std::string acqmode;
+    switch (tdc->GetAcquisitionMode()) {
+      case VME::CONT_STORAGE: acqmode = "Continuous storage"; break;
+      case VME::TRIG_MATCH: acqmode = "Trigger matching"; break;
+      default: acqmode = "[Invalid mode]"; throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
+    }
     cout << endl << "*** Ready for acquisition! ***" << endl
-         << "Local time: " << asctime(std::localtime(&t));
+         << "Acquisition mode: " << acqmode << endl 
+         << "Local time: " << asctime(std::localtime(&t_beg));
     
-    num_events = 0;
     out_file.write((char*)&fh, sizeof(file_header_t));
     while (true) {
       ec = tdc->FetchEvents();
@@ -76,18 +84,19 @@ int main(int argc, char *argv[]) {
       }
       num_events += ec.size();
     }
-    out_file.close();
-    
-    cout << "Acquired " << num_events << " in this run" << endl;
-  
-    delete vme;
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
       if (out_file.is_open()) out_file.close();
-      std::time_t t = std::time(0);
+      std::time_t t_end = std::time(0);
       cout << endl << "*** Acquisition stopped! ***" << endl
-           << "Local time: " << asctime(std::localtime(&t))
+           << "Local time: " << asctime(std::localtime(&t_end))
+           << "Total acquisition time: " << difftime(t_end, t_beg) << " seconds"
            << endl;
+      out_file.close();
+    
+      cout << endl << "Acquired " << num_events << " events in this run" << endl;
+  
+      delete vme;
       return 0;
     }
     e.Dump();

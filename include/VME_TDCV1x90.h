@@ -171,8 +171,8 @@ namespace VME
 
       void SetLSBTraileadEdge(trailead_edge_lsb);
       void SetAcquisitionMode(acq_mode);
+      acq_mode GetAcquisitionMode() const;
       bool SetTriggerMatching();
-      bool IsTriggerMatching();
       bool SetContinuousStorage();
       void GetFirmwareRev();
       
@@ -204,7 +204,7 @@ namespace VME
 
       uint16_t ReadTrigConf(trig_conf);
 
-      bool WaitMicro(micro_handshake);
+      bool WaitMicro(micro_handshake) const;
       bool SoftwareClear();
       bool SoftwareReset();
       bool HardwareReset();
@@ -232,28 +232,28 @@ namespace VME
        * \param[in] addr register
        * \param[in] data word
        */
-      void WriteRegister(mod_reg,uint16_t*);
+      void WriteRegister(mod_reg,uint16_t*) const;
       /**
        * Write a 32-bit word in the register
        * \brief Write on register
        * \param[in] addr register
        * \param[in] data word
        */
-      void WriteRegister(mod_reg,uint32_t*);
+      void WriteRegister(mod_reg,uint32_t*) const;
       /**
        * Read a 16-bit word in the register
        * \brief Read on register
        * \param[in] addr register
        * \param[out] data word
        */  
-      void ReadRegister(mod_reg,uint16_t*);
+      void ReadRegister(mod_reg,uint16_t*) const;
       /**
        * Read a 32-bit word in the register
        * \brief Read on register
        * \param[in] addr register
        * \param[out] data word
        */  
-      void ReadRegister(mod_reg,uint32_t*);
+      void ReadRegister(mod_reg,uint32_t*) const;
 
     private:
       uint32_t fBaseAddr;

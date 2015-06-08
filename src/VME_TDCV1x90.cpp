@@ -506,8 +506,8 @@ namespace VME
     return true;
   }
 
-  bool
-  TDCV1x90::IsTriggerMatching()
+  acq_mode
+  TDCV1x90::GetAcquisitionMode() const
   {
     uint16_t data;
 
@@ -524,7 +524,7 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     if (fVerb>1) {  
       std::ostringstream o; o << "Debug: value: " << data << " (";
-      switch(data) {
+      switch (data) {
         case 0: o << "continuous storage"; break;
         case 1: o << "trigger matching"; break;
         default: o << "wrong answer!"; break;
@@ -532,7 +532,11 @@ namespace VME
       o << ")";
       PrintInfo(o.str());
     }
-    return (bool)data;
+    switch (data) {
+      case 0: return CONT_STORAGE;
+      case 1: return TRIG_MATCH;
+      default: return (acq_mode)(-1);
+    }
   }
 
   bool
@@ -877,7 +881,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::WriteRegister(mod_reg addr, uint16_t* data)
+  TDCV1x90::WriteRegister(mod_reg addr, uint16_t* data) const
   {
     uint32_t address = fBaseAddr+addr;
     if (CAENVME_WriteCycle(fHandle, address, data, am, cvD16)!=cvSuccess) {
@@ -887,7 +891,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::WriteRegister(mod_reg addr, uint32_t* data)
+  TDCV1x90::WriteRegister(mod_reg addr, uint32_t* data) const
   {
     uint32_t address = fBaseAddr+addr;
     if (CAENVME_WriteCycle(fHandle, address, data, am, cvD32)!=cvSuccess) {
@@ -897,7 +901,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::ReadRegister(mod_reg addr, uint16_t* data)
+  TDCV1x90::ReadRegister(mod_reg addr, uint16_t* data) const
   {
     uint32_t address = fBaseAddr+addr;
     if (CAENVME_ReadCycle(fHandle, address, data, am, cvD16)!=cvSuccess) {
@@ -907,7 +911,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::ReadRegister(mod_reg addr, uint32_t* data)
+  TDCV1x90::ReadRegister(mod_reg addr, uint32_t* data) const
   {
     uint32_t address = fBaseAddr+addr;
     if (CAENVME_ReadCycle(fHandle, address, data, am, cvD32)!=cvSuccess) {
@@ -917,7 +921,7 @@ namespace VME
   }
 
   bool
-  TDCV1x90::WaitMicro(micro_handshake mode)
+  TDCV1x90::WaitMicro(micro_handshake mode) const
   {
     uint16_t data;
     bool status = false;
