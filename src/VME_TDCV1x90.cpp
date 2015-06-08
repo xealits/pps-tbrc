@@ -3,7 +3,7 @@
 namespace VME
 {
   TDCV1x90::TDCV1x90(int32_t bhandle,uint32_t baseaddr, acq_mode acqm, det_mode detm) :
-    fBaseAddr(baseaddr), fHandle(bhandle), fDetMode(detm),
+    fBaseAddr(baseaddr), fHandle(bhandle),
     am(cvA32_U_DATA), am_blt(cvA32_U_BLT)
   {
     //event_nb = 0;
@@ -61,7 +61,7 @@ namespace VME
   }
 
   uint32_t
-  TDCV1x90::GetModel()
+  TDCV1x90::GetModel() const
   {
     uint32_t model = 0x0;
     uint16_t data[3];
@@ -82,7 +82,7 @@ namespace VME
   }
 
   uint32_t
-  TDCV1x90::GetOUI()
+  TDCV1x90::GetOUI() const
   {
     uint32_t oui = 0x0;
     uint16_t data[3];
@@ -104,7 +104,7 @@ namespace VME
   }
 
   uint32_t
-  TDCV1x90::GetSerialNumber()
+  TDCV1x90::GetSerialNumber() const
   {
     uint32_t sn = 0x0;
     uint16_t data[2];
@@ -125,7 +125,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::GetFirmwareRev()
+  TDCV1x90::GetFirmwareRev() const
   {
     //FIXME need to clean up
     uint32_t fr[2];
@@ -144,7 +144,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::CheckConfiguration()
+  TDCV1x90::CheckConfiguration() const
   {
     uint32_t oui;
     uint32_t model;
@@ -179,7 +179,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::EnableChannel(short channel_id)
+  TDCV1x90::EnableChannel(short channel_id) const
   {
     uint16_t value = TDCV1x90Opcodes::EN_CHANNEL+(channel_id&0xFF);
     try {
@@ -194,7 +194,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::DisableChannel(short channel_id)
+  TDCV1x90::DisableChannel(short channel_id) const
   {
     uint16_t value = TDCV1x90Opcodes::DIS_CHANNEL+(channel_id&0xFF);
     try {
@@ -208,7 +208,7 @@ namespace VME
     }
   }
 
-  void TDCV1x90::SetLSBTraileadEdge(trailead_edge_lsb conf)
+  void TDCV1x90::SetLSBTraileadEdge(trailead_edge_lsb conf) const
   {
     uint16_t word = conf;
     uint16_t value = TDCV1x90Opcodes::SET_TR_LEAD_LSB;
@@ -232,7 +232,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::SetGlobalOffset(uint16_t word1,uint16_t word2)
+  TDCV1x90::SetGlobalOffset(uint16_t word1,uint16_t word2) const
   {
     uint16_t opcode = TDCV1x90Opcodes::SET_GLOB_OFFS;
     try {
@@ -254,7 +254,7 @@ namespace VME
   }
 
   glob_offs
-  TDCV1x90::ReadGlobalOffset()
+  TDCV1x90::ReadGlobalOffset() const
   {
     uint16_t opcode = TDCV1x90Opcodes::READ_GLOB_OFFS;
     uint16_t data[2];
@@ -282,7 +282,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::SetRCAdjust(int tdc, uint16_t value)
+  TDCV1x90::SetRCAdjust(int tdc, uint16_t value) const
   {
     //FIXME find a better way to insert value for 12 RCs
     uint16_t word = value;
@@ -306,7 +306,7 @@ namespace VME
   }
 
   uint16_t
-  TDCV1x90::ReadRCAdjust(int tdc)
+  TDCV1x90::ReadRCAdjust(int tdc) const
   {
     uint16_t opcode = TDCV1x90Opcodes::READ_RC_ADJ+(tdc&0x3);
     uint16_t data;
@@ -355,9 +355,10 @@ namespace VME
       }
       PrintInfo(o.str());
     }
+    fDetectionMode = mode;
   }
 
-  det_mode
+  void
   TDCV1x90::ReadDetection()
   {
     uint16_t value = TDCV1x90Opcodes::READ_DETECTION;
@@ -379,11 +380,11 @@ namespace VME
       }
       PrintInfo(o.str());
     }
-    return (det_mode)data;
+    fDetectionMode = static_cast<det_mode>(data);
   }
 
   void
-  TDCV1x90::SetWindowWidth(uint16_t width)
+  TDCV1x90::SetWindowWidth(uint16_t width) const
   {
     uint16_t word = width;
     uint16_t value = TDCV1x90Opcodes::SET_WIN_WIDTH;
@@ -396,7 +397,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::SetWindowOffset(int16_t offs)
+  TDCV1x90::SetWindowOffset(int16_t offs) const
   {
     //FIXME warning at sign bit
     uint16_t word = offs;
@@ -410,7 +411,7 @@ namespace VME
   }
     
   uint16_t
-  TDCV1x90::ReadTrigConf(trig_conf type)
+  TDCV1x90::ReadTrigConf(trig_conf type) const
   {
     uint16_t value = TDCV1x90Opcodes::READ_TRG_CONF;
     uint16_t buff[5];
@@ -426,7 +427,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::ReadResolution(det_mode det)
+  TDCV1x90::ReadResolution(det_mode det) const
   {
     uint16_t value = TDCV1x90Opcodes::READ_RES;
     uint16_t data;
@@ -456,7 +457,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::SetPairModeResolution(int lead_time_res, int pulse_width_res)
+  TDCV1x90::SetPairModeResolution(int lead_time_res, int pulse_width_res) const
   {
     uint16_t value = TDCV1x90Opcodes::SET_PAIR_RES;
     uint16_t data = 0;
@@ -475,22 +476,17 @@ namespace VME
   void
   TDCV1x90::SetAcquisitionMode(acq_mode mode)
   {
-    acqm = mode;
-    switch(mode){
-      case CONT_STORAGE:
-        if (!SetContinuousStorage())
-          throw Exception(__PRETTY_FUNCTION__, "Error while entering the continuous storage mode", Fatal);
-        break;
-      case TRIG_MATCH:
-        if (!SetTriggerMatching())
-          throw Exception(__PRETTY_FUNCTION__, "Error while entering the trigger matching mode", Fatal);
-        break;
-      default:
-        throw Exception(__PRETTY_FUNCTION__, "Wrong acquisition mode", Fatal);
-    }
+    try {
+      switch(mode){
+        case CONT_STORAGE: SetContinuousStorage(); break;
+        case TRIG_MATCH:   SetTriggerMatching();   break;
+        default:
+          throw Exception(__PRETTY_FUNCTION__, "Wrong acquisition mode", Fatal);
+      }
+    } catch (Exception& e) { throw e; }
   }
 
-  bool
+  void
   TDCV1x90::SetTriggerMatching()
   {
     uint16_t value = TDCV1x90Opcodes::TRG_MATCH;
@@ -498,16 +494,38 @@ namespace VME
       WaitMicro(WRITE_OK);
       WriteRegister(Micro,&value);
       WaitMicro(WRITE_OK);
+
+      if (GetAcquisitionMode()!=TRIG_MATCH)
+        throw Exception(__PRETTY_FUNCTION__, "Error while setting the acquisition mode to trigger matching!", Fatal);
+
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
       PrintInfo("Debug: trigger matching mode");
     }
-    return true;
   }
 
-  acq_mode
-  TDCV1x90::GetAcquisitionMode() const
+  void
+  TDCV1x90::SetContinuousStorage()
+  {
+    uint16_t value = TDCV1x90Opcodes::CONT_STOR;
+    try { 
+      WaitMicro(WRITE_OK);
+      WriteRegister(Micro,&value);
+      WaitMicro(WRITE_OK);
+
+      if (GetAcquisitionMode()!=CONT_STORAGE)
+        throw Exception(__PRETTY_FUNCTION__, "Error while setting the acquisition mode to continuous storage!", Fatal);
+
+    } catch (Exception& e) { e.Dump(); }
+    
+    if (fVerb>1) {
+      PrintInfo("Debug: continuous storage mode");
+    }
+  }
+
+  void
+  TDCV1x90::ReadAcquisitionMode()
   {
     uint16_t data;
 
@@ -533,29 +551,15 @@ namespace VME
       PrintInfo(o.str());
     }
     switch (data) {
-      case 0: return CONT_STORAGE;
-      case 1: return TRIG_MATCH;
-      default: return (acq_mode)(-1);
+      case 0: fAcquisitionMode = CONT_STORAGE; break;
+      case 1: fAcquisitionMode = TRIG_MATCH; break;
+      default: 
+        throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode read from board!", Fatal);
     }
   }
 
   bool
-  TDCV1x90::SetContinuousStorage()
-  {
-    uint16_t value = TDCV1x90Opcodes::CONT_STOR;
-    try { 
-      WaitMicro(WRITE_OK);
-      WriteRegister(Micro,&value);
-      WaitMicro(WRITE_OK); } catch (Exception& e) { e.Dump(); }
-    
-    if (fVerb>1) {
-      PrintInfo("Debug: continuous storage mode");
-    }
-    return true;
-  }
-
-  bool
-  TDCV1x90::SoftwareReset()
+  TDCV1x90::SoftwareReset() const
   {
     uint16_t value = 0x0;
     try { WriteRegister(ModuleReset,&value); } catch (Exception& e) { e.Dump(); }
@@ -563,7 +567,7 @@ namespace VME
   }
 
   bool
-  TDCV1x90::SoftwareClear()
+  TDCV1x90::SoftwareClear() const
   {
     uint16_t value = 0x0;
     try { WriteRegister(kSoftwareClear,&value); } catch (Exception& e) { e.Dump(); }
@@ -571,7 +575,7 @@ namespace VME
   }
 
   bool
-  TDCV1x90::GetStatusRegister(stat_reg bit)
+  TDCV1x90::GetStatusRegister(stat_reg bit) const
   {
     uint16_t data;
     try { ReadRegister(Status,&data); } catch (Exception& e) { e.Dump(); }
@@ -579,7 +583,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::SetStatusRegister(stat_reg reg, bool value)
+  TDCV1x90::SetStatusRegister(stat_reg reg, bool value) const
   {
     bool act = GetStatusRegister(reg);
     if (act==value) return;
@@ -594,7 +598,7 @@ namespace VME
   }
 
   bool
-  TDCV1x90::GetCtlRegister(ctl_reg bit)
+  TDCV1x90::GetControlRegister(ctl_reg bit) const
   {
     uint16_t data;
     try { ReadRegister(Control,&data); } catch (Exception& e) { e.Dump(); }
@@ -602,9 +606,9 @@ namespace VME
   }
 
   void
-  TDCV1x90::SetCtlRegister(ctl_reg reg, bool value)
+  TDCV1x90::SetControlRegister(ctl_reg reg, bool value) const
   {
-    bool act = GetCtlRegister(reg);
+    bool act = GetControlRegister(reg);
     if (act==value) return;
     
     uint16_t buff;
@@ -620,7 +624,7 @@ namespace VME
   //TDCV1x90::IsEventFIFOReady()
   //{
     //std::cout << "[VME] <TDC::ifEventFIFOReady> Debug: is FIFO enabled: "
-    //          << GetCtlRegister(EVENT_FIFO_ENABLE) << std::endl;
+    //          << GetControlRegister(EVENT_FIFO_ENABLE) << std::endl;
     //SetFIFOSize(7); //FIXME
     //ReadFIFOSize();
     /*ReadRegister(EventFIFOStatusRegister,&data);
@@ -632,10 +636,8 @@ namespace VME
   //}
 
   void
-  TDCV1x90::SetFIFOSize(uint16_t size)
+  TDCV1x90::SetFIFOSize(uint16_t size) const
   {
-    //std::cout << "size: " << (int)(std::log(size/2)/std::log(2)) << std::endl;
-    //FIXME! do some crappy math
     uint16_t word;
     switch(size) {
       case 2: word=0; break;
@@ -646,7 +648,8 @@ namespace VME
       case 64: word=5; break;
       case 128: word=6; break;
       case 256: word=7; break;
-      default: exit(0);
+      default:
+        throw Exception(__PRETTY_FUNCTION__, "Trying to set a wrong FIFO size.", JustWarning);
     }
     uint16_t opcode = TDCV1x90Opcodes::SET_FIFO_SIZE;
     try { 
@@ -657,13 +660,13 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::ostringstream o; o << "Debug: WRITE_FIFO_SIZE: " << word;
+      std::ostringstream o; o << "Debug: Setting the FIFO size to: " << size << " (" << word << ")";
       PrintInfo(o.str());
     }
   }
 
-  void
-  TDCV1x90::ReadFIFOSize()
+  uint16_t
+  TDCV1x90::GetFIFOSize() const
   {
     uint16_t word = TDCV1x90Opcodes::READ_FIFO_SIZE;
     uint16_t data;
@@ -678,15 +681,15 @@ namespace VME
       std::ostringstream o; o << "Debug: READ_FIFO_SIZE: " << std::dec << (1<<(data+1));
       PrintInfo(o.str());
     }
+    return (1<<(data+1));
   }
 
   void
-  TDCV1x90::SetTDCEncapsulation(bool mode)
+  TDCV1x90::SetTDCEncapsulation(bool mode) const
   {
     uint16_t opcode;
     if (mode) opcode = TDCV1x90Opcodes::EN_HEAD_TRAILER;
     else      opcode = TDCV1x90Opcodes::DIS_HEAD_TRAILER;
-    outBufTDCHeadTrail = mode;
     try { 
       WaitMicro(WRITE_OK);
       WriteRegister(Micro,&opcode);
@@ -698,7 +701,7 @@ namespace VME
   }
 
   bool
-  TDCV1x90::GetTDCEncapsulation()
+  TDCV1x90::GetTDCEncapsulation() const
   {
     uint16_t opcode = TDCV1x90Opcodes::READ_HEAD_TRAILER;
     uint16_t enc;
@@ -717,7 +720,7 @@ namespace VME
   }
 
   uint32_t
-  TDCV1x90::GetEventCounter()
+  TDCV1x90::GetEventCounter() const
   {
     uint32_t value;
     try { ReadRegister(EventCounter,&value); } catch (Exception& e) { e.Dump(); }
@@ -725,7 +728,7 @@ namespace VME
   }
 
   uint16_t
-  TDCV1x90::GetEventStored()
+  TDCV1x90::GetEventStored() const
   {
     uint16_t value;
     try { ReadRegister(EventStored,&value); } catch (Exception& e) { e.Dump(); }
@@ -733,12 +736,11 @@ namespace VME
   }
 
   void
-  TDCV1x90::SetTDCErrorMarks(bool mode)
+  TDCV1x90::SetTDCErrorMarks(bool mode) const
   {
     uint16_t opcode;
     if (mode) opcode = TDCV1x90Opcodes::EN_ERROR_MARK;
     else      opcode = TDCV1x90Opcodes::DIS_ERROR_MARK;
-    outBufTDCErr = mode;
     WaitMicro(WRITE_OK);
     WriteRegister(Micro,&opcode);
     
@@ -752,7 +754,7 @@ namespace VME
   }*/
 
   void
-  TDCV1x90::SetBLTEventNumberRegister(uint16_t value)
+  TDCV1x90::SetBLTEventNumberRegister(uint16_t value) const
   {
     try { WriteRegister(BLTEventNumber,&value); } catch (Exception& e) { e.Dump(); }
     if (fVerb>1) {
@@ -761,7 +763,7 @@ namespace VME
   }
 
   uint16_t
-  TDCV1x90::GetBLTEventNumberRegister()
+  TDCV1x90::GetBLTEventNumberRegister() const
   {
     uint16_t value;
     try { ReadRegister(BLTEventNumber,&value); } catch (Exception& e) { e.Dump(); }
@@ -772,19 +774,18 @@ namespace VME
   }
     
   void
-  TDCV1x90::SetETTT(bool mode)
+  TDCV1x90::SetETTT(bool mode) const
   {
-    SetCtlRegister(EXTENDED_TRIGGER_TIME_TAG_ENABLE,mode);
-    outBufTDCTTT = mode;
+    SetControlRegister(EXTENDED_TRIGGER_TIME_TAG_ENABLE,mode);
     if (fVerb>1) {
       std::ostringstream o; o << "Debug: Enabled? " << mode; PrintInfo(o.str());
     }
   }
 
   bool
-  TDCV1x90::GetETTT()
+  TDCV1x90::GetETTT() const
   {
-    return GetCtlRegister(EXTENDED_TRIGGER_TIME_TAG_ENABLE);
+    return GetControlRegister(EXTENDED_TRIGGER_TIME_TAG_ENABLE);
   }
 
   TDCEventCollection
@@ -816,7 +817,7 @@ namespace VME
       //exit(0);
       throw Exception(__PRETTY_FUNCTION__, "Abort state detected... quitting", JustWarning, TDC_ACQ_STOP);
     }
-    switch (acqm) {
+    switch (fAcquisitionMode) {
     case TRIG_MATCH:
       for (i=0; i<count; i++) { // FIXME need to use the knowledge of the TDCEvent behaviour there...
         TDCEvent ev(fBuffer[i]);
@@ -836,7 +837,7 @@ namespace VME
           std::cout << std::dec
                     << "event " << i << "\t"
                     << "channel " << channel << "\t";
-          switch(detm) {
+          switch(fDetectionMode) {
             case PAIR:
               width = (fBuffer[i]&0x7F000)>>12;
               value = fBuffer[i]&0xFFF;
@@ -855,7 +856,7 @@ namespace VME
                       << "trailing? " << trailing;
             break;
           default:
-            o.str(""); o << "Wrong detection mode: " << detm;
+            o.str(""); o << "Wrong detection mode: " << fDetectionMode;
             throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
           }
           std::cout << std::endl;
@@ -864,7 +865,7 @@ namespace VME
       return ec;
       
     default:
-      o.str(""); o << "Wrong acquisition mode: " << acqm;
+      o.str(""); o << "Wrong acquisition mode: " << fAcquisitionMode;
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
     

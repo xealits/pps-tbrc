@@ -160,72 +160,79 @@ namespace VME
       ~TDCV1x90();
       void SetVerboseLevel(unsigned short verb=1) { fVerb=verb; }
       
-      uint32_t GetModel();
-      uint32_t GetOUI();
-      uint32_t GetSerialNumber();
-      void CheckConfiguration();
+      uint32_t GetModel() const;
+      uint32_t GetOUI() const;
+      uint32_t GetSerialNumber() const;
+      void GetFirmwareRev() const;
+      
+      void CheckConfiguration() const;
      
-      void EnableChannel(short);
-      void DisableChannel(short);
+      void EnableChannel(short) const;
+      void DisableChannel(short) const;
       void SetPoI(uint16_t);
 
-      void SetLSBTraileadEdge(trailead_edge_lsb);
+      void SetLSBTraileadEdge(trailead_edge_lsb) const;
+
       void SetAcquisitionMode(acq_mode);
-      acq_mode GetAcquisitionMode() const;
-      bool SetTriggerMatching();
-      bool SetContinuousStorage();
-      void GetFirmwareRev();
-      
-      void SetGlobalOffset(uint16_t,uint16_t);
-      glob_offs ReadGlobalOffset();
-      
-      void SetRCAdjust(int,uint16_t);
-      uint16_t ReadRCAdjust(int);
-      
-      uint32_t GetEventCounter();
-      uint16_t GetEventStored();
-      
+      void ReadAcquisitionMode();
+      inline acq_mode GetAcquisitionMode() {
+        ReadAcquisitionMode();
+        return fAcquisitionMode;
+      }
+      void SetTriggerMatching();
+      void SetContinuousStorage();
+
       void SetDetection(det_mode);
-      det_mode ReadDetection();
+      void ReadDetection();
+      inline det_mode GetDetection() {
+        ReadDetection();
+        return fDetectionMode;
+      }
       
-      void SetTDCEncapsulation(bool);
-      bool GetTDCEncapsulation();
-      void SetTDCErrorMarks(bool);
-      //bool GetTDCErrorMarks();
+      void SetGlobalOffset(uint16_t,uint16_t) const;
+      glob_offs ReadGlobalOffset() const;
       
-      void ReadResolution(det_mode);
-      void SetPairModeResolution(int,int);
+      void SetRCAdjust(int,uint16_t) const;
+      uint16_t ReadRCAdjust(int) const;
+      
+      uint32_t GetEventCounter() const;
+      uint16_t GetEventStored() const;
+      
+      void SetTDCEncapsulation(bool) const;
+      bool GetTDCEncapsulation() const;
 
-      void SetBLTEventNumberRegister(uint16_t);
-      uint16_t GetBLTEventNumberRegister();
+      void SetTDCErrorMarks(bool) const;
+      bool GetTDCErrorMarks() const;
       
-      void SetWindowWidth(uint16_t);
-      void SetWindowOffset(int16_t);
+      void ReadResolution(det_mode) const;
+      void SetPairModeResolution(int,int) const;
 
-      uint16_t ReadTrigConf(trig_conf);
+      void SetBLTEventNumberRegister(uint16_t) const;
+      uint16_t GetBLTEventNumberRegister() const;
+      
+      void SetWindowWidth(uint16_t) const;
+      void SetWindowOffset(int16_t) const;
+
+      uint16_t ReadTrigConf(trig_conf) const;
 
       bool WaitMicro(micro_handshake) const;
-      bool SoftwareClear();
-      bool SoftwareReset();
-      bool HardwareReset();
+      bool SoftwareClear() const;
+      bool SoftwareReset() const;
+      bool HardwareReset() const;
       
-      bool GetStatusRegister(stat_reg);
-      void SetStatusRegister(stat_reg,bool);
-      bool GetCtlRegister(ctl_reg);
-      void SetCtlRegister(ctl_reg,bool);
-      
-      void SetETTT(bool);
-      bool GetETTT();
+      void SetETTT(bool) const;
+      bool GetETTT() const;
       
       TDCEventCollection FetchEvents();
 
       //bool IsEventFIFOReady();
-      void SetFIFOSize(uint16_t);
-      void ReadFIFOSize();
+      void SetFIFOSize(uint16_t) const;
+      uint16_t GetFIFOSize() const;
       
       // Close/Clean everything before exit
       void abort();
       
+    private:
       /**
        * Write a 16-bit word in the register
        * \brief Write on register
@@ -255,24 +262,23 @@ namespace VME
        */  
       void ReadRegister(mod_reg,uint32_t*) const;
 
-    private:
+      bool GetStatusRegister(stat_reg) const;
+      void SetStatusRegister(stat_reg,bool) const;
+      bool GetControlRegister(ctl_reg) const;
+      void SetControlRegister(ctl_reg,bool) const;
+      
       uint32_t fBaseAddr;
       int32_t fHandle;
-      det_mode fDetMode;
       unsigned short fVerb;
+
+      acq_mode fAcquisitionMode;
+      det_mode fDetectionMode;
       
       CVAddressModifier am; // Address modifier
       CVAddressModifier am_blt; // Address modifier (Block Transfert)
       
       uint32_t* fBuffer;
         
-      det_mode detm;
-      acq_mode acqm;
-      
-      bool outBufTDCHeadTrail;
-      bool outBufTDCErr;
-      bool outBufTDCTTT;
-      
       uint32_t nchannels;
       bool gEnd;
       std::string pair_lead_res[8]; 
