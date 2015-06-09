@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
     vme->AddTDC(tdc_address);
     tdc = vme->GetTDC(tdc_address);
     tdc->SetVerboseLevel(0);
-    tdc->SetAcquisitionMode(VME::CONT_STORAGE);
+    //tdc->SetAcquisitionMode(VME::CONT_STORAGE);
     tdc->SetWindowWidth(2040);
     tdc->SetWindowOffset(-2045);
     tdc->WaitMicro(VME::WRITE_OK);
