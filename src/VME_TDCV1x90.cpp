@@ -55,6 +55,11 @@ namespace VME
     for (int i=0; i<8; i++) pair_lead_res[i] = c_pair_lead_res[i];
     for (int i=0; i<16; i++) pair_width_res[i] = c_pair_width_res[i];
     for (int i=0; i<4; i++) trailead_edge_res[i] = c_trailead_edge_res[i];
+
+    if (fVerb>1) {
+      std::stringstream s; s << "TDC with base address 0x" << std::hex << baseaddr << " successfully built!";
+      PrintInfo(s.str());
+    }
   }
 
   TDCV1x90::~TDCV1x90()

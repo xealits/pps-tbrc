@@ -47,7 +47,8 @@ int main(int argc, char *argv[]) {
     fh.run_id = vme->GetRunNumber();
     
     // TDC configuration
-    const uint32_t tdc_address = 0x000d0000;
+    //const uint32_t tdc_address = 0x000d0000; // V1290N (16 ch., Louvain-la-Neuve)
+    const uint32_t tdc_address = 0x00aa0000; // V1290A (32 ch., CERN)
     
     vme->AddTDC(tdc_address);
     tdc = vme->GetTDC(tdc_address);
@@ -89,9 +90,11 @@ int main(int argc, char *argv[]) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
       if (out_file.is_open()) out_file.close();
       std::time_t t_end = std::time(0);
+      double nsec_tot = difftime(t_end, t_beg), nsec = fmod(nsec_tot,60), nmin = (nsec_tot-nsec)/60.;
       cout << endl << "*** Acquisition stopped! ***" << endl
            << "Local time: " << asctime(std::localtime(&t_end))
            << "Total acquisition time: " << difftime(t_end, t_beg) << " seconds"
+           << " (" << nmin << " min " << nsec << " sec)"
            << endl;
       out_file.close();
     
