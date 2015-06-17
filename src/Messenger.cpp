@@ -249,6 +249,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     } catch (Exception& e) {
       e.Dump();
     }
+  }
   else if (m.GetKey()==GET_RUN_NUMBER) {
     try {
       Send(SocketMessage(RUN_NUMBER, static_cast<int>(time(NULL))), sid);

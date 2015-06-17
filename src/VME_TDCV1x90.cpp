@@ -253,7 +253,7 @@ namespace VME
       std::ostringstream o;
       o << "Debug: " << std::endl
         << "\tcoarse counter offset: " << offs.coarse << std::endl
-        << "\t  fine counter offset: " << offs.fine << std::endl;
+        << "\t  fine counter offset: " << offs.fine;
       PrintInfo(o.str());
     }
   }
@@ -277,7 +277,7 @@ namespace VME
       std::ostringstream o;
       o << "Debug: " << std::endl
         << "\tcoarse counter offset: " << data[0] << std::endl
-        << "\t  fine counter offset: " << data[1] << std::endl;
+        << "\t  fine counter offset: " << data[1];
       PrintInfo(o.str());
     }
     ret.fine = data[1];
