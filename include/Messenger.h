@@ -3,6 +3,9 @@
 
 #include "Socket.h"
 
+#include <unistd.h>
+#include <sys/wait.h>
+
 /**
  * Messenger/broadcaster object used by the server to send/receive commands from
  * the clients/listeners.
@@ -46,6 +49,9 @@ class Messenger : public Socket
      * \param[in] m Message to transmit
      */
     void Broadcast(const Message& m) const;
+    /// Start the data acquisition
+    void StartAcquisition();
+    void StopAcquisition();
     /// Socket actor type retrieval method
     inline SocketType GetType() const { return MASTER; }
   private:
@@ -71,6 +77,7 @@ class Messenger : public Socket
     void ProcessMessage(SocketMessage m, int sid);
     WebSocket* fWS;
     int fNumAttempts;
+    pid_t fPID;
 };
 
 #endif

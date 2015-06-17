@@ -1,7 +1,7 @@
 var port = 1987;
 var listener_id, connection;
 var upper_fields;
-var bind_button, unbind_button, refresh_button, time_field;
+var bind_button, unbind_button, refresh_button, acquisition_button, time_field;
 var socket_id, console_log;
 var built_clients;
 
@@ -15,6 +15,7 @@ function enable_connected_buttons() {
   bind_button.disabled = true;
   unbind_button.disabled = false;
   refresh_button.disabled = false;
+  acquisition_button.disabled = false;
   console_log.value = "";
 }
 
@@ -23,6 +24,7 @@ function disable_connected_buttons() {
   bind_button.disabled = false;
   unbind_button.disabled = true;
   refresh_button.disabled = true;
+  acquisition_button.disabled = true;
   output.innerHTML = "";
   socket_id.value = "###";
 }
@@ -34,6 +36,7 @@ function restore_init_state() {
   listener_id = -1;
   time_field.style.color = "lightgray";
   if (connection!=0) {
+    connection.close();
     delete connection;
     connection = 0;
   }
@@ -46,6 +49,7 @@ function socket_init() {
   bind_button = document.getElementById("bind_button");
   unbind_button = document.getElementById("unbind_button");
   refresh_button = document.getElementById("refresh_button");
+  acquisition_button = document.getElementById("acquisition_button");
   socket_id = document.getElementById("socket_id");
   console_log = document.getElementById("console_log");
   time_field = document.getElementById("time_field");
@@ -67,7 +71,6 @@ function bind_socket() {
   built_clients = [];
 
   connection.onerror = function (event) {
-    //console.log(event); 
     if (event.originalTarget===undefined || event.originalTarget.readyState!==1) {
       console_log.value = "Server not ready for connection!";
       socket_id.style.backgroundColor = "red";
@@ -77,48 +80,46 @@ function bind_socket() {
     }
     unbind_socket();
   }
-  connection.onopen = function () {
-    console.log("haha"+connection.readyState);
-  };
-  connection.onmessage = function(event) {
-    console.log("new message received:");
-    console.log(event);
-    parse_message(event);
-  };
-  //};
-  connection.onclose = function() { 
-    bind_socket();
-  };
+  connection.onopen = function () {};
+  connection.onmessage = function(event) { parse_message(event); };
+  connection.onclose = function() { bind_socket(); };
 }
   
 function unbind_socket() {
   if (connection===0) return;
-  
   connection.send("REMOVE_CLIENT:"+listener_id);
   connection.onmessage = function(event) { parse_message(event); }
 }
 
 function ask_socket_removal(id) {
   if (connection===0) return;
-  
   connection.send("REMOVE_CLIENT:"+id);
   connection.onmessage = function(event) { parse_message(event); }  
 }
 
 function ask_socket_ping(id) {
   if (connection===0) return;
-  
   connection.send("PING_CLIENT:"+id);
   connection.onmessage = function(event) { parse_message(event); }  
 }
 
 function socket_close() {
   if (connection===0) return;
-
   console_log.value = "close() invoked";
   unbind_socket();
   connection.onclose = function (event) {};
   connection.close();
+}
+
+function start_acquisition() {
+  if (connection===0) return;
+  connection.send("START_ACQUISITION:"+listener_id);
+  connection.onmessage = function(event) { parse_message(event); }
+}
+
+function stop_acquisition() {
+  connection.send("STOP_ACQUISITION:"+listener_id);
+  connection.onmessage = function(event) { parse_message(event); }  
 }
 
 function parse_message(event) {
@@ -173,9 +174,18 @@ function parse_message(event) {
   else if (d.indexOf("PING_ANSWER")>-1) {
     alert(d.substr(d.indexOf(":")+1));
   }
+  else if (d.indexOf("ACQUISITION_STARTED")>-1) {
+    alert("Acquisition process successfully launched!");
+    acquisition_button.innerHTML = "Stop acquisition";
+    acquisition_button.setAttribute('onClick', 'stop_acquisition()');
+  }
+  else if (d.indexOf("ACQUISITION_STOPPED")>-1) {
+    alert("Acquisition process terminated!");
+    acquisition_button.innerHTML = "Start acquisition";
+    acquisition_button.setAttribute('onClick', 'start_acquisition()');
+  }
   else if (d.indexOf("MASTER_DISCONNECT")>-1) {
     alert("ALERT:\nMaster disconnected!");
-    connection.close();
     restore_init_state();
     return;
   }  

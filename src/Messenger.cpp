@@ -1,11 +1,11 @@
 #include "Messenger.h"
 
 Messenger::Messenger() :
-  Socket(-1), fWS(0), fNumAttempts(0)
+  Socket(-1), fWS(0), fNumAttempts(0), fPID(-1)
 {}
 
 Messenger::Messenger(int port) :
-  Socket(port), fWS(0), fNumAttempts(0)
+  Socket(port), fWS(0), fNumAttempts(0), fPID(-1)
 {
   std::cout << __PRETTY_FUNCTION__ << " new Messenger at port " << GetPort() << std::endl;
   fWS = new WebSocket;
@@ -205,7 +205,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     SocketMessage msg; int i=0;
     do { msg = FetchMessage(toping); i++; } while (msg.GetKey()!=PING_ANSWER && i<MAX_SOCKET_ATTEMPTS);
     Send(SocketMessage(PING_ANSWER, msg.GetValue()), sid);
-  } 
+  }
   else if (m.GetKey()==GET_CLIENTS) {
     int i = 0;
     std::ostringstream os;
@@ -232,6 +232,23 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
       e.Dump();
     }
   }
+  else if (m.GetKey()==START_ACQUISITION) {
+    try {
+      StartAcquisition();
+      Send(SocketMessage(ACQUISITION_STARTED), sid);
+      throw Exception(__PRETTY_FUNCTION__, "Acquisition started!", Info, 30000);
+    } catch (Exception& e) {
+      e.Dump();
+    }
+  }
+  else if (m.GetKey()==STOP_ACQUISITION) {
+    try {
+      StopAcquisition();
+      Send(SocketMessage(ACQUISITION_STOPPED), sid);
+      throw Exception(__PRETTY_FUNCTION__, "Acquisition stopped!", Info, 30000);
+    } catch (Exception& e) {
+      e.Dump();
+    }
   else if (m.GetKey()==GET_RUN_NUMBER) {
     try {
       Send(SocketMessage(RUN_NUMBER, static_cast<int>(time(NULL))), sid);
@@ -256,4 +273,36 @@ Messenger::Broadcast(const Message& m) const
   } catch (Exception& e) {
     e.Dump();
   }
+}
+
+void
+Messenger::StartAcquisition()
+{
+  fPID = fork();
+  try {
+    switch (fPID) {
+      case -1:
+        throw Exception(__PRETTY_FUNCTION__, "Failed to fork the current process!", JustWarning);
+      case 0:
+        PrintInfo("Launching the daughter acquisition process");
+        execl("ppsFetch", "", (char*)NULL);
+        throw Exception(__PRETTY_FUNCTION__, "Failed to launch the daughter process!", JustWarning);
+      /*default:
+        while (!WIFEXITED(status)) {
+          waitpid(fAcquisitionPID, &status, 0); // wait for the process to finish
+        }
+        std::cout << "Process exited with status=" << WEXITSTATUS(status) << std::endl;*/
+    }
+  } catch (Exception& e) { e.Dump(); }
+  /*catch (std::exception& e) {
+    std::ostringstream os;
+    os << e.what();
+    throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+  }*/
+}
+
+void
+Messenger::StopAcquisition()
+{
+  kill(fPID, SIGTERM);
 }
