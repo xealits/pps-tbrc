@@ -2,6 +2,8 @@
 #define FileConstants_h
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <string>
 
 /**
  * General header to store in each collected data file for offline readout. It
@@ -17,5 +19,20 @@ struct file_header_t {
   uint32_t spill_id;
   uint8_t num_hptdc;
 };
+
+/// Generate a random file name
+inline std::string GenerateFileName(const size_t len=5)
+{
+  std::string out;
+  srand(time(NULL));
+  const char az[] =
+    "0123456789"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz";
+  out = "events_";
+  for (size_t i=0; i<len; i++) { out += az[rand()%(sizeof(az)-1)]; }
+  out += ".dat";
+  return out;
+}
 
 #endif

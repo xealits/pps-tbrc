@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
   h = new FPGAHandler(1987, "/dev/usbmon");
 
   try {
-    //h->Connect();
+    h->Connect();
     //h->SetTDCSetup(config);
     h->OpenFile();
   } catch (Exception& e) {

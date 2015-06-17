@@ -17,9 +17,10 @@
 <div id="upper_fields">
   <button onClick="bind_socket()" id="bind_button">Bind</button>
   <button onClick="unbind_socket()" id="unbind_button">Unbind</button>
-  <button onClick="socket_refresh()" id="refresh_button">Refresh</button>
   <input type="text" id="socket_id" size=2 disabled />
-  <span id="time_field"></span>
+  <span id="time_field"></span><br />
+  <button onClick="socket_refresh()" id="refresh_button">Refresh</button>
+  <button onClick="start_acquisition()" id="acquisition_button">Launch acquisition</button>
   <br />
   <textarea id="console_log" cols=60 rows=4 disabled></textarea>
 </div>
