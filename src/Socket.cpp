@@ -100,7 +100,7 @@ Socket::AcceptConnections(Socket& socket)
   socklen_t len = sizeof(fAddress);
   socket.SetSocketId(accept(fSocketId, (struct sockaddr*)&fAddress, &len));
   std::ostringstream o; o << "New client with # " << socket.GetSocketId();
-  Exception(__PRETTY_FUNCTION__, o.str(), Info).Dump();
+  PrintInfo(o.str());
   if (socket.GetSocketId()<0) {
     throw Exception(__PRETTY_FUNCTION__, "Cannot accept client!", JustWarning, SOCKET_ERROR(errno));
   }
@@ -176,5 +176,5 @@ Socket::DumpConnected() const
     os << " " << it->first;
     if (it->second) os << " (web)";
   }
-  Exception(__PRETTY_FUNCTION__, os.str(), Info).Dump();
+  PrintInfo(os.str());
 }
