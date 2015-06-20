@@ -59,19 +59,6 @@ namespace VME
   } det_mode;
 
   typedef enum {
-    BERREN                           = 0,
-    TERM                             = 1,
-    TERM_SW                          = 2,
-    EMPTY_EVENT                      = 3,
-    ALIGN64                          = 4,
-    COMPENSATION_ENABLE              = 5,
-    TEST_FIFO_ENABLE                 = 6,
-    READ_COMPENSATION_SRAM_ENABLE    = 7,
-    EVENT_FIFO_ENABLE                = 8,
-    EXTENDED_TRIGGER_TIME_TAG_ENABLE = 9,
-  } ctl_reg;
-
-  typedef enum {
 
     kOutputBuffer            = 0x0000, // D32 R
     kControl                 = 0x1000, // D16 R/W
@@ -128,6 +115,11 @@ namespace VME
     uint32_t ettt;
   };
 
+  /**
+   * \brief TDC status register
+   * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+   * \date Jun 2015
+   */
   class TDCV1x90Status
   {
     public:
@@ -140,6 +132,29 @@ namespace VME
 
       inline TDCV1x90Status(const uint16_t& word) : fWord(word) {;}
       virtual inline ~TDCV1x90Status() {;}
+
+      inline void Dump() const {
+        std::ostringstream ss;
+        ss << "============ TDC Status ============" << "\n\t"
+           << "----- FIFO state: ---------------" << "\n\t"
+           << "Data ready? " << DataReady() << "\n\t"
+           << "FIFO almost full? " << AlmostFull() << "\n\t"
+           << "FIFO full? " << Full() << "\n\t"
+           << "FIFO purged? " << Purged() << "\n\t"
+           << "---------------------------------" << "\n\t"
+           << "Trigger matching mode? " << TriggerMatching() << "\n\t"
+           << "Pair mode? " << PairMode() << "\n\t"
+           << "Resolution: " << Resolution() << "\n\t"
+           << "Headers enabled? " << HeadersEnabled() << "\n\t"
+           << "Termination? " << TerminationOn() << "\n\t"
+           << "----- Error state: --------------" << "\n\t"
+           << "Global error: " << Error() << "\n\t";
+        for (unsigned int i=0; i<4; i++) ss << "\tError " << i << ": " << Error(i) << "\n\t";
+        ss << "Bus error: " << BusError() << "\n\t"
+           << "---------------------------------" << "\n\t"
+           << "Trigger lost? " << TriggerLost();
+        PrintInfo(ss.str());
+      }
  
       inline uint16_t GetValue() const { return fWord; }
       
@@ -162,10 +177,78 @@ namespace VME
   };
 
   /**
+   * \brief TDC control register
+   * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+   * \date Jun 2015
+   */
+  class TDCV1x90Control
+  {
+    public:
+      inline TDCV1x90Control(const uint16_t& word) : fWord(word) {;}
+      inline virtual ~TDCV1x90Control() {;}
+
+      inline void Dump() const {
+        std::ostringstream ss;
+        ss << "============ TDC Control ============\n\t"
+           << "Bus error? " << GetBusError() << "\n\t"
+           << "Termination? " << GetTermination() << "\n\t"
+           << "Termination (SW)? " << GetSWTermination() << "\n\t"
+           << "Empty events? " << GetEmptyEvent() << "\n\t"
+           << "Align word sizes to even number? " << GetAlign64() << "\n\t"
+           << "Compensation? " << GetCompensation() << "\n\t"
+           << "FIFO test? " << GetTestFIFO()  << "\n\t"
+           << "Compensation (SRAM)? " << GetSRAMCompensation() << "\n\t"
+           << "Event FIFO? " << GetEventFIFO() << "\n\t"
+           << "ETTT? " << GetETTT() << "\n\t"
+           << "MEB access with 16MB address range? " << GetMEBAccess();
+        PrintInfo(ss.str());
+      }
+
+      inline uint16_t GetValue() const { return fWord; }
+      
+      inline bool GetBusError() const { return static_cast<bool>(fWord&0x1); }
+      inline void SetBusError(bool sw) { if (sw==GetBusError()) return; int sign = (sw)?1:-1; fWord+=sign; }
+
+      inline bool GetTermination() const { return static_cast<bool>((fWord>>1)&0x1); }
+      inline void SetTermination(bool sw) { if (sw==GetTermination()) return; int sign = (sw)?1:-1; fWord+=(sign*0x1<<1); }
+
+      inline bool GetSWTermination() const { return static_cast<bool>((fWord>>2)&0x1); }
+      inline void SetSWTermination(bool sw) { if (sw==GetSWTermination()) return; int sign = (sw)?1:-1; fWord+=(sign*0x1<<2); }
+
+      inline bool GetEmptyEvent() const { return static_cast<bool>((fWord>>3)&0x1); }
+      inline void SetEmptyEvent(bool sw) { if (sw==GetEmptyEvent()) return; int sign = (sw)?1:-1; fWord+=(sign*0x1<<3); }
+
+      inline bool GetAlign64() const { return static_cast<bool>((fWord>>4)&0x1); }
+      inline void SetAlign64(bool sw) { if (sw==GetAlign64()) return; int sign = (sw)?1:-1; fWord+=(sign*0x1<<4); }
+
+      inline bool GetCompensation() const { return static_cast<bool>((fWord>>5)&0x1); }
+      inline void SetCompensation(bool sw) { if (sw==GetCompensation()) return; int sign = (sw)?1:-1; fWord+=(sign*0x1<<5); }
+
+      inline bool GetTestFIFO() const { return static_cast<bool>((fWord>>6)&0x1); }
+      inline void SetTestFIFO(bool sw) { if (sw==GetTestFIFO()) return; int sign = (sw)?1:-1; fWord+=(sign*0x1<<6); }
+
+      inline bool GetSRAMCompensation() const { return static_cast<bool>((fWord>>7)&0x1); }
+      inline void SetSRAMCompensation(bool sw) { if (sw==GetSRAMCompensation()) return; int sign = (sw)?1:-1; fWord+=(sign*0x1<<7); }
+
+      inline bool GetEventFIFO() const { return static_cast<bool>((fWord>>8)&0x1); }
+      inline void SetEventFIFO(bool sw) { if (sw==GetEventFIFO()) return; int sign = (sw)?1:-1; fWord+=(sign*0x1<<8); }
+
+      inline bool GetETTT() const { return static_cast<bool>((fWord>>9)&0x1); }
+      inline void SetETTT(bool sw) { if (sw==GetETTT()) return; int sign = (sw)?1:-1; fWord+=(sign*0x1<<9); }
+
+      inline bool GetMEBAccess() const { return static_cast<bool>((fWord>>12)&0x1); }
+      inline void SetMEBAccess(bool sw) { if (sw==GetMEBAccess()) return; int sign = (sw)?1:-1; fWord+=(sign*0x1<<12); }
+
+    private:
+      uint16_t fWord;
+  };
+
+  /**
    * 
    * \author Laurent Forthomme <laurent.forthomme@cern.ch>
    * \author Bob Velghe <bob.velghe@cern.ch>
-   * \date Jun 2010
+   * \date Jun 2010 (NA62-Gigatracker)
+   * \date May 2015 (CMS-TOTEM PPS)
    */
   class TDCV1x90
   {
@@ -173,6 +256,9 @@ namespace VME
       TDCV1x90(int32_t, uint32_t, acq_mode acqm=TRIG_MATCH, det_mode detm=TRAILEAD);
       ~TDCV1x90();
       void SetVerboseLevel(unsigned short verb=1) { fVerb=verb; }
+
+      void SetTestMode(bool en=true) const;
+      bool GetTestMode() const;
       
       uint32_t GetModel() const;
       uint32_t GetOUI() const;
@@ -245,11 +331,18 @@ namespace VME
       bool SoftwareReset() const;
       bool HardwareReset() const;
       
-      void SetETTT(bool) const;
-      bool GetETTT() const;
+      inline void SetETTT(bool ettt=true) const {
+        TDCV1x90Control ctl = GetControl();
+        ctl.SetETTT(ettt);
+        SetControl(ctl);
+      }
+      inline bool GetETTT() const { return GetControl().GetETTT(); }
       
       void SetStatus(const TDCV1x90Status&) const;
       TDCV1x90Status GetStatus() const;
+
+      void SetControl(const TDCV1x90Control&) const;
+      TDCV1x90Control GetControl() const;
 
       TDCEventCollection FetchEvents();
 
@@ -290,9 +383,6 @@ namespace VME
        */  
       void ReadRegister(mod_reg, uint32_t*) const;
 
-      bool GetControlRegister(ctl_reg) const;
-      void SetControlRegister(ctl_reg,bool) const;
-      
       uint32_t fBaseAddr;
       int32_t fHandle;
       unsigned short fVerb;

@@ -14,6 +14,11 @@ main(int argc, char* argv[])
   
   FileReader f(argv[1]);
   std::cout << f.GetNumTDCs() << " TDCs recorded" << std::endl;
+
+  VME::TDCEvent ev;
+  //while (ev=f.GetNextEvent()) {
+    
+  //}
   
   return 0;
 }

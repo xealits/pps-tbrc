@@ -53,9 +53,11 @@ int main(int argc, char *argv[]) {
     vme->AddTDC(tdc_address);
     tdc = vme->GetTDC(tdc_address);
     tdc->SetVerboseLevel(0);
-    //tdc->SetAcquisitionMode(VME::CONT_STORAGE);
-    tdc->SetWindowWidth(2040);
-    tdc->SetWindowOffset(-2045);
+    tdc->GetControl().Dump();
+    tdc->SetAcquisitionMode(VME::CONT_STORAGE);
+    //tdc->SetTestMode();
+    /*tdc->SetWindowWidth(2040);
+    tdc->SetWindowOffset(-2045);*/
     tdc->WaitMicro(VME::WRITE_OK);
     
     filename = GenerateFileName(0);
@@ -79,9 +81,13 @@ int main(int argc, char *argv[]) {
     out_file.write((char*)&fh, sizeof(file_header_t));
     while (true) {
       ec = tdc->FetchEvents();
-      if (ec.size()==0) continue; // no events were fetched
+      if (ec.size()==0) { // no events were fetched
+        tdc->GetStatus().Dump();
+        sleep(2);
+        continue;
+      }
       for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
-        e->Dump();
+        //e->Dump();
         out_file.write((char*)&(*e), sizeof(VME::TDCEvent));
       }
       num_events += ec.size();

@@ -9,7 +9,7 @@ namespace VME
     //event_nb = 0;
     //event_max = 1024;
 
-    fBuffer = (uint32_t *)malloc(16*1024*1024); // 16Mb of buffer!
+    fBuffer = (uint32_t*)malloc(16*1024*1024); // 16MB of buffer!
     if (fBuffer==NULL) {
       throw Exception(__PRETTY_FUNCTION__, "Output buffer has not been allocated!", Fatal);
     }
@@ -22,25 +22,31 @@ namespace VME
     }
     
     SoftwareReset();
+    //SoftwareClear();
     SetAcquisitionMode(acqm);
-    
+   
+    try {
+      WaitMicro(WRITE_OK);
+      WriteRegister(kMicro, TDCV1x90Opcodes::EN_ALL_CHANNEL);
+    } catch (Exception& e) { e.Dump(); }
+ 
     SetDetection(TRAILEAD);
     SetLSBTraileadEdge(r25ps);
-    SetRCAdjust(0,0);
-    SetRCAdjust(1,0);
+    /*SetRCAdjust(0,0);
+    SetRCAdjust(1,0);*/
 
     GlobalOffset offs; offs.fine = 0x0; offs.coarse = 0x0;
     SetGlobalOffset(offs); // coarse and fine set
-    GetGlobalOffset();
+    //GetGlobalOffset();
 
-    SetBLTEventNumberRegister(1); // FIXME find good value!
+    //SetBLTEventNumberRegister(1); // FIXME find good value!
     SetTDCEncapsulation(true);
     SetErrorMarks(true);
     SetETTT(true);
     SetWindowWidth(2045);
     SetWindowOffset(-2050);
     //SetPairModeResolution(0,0x4);
-    //GetResolution(detect);
+    GetResolution(detm);
     
     gEnd = false;
     
@@ -178,6 +184,24 @@ namespace VME
     std::cout << "                 Serial number is "
               << std::dec << GetSerNum() << std::endl;
     #endif*/
+  }
+
+  void
+  TDCV1x90::SetTestMode(bool en) const
+  {
+    uint16_t word;
+    word = (en) ? TDCV1x90Opcodes::ENABLE_TEST_MODE : TDCV1x90Opcodes::DISABLE_TEST_MODE;
+
+    try {
+      WaitMicro(WRITE_OK);
+      WriteRegister(kMicro, word);
+    } catch (Exception& e) { e.Dump(); }
+
+    if (fVerb>1) {
+      std::ostringstream o;
+      o << "Debug: Test mode enabled? " << en;
+      PrintInfo(o.str());
+    }
   }
 
   void
@@ -565,29 +589,6 @@ namespace VME
     return true;
   }
 
-  bool
-  TDCV1x90::GetControlRegister(ctl_reg bit) const
-  {
-    uint16_t data;
-    try { ReadRegister(kControl, &data); } catch (Exception& e) { e.Dump(); }
-    return ((data&(1<<bit))>>bit);
-  }
-
-  void
-  TDCV1x90::SetControlRegister(ctl_reg reg, bool value) const
-  {
-    bool act = GetControlRegister(reg);
-    if (act==value) return;
-    
-    uint16_t buff;
-    try {
-      ReadRegister(kControl, &buff);
-      if (value) buff += (1<<reg);
-      else       buff -= (1<<reg);
-      WriteRegister(kControl, buff);
-    } catch (Exception& e) { e.Dump(); }
-  }
-
   //bool
   //TDCV1x90::IsEventFIFOReady()
   //{
@@ -737,21 +738,6 @@ namespace VME
   }
     
   void
-  TDCV1x90::SetETTT(bool mode) const
-  {
-    SetControlRegister(EXTENDED_TRIGGER_TIME_TAG_ENABLE, mode);
-    if (fVerb>1) {
-      std::ostringstream o; o << "Debug: Enabled? " << mode; PrintInfo(o.str());
-    }
-  }
-
-  bool
-  TDCV1x90::GetETTT() const
-  {
-    return GetControlRegister(EXTENDED_TRIGGER_TIME_TAG_ENABLE);
-  }
-  
-  void
   TDCV1x90::SetStatus(const TDCV1x90Status& status) const
   {
     try { WriteRegister(kStatus, status.GetValue()); } catch (Exception& e) { e.Dump(); }
@@ -765,6 +751,20 @@ namespace VME
     return TDCV1x90Status(value&0xFFFF);
   }
 
+  void
+  TDCV1x90::SetControl(const TDCV1x90Control& control) const
+  {
+    try { WriteRegister(kControl, control.GetValue()); } catch (Exception& e) { e.Dump(); }
+  }
+
+  TDCV1x90Control
+  TDCV1x90::GetControl() const
+  {
+    uint16_t value;
+    try { ReadRegister(kControl, &value); } catch (Exception& e) { e.Dump(); }
+    return TDCV1x90Control(value&0xFFFF);
+  }
+
   TDCEventCollection
   TDCV1x90::FetchEvents()
   {
@@ -772,8 +772,7 @@ namespace VME
       throw Exception(__PRETTY_FUNCTION__, "Abort state detected... quitting", JustWarning, TDC_ACQ_STOP);
     TDCEventCollection ec;
     // Start Readout (check if BERR is set to 0)
-    // Nw words are transmitted until the global TRAILER
-    // Move file!
+    // New words are transmitted until the global TRAILER
     
     memset(fBuffer, 0, sizeof(uint32_t));
     
@@ -808,7 +807,7 @@ namespace VME
         trailing = ev.IsTrailing();
         value = (trailing) ? ev.GetTrailingTime() : ev.GetLeadingTime();
         channel = ev.GetChannelId();
-        if (value != 0) {
+        if (value!=0) {
           ec.push_back(ev);
           std::cout << std::dec
                     << "event " << i << "\t"
