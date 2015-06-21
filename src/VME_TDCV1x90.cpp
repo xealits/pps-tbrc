@@ -2,7 +2,7 @@
 
 namespace VME
 {
-  TDCV1x90::TDCV1x90(int32_t bhandle,uint32_t baseaddr, acq_mode acqm, det_mode detm) :
+  TDCV1x90::TDCV1x90(int32_t bhandle,uint32_t baseaddr, const ReadoutMode& acqm, det_mode detm) :
     fBaseAddr(baseaddr), fHandle(bhandle),
     am(cvA32_U_DATA), am_blt(cvA32_U_BLT)
   {
@@ -494,7 +494,7 @@ namespace VME
 
 
   void
-  TDCV1x90::SetAcquisitionMode(acq_mode mode)
+  TDCV1x90::SetAcquisitionMode(const ReadoutMode& mode)
   {
     try {
       switch(mode){

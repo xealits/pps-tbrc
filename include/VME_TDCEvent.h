@@ -7,6 +7,11 @@
 
 namespace VME
 {
+  typedef enum {
+    CONT_STORAGE,
+    TRIG_MATCH,
+  } ReadoutMode;
+
   /**
    * Object enabling to decipher any measurement/error/debug event returned by the
    * HPTDC chip
@@ -30,8 +35,9 @@ namespace VME
       };
     
     public:
-      TDCEvent() : fWord(0) {;}
-      TDCEvent(const uint32_t& word) : fWord(word) {;}
+      inline TDCEvent() : fWord(0) {;}
+      inline TDCEvent(const TDCEvent& ev) : fWord(ev.fWord) {;}
+      inline TDCEvent(const uint32_t& word) : fWord(word) {;}
       inline virtual ~TDCEvent() {;}
 
       inline void Dump() const {
@@ -39,9 +45,9 @@ namespace VME
         ss << "Event dump\n\t"
            << "Type: 0x" << std::hex << GetType() << std::dec << "\n\t"
            << "Word:\n\t";
-        for (unsigned int i=0; i<32; i++) {
-          if (i%4==0) ss << " ";
+        for (int i=31; i>=0; i--) {
           ss << (unsigned int)((fWord>>i)&0x1);
+          if (i%4==0) ss << " ";
         }
         PrintInfo(ss.str());
       }
@@ -53,9 +59,9 @@ namespace VME
         return static_cast<EventType>((fWord>>27)&0x1F);
       }
       /// Programmed identifier of master TDC providing the event
-      inline uint8_t GetTDCId() const {
+      inline unsigned int GetTDCId() const {
         if (GetType()!=TDCHeader and GetType()!=TDCTrailer and GetType()!=TDCError) return 0;
-        return static_cast<uint8_t>((fWord>>24)&0x3);
+        return static_cast<unsigned int>((fWord>>24)&0x3);
       }
       /// Event identifier from event counter
       inline uint16_t GetEventId() const {
@@ -67,13 +73,13 @@ namespace VME
         if (GetType()!=TDCTrailer) return 0;
         return static_cast<uint16_t>(fWord&0xFFF);
       }
-      inline uint8_t GetGeo() const {
+      inline unsigned int GetGeo() const {
         if (GetType()!=TDCTrailer) return 0;
-        return static_cast<uint8_t>(fWord&0x1F);
+        return static_cast<unsigned int>(fWord&0x1F);
       }
-      inline uint8_t GetChannelId() const {
+      inline unsigned int GetChannelId() const {
         if (GetType()!=TDCMeasurement) return 0;
-        return static_cast<uint8_t>((fWord>>19)&0x7F);
+        return static_cast<unsigned int>((fWord>>19)&0x7F);
       }
       /// Total number of events
       inline uint32_t GetEventCount() const {
@@ -105,18 +111,18 @@ namespace VME
         else return static_cast<uint32_t>(fWord&0x7FFFF);
       }
       /// Width of pulse in programmed time resolution
-      inline uint8_t GetWidth() const {
+      inline unsigned int GetWidth() const {
         if (GetType()!=TDCMeasurement) return 0;
-        return static_cast<uint8_t>((fWord>>12)&0x7F);
+        return static_cast<unsigned int>((fWord>>12)&0x7F);
       }
       /// Trailing edge measurement in programmed time resolution
       inline uint32_t GetTrailingTime() const {
         if (GetType()!=TDCMeasurement or !IsTrailing()) return 0;
         return static_cast<uint32_t>(fWord&0x7FFFF);
       }
-      inline uint8_t GetStatus() const {
+      inline unsigned int GetStatus() const {
         if (GetType()!=GlobalTrailer) return 0;
-        return static_cast<uint8_t>((fWord>>24)&0x7);
+        return static_cast<unsigned int>((fWord>>24)&0x7);
       }
       /// Return error flags if an error condition has been detected
       inline uint16_t GetErrorFlags() const {

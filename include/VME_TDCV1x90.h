@@ -47,11 +47,6 @@ namespace VME
   } micro_handshake;
 
   typedef enum {
-    CONT_STORAGE,
-    TRIG_MATCH,
-  } acq_mode;
-
-  typedef enum {
     PAIR      = 0,
     OTRAILING = 1,
     OLEADING  = 2,
@@ -253,7 +248,7 @@ namespace VME
   class TDCV1x90
   {
     public:
-      TDCV1x90(int32_t, uint32_t, acq_mode acqm=TRIG_MATCH, det_mode detm=TRAILEAD);
+      TDCV1x90(int32_t, uint32_t, const ReadoutMode& acqm=TRIG_MATCH, det_mode detm=TRAILEAD);
       ~TDCV1x90();
       void SetVerboseLevel(unsigned short verb=1) { fVerb=verb; }
 
@@ -273,9 +268,9 @@ namespace VME
 
       void SetLSBTraileadEdge(trailead_edge_lsb) const;
 
-      void SetAcquisitionMode(acq_mode);
+      void SetAcquisitionMode(const ReadoutMode&);
       void ReadAcquisitionMode();
-      inline acq_mode GetAcquisitionMode() {
+      inline ReadoutMode GetAcquisitionMode() {
         ReadAcquisitionMode();
         return fAcquisitionMode;
       }
@@ -387,7 +382,7 @@ namespace VME
       int32_t fHandle;
       unsigned short fVerb;
 
-      acq_mode fAcquisitionMode;
+      ReadoutMode fAcquisitionMode;
       det_mode fDetectionMode;
 
       bool fErrorMarks;

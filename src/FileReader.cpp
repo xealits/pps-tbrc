@@ -1,6 +1,7 @@
 #include "FileReader.h"
 
-FileReader::FileReader(std::string file)
+FileReader::FileReader(std::string file, const VME::ReadoutMode& ro) :
+  fReadoutMode(ro)
 {
   fFile.open(file.c_str(), std::ios::in|std::ios::binary);
   
@@ -31,9 +32,13 @@ FileReader::FileReader(std::string file)
     throw Exception(__PRETTY_FUNCTION__, "Wrong magic number!", Fatal);
   }
   std::stringstream s;
-  s << "File written on: " << asctime(localtime(&(st.st_mtime)));
-  Exception(__PRETTY_FUNCTION__, s.str(), Info).Dump();
-  
+  char buff[80];
+  strftime(buff, 80, "%c", localtime(&(st.st_mtime)));
+  s << "File written on: " << buff << "\n\t"
+    << "Run number: " << fHeader.run_id << "\n\t" 
+    << "Number of events: " << (st.st_size-sizeof(file_header_t))/sizeof(uint32_t);
+  PrintInfo(s.str());
+  exit(0);
 }
 
 FileReader::~FileReader()
@@ -41,11 +46,46 @@ FileReader::~FileReader()
   if (fFile.is_open()) fFile.close();
 }
 
-VME::TDCEvent
-FileReader::GetNextEvent()
+bool
+FileReader::GetNextEvent(VME::TDCEvent* ev)
+{
+  uint32_t buffer;
+  fFile.read((char*)&buffer, sizeof(uint32_t));
+  ev->SetWord(buffer);
+  if (fFile.eof()) return false;
+  return true;
+}
+
+bool
+FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* m)
 {
   VME::TDCEvent ev;
-  fFile.read((char*)&ev, sizeof(VME::TDCEvent));
-  if (fFile) return ev;
-  return 0;
+  std::vector<VME::TDCEvent> ec;
+  /*do { GetNextEvent(&ev);
+    std::cout << ev.GetChannelId() << " type: " << ev.GetType() << std::endl; 
+  } while (ev.GetType()!=VME::TDCEvent::TDCHeader);*/
+  /*do {
+    GetNextEvent(&ev);
+    if (ev.GetChannelId()!=channel_id) continue;
+    ec.push_back(ev);
+    std::cout << ev.GetType() << std::endl;
+  } while (ev.GetType()!=VME::TDCEvent::TDCHeader);*/
+
+  if (fReadoutMode==VME::CONT_STORAGE) {
+    bool has_lead = false, has_trail = false;
+    while (GetNextEvent(&ev)) {
+      if (ev.GetChannelId()!=channel_id) continue;
+      if (ev.GetType()==VME::TDCEvent::TDCHeader) continue;
+
+      ec.push_back(ev);
+
+      if (ev.IsTrailing()) has_trail = true;
+      else has_lead = true;
+      if (has_lead and has_trail) break;
+    }
+  }
+  //std::cout << "--> " << ec.size() << std::endl;
+  m->SetEventsCollection(ec);
+  return true;
 }
+
