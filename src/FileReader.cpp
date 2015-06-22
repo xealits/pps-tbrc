@@ -51,6 +51,7 @@ FileReader::GetNextEvent(VME::TDCEvent* ev)
   uint32_t buffer;
   fFile.read((char*)&buffer, sizeof(uint32_t));
   ev->SetWord(buffer);
+  //std::cout << "Event type: " << ev->GetType() << std::endl;
   if (fFile.eof()) return false;
   return true;
 }
@@ -75,17 +76,26 @@ FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* m)
     while (true) {
       if (!GetNextEvent(&ev)) return false;
       if (ev.GetChannelId()!=channel_id) continue;
-      if (ev.GetType()==VME::TDCEvent::TDCHeader) continue;
 
       ec.push_back(ev);
 
-      if (ev.IsTrailing()) has_trail = true;
-      else has_lead = true;
+      switch (ev.GetType()) {
+        case VME::TDCEvent::TDCHeader:
+          //std::cerr << "Event Id=" << ev.GetEventId() << std::endl;
+          break;
+        case VME::TDCEvent::TDCMeasurement:
+          //std::cerr << "Leading measurement? " << (!ev.IsTrailing()) << std::endl;
+          if (ev.IsTrailing()) has_trail = true;
+          else has_lead = true;
+          break;
+        default: break;
+      }
       if (has_lead and has_trail) break;
     }
   }
   //std::cout << "--> " << ec.size() << std::endl;
   m->SetEventsCollection(ec);
+  //std::cerr << "Events collection built!" << std::endl;
   return true;
 }
 
