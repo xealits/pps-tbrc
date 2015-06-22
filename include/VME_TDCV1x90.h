@@ -255,7 +255,7 @@ namespace VME
         DLL_PLL_HighRes = 0x3
       } DLLMode;
       
-      TDCV1x90(int32_t, uint32_t, const ReadoutMode& acqm=TRIG_MATCH, det_mode detm=TRAILEAD);
+      TDCV1x90(int32_t bhandle, uint32_t baseaddr, const ReadoutMode& acqm=TRIG_MATCH, det_mode detm=TRAILEAD);
       ~TDCV1x90();
       void SetVerboseLevel(unsigned short verb=1) { fVerb=verb; }
 
