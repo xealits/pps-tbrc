@@ -23,7 +23,7 @@ namespace VME
       inline TDCMeasurement(const std::vector<TDCEvent>& v) { SetEventsCollection(v); }
       inline ~TDCMeasurement() { fMap.clear(); }
 
-      inline void Dump() const {
+      inline void Dump() {
         for (std::map<Type,TDCEvent>::const_iterator e=fMap.begin(); e!=fMap.end(); e++) {
           std::cout << "=> Type=" << e->first << std::endl;
         }
@@ -48,13 +48,13 @@ namespace VME
         }
       }
 
-      inline uint32_t GetLeadingTime() const {
+      inline uint32_t GetLeadingTime() {
         if (!fMap.count(LeadingEdge)) { return 0; }
-        return fMap.at(LeadingEdge).GetLeadingTime();
+        return fMap[LeadingEdge].GetLeadingTime();
       }
-      inline uint32_t GetTrailingTime() const {
+      inline uint32_t GetTrailingTime() {
         if (!fMap.count(TrailingEdge)) { return 0; }
-        return fMap.at(TrailingEdge).GetTrailingTime();
+        return fMap[TrailingEdge].GetTrailingTime();
       }
 
     private:
