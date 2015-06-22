@@ -248,6 +248,13 @@ namespace VME
   class TDCV1x90
   {
     public:
+      typedef enum {
+        DLL_Direct_LowRes = 0x0,
+        DLL_PLL_LowRes = 0x1,
+        DLL_PLL_MedRes = 0x2,
+        DLL_PLL_HighRes = 0x3
+      } DLLMode;
+      
       TDCV1x90(int32_t, uint32_t, const ReadoutMode& acqm=TRIG_MATCH, det_mode detm=TRAILEAD);
       ~TDCV1x90();
       void SetVerboseLevel(unsigned short verb=1) { fVerb=verb; }
@@ -283,6 +290,9 @@ namespace VME
         ReadDetection();
         return fDetectionMode;
       }
+
+      void SetDLLClock(const DLLMode& dll) const;
+      DLLMode GetDLLClock() const;
       
       void SetGlobalOffset(const GlobalOffset&) const;
       GlobalOffset GetGlobalOffset() const;

@@ -48,13 +48,15 @@ int main(int argc, char *argv[]) {
     
     // TDC configuration
     //const uint32_t tdc_address = 0x000d0000; // V1290N (16 ch., Louvain-la-Neuve)
-    const uint32_t tdc_address = 0x00aa0000; // V1290A (32 ch., CERN)
+    const uint32_t tdc_address = 0x00bb0000; // V1290A (32 ch., CERN)
     
     vme->AddTDC(tdc_address);
     tdc = vme->GetTDC(tdc_address);
     tdc->SetVerboseLevel(0);
     tdc->GetControl().Dump();
     tdc->SetAcquisitionMode(VME::CONT_STORAGE);
+    tdc->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
+    tdc->SetETTT();
     //tdc->SetTestMode();
     /*tdc->SetWindowWidth(2040);
     tdc->SetWindowOffset(-2045);*/

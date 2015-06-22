@@ -736,6 +736,17 @@ namespace VME
     }
     return value;
   }
+
+  void
+  TDCV1x90::SetDLLClock(const DLLMode& dll) const
+  {
+    try {
+      WaitMicro(WRITE_OK);
+      WriteRegister(kMicro, TDCV1x90Opcodes::SET_DLL_CLOCK);
+      WaitMicro(WRITE_OK);
+      WriteRegister(kMicro, static_cast<uint16_t>(dll));
+    } catch (Exception& e) { e.Dump(); return; }
+  }
     
   void
   TDCV1x90::SetStatus(const TDCV1x90Status& status) const
@@ -809,32 +820,32 @@ namespace VME
         channel = ev.GetChannelId();
         if (value!=0) {
           ec.push_back(ev);
-          std::cout << std::dec
+          /*std::cout << std::dec
                     << "event " << i << "\t"
-                    << "channel " << channel << "\t";
+                    << "channel " << channel << "\t";*/
           switch(fDetectionMode) {
             case PAIR:
               width = (fBuffer[i]&0x7F000)>>12;
               value = fBuffer[i]&0xFFF;
-              std::cout << "width " << std::hex << width << "\t\t"
-                        << "value " << std::dec << value;
+              /*std::cout << "width " << std::hex << width << "\t\t"
+                        << "value " << std::dec << value;*/
             break;
           case OTRAILING:
           case OLEADING:
-            std::cout << std::dec
+            /*std::cout << std::dec
                       << "value " << value << "\t"
-                      << "trailing? " << trailing;
+                      << "trailing? " << trailing;*/
             break;
           case TRAILEAD:
-            std::cout << std::dec 
+            /*std::cout << std::dec 
                       << "value " << value << "\t"
-                      << "trailing? " << trailing;
+                      << "trailing? " << trailing;*/
             break;
           default:
             o.str(""); o << "Wrong detection mode: " << fDetectionMode;
             throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
           }
-          std::cout << std::endl;
+          //std::cout << std::endl;
         }
       }
       return ec;
