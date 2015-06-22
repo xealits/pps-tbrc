@@ -31,11 +31,14 @@ int main(int argc, char *argv[]) {
   VME::TDCEventCollection ec;
   VME::TDCV1x90* tdc;
   string filename;
+
+  VME::TDCV1x90::DetectionMode det_mode = PAIR;
   
   file_header_t fh;
   fh.magic = 0x30535050; // PPS0 in ASCII
   fh.run_id = 0;
   fh.spill_id = 0;
+  fh.det_mode = det_mode;
   
   std::time_t t_beg;
   num_events = 0;
@@ -56,6 +59,7 @@ int main(int argc, char *argv[]) {
     tdc->GetControl().Dump();
     tdc->SetAcquisitionMode(VME::CONT_STORAGE);
     tdc->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
+    tdc->SetDetectionMode(det_mode);
     tdc->SetETTT();
     //tdc->SetTestMode();
     /*tdc->SetWindowWidth(2040);

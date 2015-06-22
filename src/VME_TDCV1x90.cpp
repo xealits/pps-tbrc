@@ -2,7 +2,7 @@
 
 namespace VME
 {
-  TDCV1x90::TDCV1x90(int32_t bhandle,uint32_t baseaddr, const ReadoutMode& acqm, det_mode detm) :
+  TDCV1x90::TDCV1x90(int32_t bhandle, uint32_t baseaddr, const ReadoutMode& acqm, const DetectionMode& detm) :
     fBaseAddr(baseaddr), fHandle(bhandle),
     am(cvA32_U_DATA), am_blt(cvA32_U_BLT)
   {
@@ -362,7 +362,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::SetDetection(det_mode mode)
+  TDCV1x90::SetDetection(const DetectionMode& mode)
   {
     try {
       WaitMicro(WRITE_OK);
@@ -405,7 +405,7 @@ namespace VME
       }
       PrintInfo(o.str());
     }
-    fDetectionMode = static_cast<det_mode>(data&0x3);
+    fDetectionMode = static_cast<DetectionMode>(data&0x3);
   }
 
   void
@@ -449,7 +449,7 @@ namespace VME
   }
 
   uint16_t
-  TDCV1x90::GetResolution(const det_mode& det) const
+  TDCV1x90::GetResolution(const DetectionMode& det) const
   {
     uint16_t data;
     try { 

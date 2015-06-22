@@ -12,10 +12,17 @@ namespace VME
    * \author Laurent Forthomme <laurent.forthomme@cern.ch>
    * \ingroup HPTDC
    */
-  typedef enum {
+  enum ReadoutMode {
     CONT_STORAGE,
     TRIG_MATCH,
-  } ReadoutMode;
+  };
+
+  enum DetectionMode {
+     PAIR      = 0x0,
+     OTRAILING = 0x1,
+     OLEADING  = 0x2,
+     TRAILEAD  = 0x3
+  };
  
   /**
    * \brief Error flags handler

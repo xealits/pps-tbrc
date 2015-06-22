@@ -47,13 +47,6 @@ namespace VME
   } micro_handshake;
 
   typedef enum {
-    PAIR      = 0,
-    OTRAILING = 1,
-    OLEADING  = 2,
-    TRAILEAD  = 3,
-  } det_mode;
-
-  typedef enum {
 
     kOutputBuffer            = 0x0000, // D32 R
     kControl                 = 0x1000, // D16 R/W
@@ -248,14 +241,14 @@ namespace VME
   class TDCV1x90
   {
     public:
-      typedef enum {
+      enum DLLMode {
         DLL_Direct_LowRes = 0x0,
         DLL_PLL_LowRes = 0x1,
         DLL_PLL_MedRes = 0x2,
         DLL_PLL_HighRes = 0x3
-      } DLLMode;
+      };
       
-      TDCV1x90(int32_t, uint32_t, const ReadoutMode& acqm=TRIG_MATCH, det_mode detm=TRAILEAD);
+      TDCV1x90(int32_t, uint32_t, const ReadoutMode& acqm=TRIG_MATCH, const DetectionMode& detm=TRAILEAD);
       ~TDCV1x90();
       void SetVerboseLevel(unsigned short verb=1) { fVerb=verb; }
 
@@ -284,9 +277,9 @@ namespace VME
       void SetTriggerMatching();
       void SetContinuousStorage();
 
-      void SetDetection(det_mode);
+      void SetDetection(const DetectionMode& detm);
       void ReadDetection();
-      inline det_mode GetDetection() {
+      inline DetectionMode GetDetection() {
         ReadDetection();
         return fDetectionMode;
       }
@@ -318,7 +311,7 @@ namespace VME
       inline bool GetErrorMarks() const { return fErrorMarks; }
       
       void SetPairModeResolution(int,int) const;
-      uint16_t GetResolution(const det_mode&) const;
+      uint16_t GetResolution(const DetectionMode&) const;
 
       void SetBLTEventNumberRegister(const uint16_t&) const;
       uint16_t GetBLTEventNumberRegister() const;
@@ -393,7 +386,7 @@ namespace VME
       unsigned short fVerb;
 
       ReadoutMode fAcquisitionMode;
-      det_mode fDetectionMode;
+      DetectionMode fDetectionMode;
 
       bool fErrorMarks;
       uint16_t fWindowWidth;
