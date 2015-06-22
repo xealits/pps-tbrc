@@ -20,6 +20,7 @@ main(int argc, char* argv[])
   num_events = 0;
   while (f.GetNextMeasurement(0, &m)) {
     cout << m.GetLeadingTime()-m.GetTrailingTime() << endl;
+    //m.Dump();
     num_events++;
   }
   cerr << "number of events in channel " << 0 << ": " << num_events << endl;

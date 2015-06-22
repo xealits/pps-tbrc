@@ -663,7 +663,8 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::ostringstream o; o << "Debug: Enabled? " << mode; PrintInfo(o.str());
+      std::ostringstream o; o << "Debug: TDC encapsulation enabled? " << mode;
+      PrintInfo(o.str());
     }
   }
 
@@ -712,7 +713,8 @@ namespace VME
       WriteRegister(kMicro, opcode);
     } catch (Exception& e) { e.Dump(); return; }
     if (fVerb>1) {
-      std::ostringstream o; o << "Debug: Enabled? " << mode; PrintInfo(o.str());
+      std::ostringstream o; o << "Debug: Enabled? " << mode;
+      PrintInfo(o.str());
     }
     fErrorMarks = mode;
   }
@@ -722,7 +724,8 @@ namespace VME
   {
     try { WriteRegister(kBLTEventNumber, value); } catch (Exception& e) { e.Dump(); }
     if (fVerb>1) {
-      std::ostringstream o; o << "Debug: value: " << value; PrintInfo(o.str());
+      std::ostringstream o; o << "Debug: value: " << value;
+      PrintInfo(o.str());
     }
   }
 
@@ -732,7 +735,8 @@ namespace VME
     uint16_t value;
     try { ReadRegister(kBLTEventNumber, &value); } catch (Exception& e) { e.Dump(); }
     if (fVerb>1) {
-      std::ostringstream o; o << "Debug: value: " << value; PrintInfo(o.str());
+      std::ostringstream o; o << "Debug: value: " << value;
+      PrintInfo(o.str());
     }
     return value;
   }

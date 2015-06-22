@@ -51,7 +51,7 @@ FileReader::GetNextEvent(VME::TDCEvent* ev)
   uint32_t buffer;
   fFile.read((char*)&buffer, sizeof(uint32_t));
   ev->SetWord(buffer);
-  //std::cout << "Event type: " << ev->GetType() << std::endl;
+  //std::cerr << "Event type: " << ev->GetType() << std::endl;
   if (fFile.eof()) return false;
   return true;
 }
@@ -72,7 +72,7 @@ FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* m)
   } while (ev.GetType()!=VME::TDCEvent::TDCHeader);*/
 
   if (fReadoutMode==VME::CONT_STORAGE) {
-    bool has_lead = false, has_trail = false;
+    bool has_lead = false, has_trail = false, has_error = false;
     while (true) {
       if (!GetNextEvent(&ev)) return false;
       if (ev.GetChannelId()!=channel_id) continue;
@@ -88,10 +88,19 @@ FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* m)
           if (ev.IsTrailing()) has_trail = true;
           else has_lead = true;
           break;
-        default: break;
+        case VME::TDCEvent::GlobalHeader:
+        case VME::TDCEvent::GlobalTrailer:
+        case VME::TDCEvent::TDCTrailer:
+        case VME::TDCEvent::TDCError:
+          has_error = true;
+          std::cerr << " ---> Error flags: " << ev.GetErrorFlags() << std::endl;
+        case VME::TDCEvent::ETTT:
+        case VME::TDCEvent::Filler:
+          break;
       }
       if (has_lead and has_trail) break;
     }
+    if (has_error) throw Exception(__PRETTY_FUNCTION__, "Measurement has at least one error word.", JustWarning);
   }
   //std::cout << "--> " << ec.size() << std::endl;
   m->SetEventsCollection(ec);
