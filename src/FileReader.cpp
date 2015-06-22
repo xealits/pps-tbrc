@@ -38,7 +38,6 @@ FileReader::FileReader(std::string file, const VME::ReadoutMode& ro) :
     << "Run number: " << fHeader.run_id << "\n\t" 
     << "Number of events: " << (st.st_size-sizeof(file_header_t))/sizeof(uint32_t);
   PrintInfo(s.str());
-  exit(0);
 }
 
 FileReader::~FileReader()
@@ -73,7 +72,8 @@ FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* m)
 
   if (fReadoutMode==VME::CONT_STORAGE) {
     bool has_lead = false, has_trail = false;
-    while (GetNextEvent(&ev)) {
+    while (true) {
+      if (!GetNextEvent(&ev)) return false;
       if (ev.GetChannelId()!=channel_id) continue;
       if (ev.GetType()==VME::TDCEvent::TDCHeader) continue;
 

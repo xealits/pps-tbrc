@@ -79,7 +79,8 @@ namespace VME
       }
       inline unsigned int GetChannelId() const {
         if (GetType()!=TDCMeasurement) return 0;
-        return static_cast<unsigned int>((fWord>>19)&0x7F);
+        //return static_cast<unsigned int>((fWord>>19)&0x7F);
+        return static_cast<unsigned int>((fWord>>21)&0x1F);
       }
       /// Total number of events
       inline uint32_t GetEventCount() const {
