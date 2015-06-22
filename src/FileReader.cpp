@@ -1,6 +1,6 @@
 #include "FileReader.h"
 
-FileReader::FileReader(std::string file, const VME::ReadoutMode& ro) :
+FileReader::FileReader(std::string file, const VME::AcquisitionMode& ro) :
   fReadoutMode(ro)
 {
   fFile.open(file.c_str(), std::ios::in|std::ios::binary);

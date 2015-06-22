@@ -33,7 +33,7 @@ void
 VMEReader::AddTDC(uint32_t address)
 {
   VME::TDCV1x90* tdc = new VME::TDCV1x90(fBridge->GetHandle(), address, VME::TRIG_MATCH, VME::TRAILEAD);
-  tdc->GetFirmwareRev();
+  tdc->GetFirmwareRevision();
   fTDCCollection.insert(std::pair<uint32_t,VME::TDCV1x90*>(address, tdc));
 }
 

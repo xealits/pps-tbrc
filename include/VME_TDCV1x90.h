@@ -248,7 +248,7 @@ namespace VME
         DLL_PLL_HighRes = 0x3
       };
       
-      TDCV1x90(int32_t, uint32_t, const ReadoutMode& acqm=TRIG_MATCH, const DetectionMode& detm=TRAILEAD);
+      TDCV1x90(int32_t, uint32_t, const AcquisitionMode& acqm=TRIG_MATCH, const DetectionMode& detm=TRAILEAD);
       ~TDCV1x90();
       void SetVerboseLevel(unsigned short verb=1) { fVerb=verb; }
 
@@ -258,7 +258,7 @@ namespace VME
       uint32_t GetModel() const;
       uint32_t GetOUI() const;
       uint32_t GetSerialNumber() const;
-      void GetFirmwareRev() const;
+      void GetFirmwareRevision() const;
       
       void CheckConfiguration() const;
      
@@ -268,19 +268,17 @@ namespace VME
 
       void SetLSBTraileadEdge(trailead_edge_lsb) const;
 
-      void SetAcquisitionMode(const ReadoutMode&);
-      void ReadAcquisitionMode();
-      inline ReadoutMode GetAcquisitionMode() {
+      void SetAcquisitionMode(const AcquisitionMode&);
+      inline AcquisitionMode GetAcquisitionMode() {
         ReadAcquisitionMode();
         return fAcquisitionMode;
       }
       void SetTriggerMatching();
       void SetContinuousStorage();
 
-      void SetDetection(const DetectionMode& detm);
-      void ReadDetection();
-      inline DetectionMode GetDetection() {
-        ReadDetection();
+      void SetDetectionMode(const DetectionMode& detm);
+      inline DetectionMode GetDetectionMode() {
+        ReadDetectionMode();
         return fDetectionMode;
       }
 
@@ -311,7 +309,7 @@ namespace VME
       inline bool GetErrorMarks() const { return fErrorMarks; }
       
       void SetPairModeResolution(int,int) const;
-      uint16_t GetResolution(const DetectionMode&) const;
+      uint16_t GetResolution() const;
 
       void SetBLTEventNumberRegister(const uint16_t&) const;
       uint16_t GetBLTEventNumberRegister() const;
@@ -381,11 +379,14 @@ namespace VME
        */  
       void ReadRegister(mod_reg, uint32_t*) const;
 
+      void ReadAcquisitionMode();
+      void ReadDetectionMode();
+
       uint32_t fBaseAddr;
       int32_t fHandle;
       unsigned short fVerb;
 
-      ReadoutMode fAcquisitionMode;
+      AcquisitionMode fAcquisitionMode;
       DetectionMode fDetectionMode;
 
       bool fErrorMarks;

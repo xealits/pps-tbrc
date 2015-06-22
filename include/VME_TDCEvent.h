@@ -12,7 +12,7 @@ namespace VME
    * \author Laurent Forthomme <laurent.forthomme@cern.ch>
    * \ingroup HPTDC
    */
-  enum ReadoutMode {
+  enum AcquisitionMode {
     CONT_STORAGE,
     TRIG_MATCH,
   };
