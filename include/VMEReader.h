@@ -39,6 +39,19 @@ class VMEReader : public Client
     /// Ask the socket master a run number
     unsigned int GetRunNumber();
     
+    inline void StartPulser(double period, double width, unsigned char num_pulses=0) {
+      try {
+        fBridge->StartPulser(period, width, num_pulses);
+        fIsPulserStarted = true;
+      } catch (Exception& e) { throw e; }
+    }
+    inline void StopPulser() {
+      try {
+        fBridge->StopPulser();
+        fIsPulserStarted = false;
+      } catch (Exception& e) { throw e; }
+    }
+
     /// Abort data collection for all modules on the bus handled by the bridge
     void Abort();
 
@@ -51,6 +64,7 @@ class VMEReader : public Client
     TDCCollection fTDCCollection;
     /// Are we dealing with socket message passing?
     bool fOnSocket;
+    bool fIsPulserStarted;
 };
 
 #endif

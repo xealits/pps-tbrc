@@ -133,6 +133,33 @@ namespace VME
   }
 
   void
+  BridgeVx718::StartPulser(double period, double width, unsigned char num_pulses) const
+  {
+    unsigned char per, wid;
+    CVTimeUnits unit;
+    // in ns!
+    if (width<6.375)       { unit = cvUnit25ns;   wid = static_cast<unsigned char>(width*1000/25); per = static_cast<unsigned char>(period*1000/25); }
+    else if (width<408.e3) { unit = cvUnit1600ns; wid = static_cast<unsigned char>(width/1600);    per = static_cast<unsigned char>(period/1600); }
+    else throw Exception(__PRETTY_FUNCTION__, "Unsupported (so far...) pulser width!", JustWarning);
+
+    if (CAENVME_SetPulserConf(fHandle, cvPulserB, per, wid, unit, num_pulses, cvManualSW, cvManualSW)!=cvSuccess) {
+      throw Exception(__PRETTY_FUNCTION__, "Failed to configure the pulser", JustWarning);
+    }
+
+    if (CAENVME_StartPulser(fHandle, cvPulserB)!=cvSuccess) {
+      throw Exception(__PRETTY_FUNCTION__, "Failed to start the pulser", JustWarning);
+    }
+  }
+
+  void
+  BridgeVx718::StopPulser() const
+  {
+    if (CAENVME_StopPulser(fHandle, cvPulserB)!=cvSuccess) {
+      throw Exception(__PRETTY_FUNCTION__, "Failed to stop the pulser", JustWarning);
+    }
+  }
+
+  void
   BridgeVx718::WriteRegister(mod_reg addr, const uint16_t& data) const
   {
     uint32_t address = fBaseAddr+addr;

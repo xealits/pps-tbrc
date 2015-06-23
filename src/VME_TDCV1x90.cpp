@@ -45,6 +45,7 @@ namespace VME
     SetWindowWidth(2045);
     SetWindowOffset(-2050);
     //SetPairModeResolution(0,0x4);
+    SetPoI(0xFFFF, 0xFFFF);
     GetResolution();
     
     gEnd = false;

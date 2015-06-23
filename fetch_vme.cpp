@@ -56,6 +56,7 @@ int main(int argc, char *argv[]) {
     const uint32_t tdc_address = 0x00aa0000; // V1290A (32 ch., CERN)
     //const uint32_t tdc_address = 0x00bb0000; // V1290A (32 ch., CERN)
     
+    vme->StartPulser(100., 20.);
     vme->AddTDC(tdc_address);
     tdc = vme->GetTDC(tdc_address);
     //tdc->SetVerboseLevel(0);
@@ -65,8 +66,8 @@ int main(int argc, char *argv[]) {
     tdc->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
     tdc->SetETTT();
     //tdc->SetTestMode();
-    /*tdc->SetWindowWidth(2040);
-    tdc->SetWindowOffset(-2045);*/
+    //tdc->SetWindowWidth(2040);
+    //tdc->SetWindowOffset(-2045);
     
     filename = GenerateFileName(0);
     out_file.open(filename.c_str(), fstream::out | ios::binary );	
@@ -107,6 +108,7 @@ int main(int argc, char *argv[]) {
       }
       num_events += ec.size();
     }
+    while(true) {;}
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
       if (out_file.is_open()) out_file.close();

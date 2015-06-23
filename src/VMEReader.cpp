@@ -1,16 +1,20 @@
 #include "VMEReader.h"
 
 VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
-  Client(1987), fOnSocket(on_socket)
+  Client(1987), fOnSocket(on_socket), fIsPulserStarted(false)
 {
   if (fOnSocket) {
     Client::Connect();
   }
   fBridge = new VME::BridgeVx718(device, type);
+  try {
+    StopPulser();
+  } catch (Exception& e) { e.Dump(); }
 }
 
 VMEReader::~VMEReader()
 {
+  if (fIsPulserStarted) fBridge->StopPulser();
   delete fBridge;
 }
 

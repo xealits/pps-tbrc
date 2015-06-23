@@ -128,6 +128,9 @@ namespace VME
       void InputConf(CVInputSelect input);
       void InputRead(CVInputSelect input);
 
+      void StartPulser(double period, double width, unsigned char num_pulses=0) const;
+      void StopPulser() const;
+
     private:
       enum mod_reg {
         kIRQStatus      = 0x05,
