@@ -118,15 +118,15 @@ namespace VME
       /**
        * \brief Set and control the output lines
        */
-      void OutputConf(CVOutputSelect output);
-      void OutputOn(CVOutputSelect output);
-      void OutputOff(CVOutputSelect output);
+      void OutputConf(CVOutputSelect output) const;
+      void OutputOn(CVOutputSelect output) const;
+      void OutputOff(CVOutputSelect output) const;
 
       /**
        * \brief Set and read the input lines
        */
-      void InputConf(CVInputSelect input);
-      void InputRead(CVInputSelect input);
+      void InputConf(CVInputSelect input) const;
+      void InputRead(CVInputSelect input) const;
 
       void StartPulser(double period, double width, unsigned char num_pulses=0) const;
       void StopPulser() const;
@@ -149,8 +149,6 @@ namespace VME
       void ReadRegister(mod_reg addr, uint16_t* data) const;
       void ReadRegister(mod_reg addr, uint32_t* data) const;
 
-      /// Map output lines [0,4] to corresponding register.
-      std::map<CVOutputSelect,CVOutputRegisterBits> fPortMapping; 
       /// Device handle
       int32_t fHandle;
       uint32_t fBaseAddr;

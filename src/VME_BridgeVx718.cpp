@@ -44,13 +44,6 @@ namespace VME
     o << "Bridge firmware version: " << rel;
     PrintInfo(o.str());
     
-    //Map output lines [0,4] to corresponding register.
-    fPortMapping[cvOutput0] = cvOut0Bit;
-    fPortMapping[cvOutput1] = cvOut1Bit;
-    fPortMapping[cvOutput2] = cvOut2Bit;
-    fPortMapping[cvOutput3] = cvOut3Bit;
-    fPortMapping[cvOutput4] = cvOut4Bit;
-
     CheckConfiguration();
   }
 
@@ -77,7 +70,7 @@ namespace VME
 
   // output := cvOutput[0,4] 
   void
-  BridgeVx718::OutputConf(CVOutputSelect output)
+  BridgeVx718::OutputConf(CVOutputSelect output) const
   {
     if (CAENVME_SetOutputConf(fHandle, output, cvDirect, cvActiveHigh, cvManualSW)!=cvSuccess) {
       std::ostringstream o;
@@ -88,9 +81,9 @@ namespace VME
 
   // output := cvOutput[0,4]
   void
-  BridgeVx718::OutputOn(CVOutputSelect output)
+  BridgeVx718::OutputOn(CVOutputSelect output) const
   {
-    if (CAENVME_SetOutputRegister(fHandle, fPortMapping[output])!=cvSuccess) {
+    if (CAENVME_SetOutputRegister(fHandle, output)!=cvSuccess) {
       std::ostringstream o;
       o << "Failed to enable output register #" << static_cast<int>(output);
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
@@ -98,9 +91,9 @@ namespace VME
   }
 
   void
-  BridgeVx718::OutputOff(CVOutputSelect output)
+  BridgeVx718::OutputOff(CVOutputSelect output) const
   {
-    if (CAENVME_ClearOutputRegister(fHandle, fPortMapping[output])!=cvSuccess) {
+    if (CAENVME_ClearOutputRegister(fHandle, output)!=cvSuccess) {
       std::ostringstream o;
       o << "Failed to disable output register #" << static_cast<int>(output);
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
@@ -109,7 +102,7 @@ namespace VME
 
   // input := cvInput[0,1]
   void
-  BridgeVx718::InputConf(CVInputSelect input)
+  BridgeVx718::InputConf(CVInputSelect input) const
   {
     if (CAENVME_SetInputConf(fHandle, input, cvDirect, cvActiveHigh)!=cvSuccess) {
       std::ostringstream o;
@@ -119,7 +112,7 @@ namespace VME
   }
 
   void
-  BridgeVx718::InputRead(CVInputSelect input)
+  BridgeVx718::InputRead(CVInputSelect input) const
   {
     short unsigned int data;
     if (CAENVME_ReadRegister(fHandle, cvInputReg, &data)!=cvSuccess) {
@@ -135,12 +128,42 @@ namespace VME
   void
   BridgeVx718::StartPulser(double period, double width, unsigned char num_pulses) const
   {
-    unsigned char per, wid;
+    unsigned short per, wid;
     CVTimeUnits unit;
-    // in ns!
-    if (width<6.375)       { unit = cvUnit25ns;   wid = static_cast<unsigned char>(width*1000/25); per = static_cast<unsigned char>(period*1000/25); }
-    else if (width<408.e3) { unit = cvUnit1600ns; wid = static_cast<unsigned char>(width/1600);    per = static_cast<unsigned char>(period/1600); }
-    else throw Exception(__PRETTY_FUNCTION__, "Unsupported (so far...) pulser width!", JustWarning);
+
+    try {
+      OutputConf(cvOutput0);
+      OutputConf(cvOutput1);
+      OutputConf(cvOutput2);
+      OutputConf(cvOutput3);
+    } catch (Exception& e) {
+      e.Dump();
+    }
+
+    // in us!
+    if (width<0xFF*25.e-3) { // 6.375 us
+      unit = cvUnit25ns;
+      wid = static_cast<unsigned short>(width*1000/25);
+      per = static_cast<unsigned short>(period*1000/25);
+    }
+    else if (width<0xFF*1.6) { // 408 us
+      unit = cvUnit1600ns;
+      wid = static_cast<unsigned short>(width*1000/1600);
+      per = static_cast<unsigned short>(period*1000/1600);
+    }
+    else if (width<0xFF*410.) { // 104.55 ms
+      unit = cvUnit410us;
+      wid = static_cast<unsigned short>(width/410);
+      per = static_cast<unsigned short>(period/410);
+    }
+    else if (width<0xFF*104.e3)  { // 26.52 s
+      unit = cvUnit104ms;
+      wid = static_cast<unsigned short>(width/104e3);
+      per = static_cast<unsigned short>(period/104e3);
+    }
+    else throw Exception(__PRETTY_FUNCTION__, "Unsupported pulser width!", JustWarning);
+
+    std::cout << width << " / " << period << " --> " << wid << " / " << per << std::endl;
 
     if (CAENVME_SetPulserConf(fHandle, cvPulserB, per, wid, unit, num_pulses, cvManualSW, cvManualSW)!=cvSuccess) {
       throw Exception(__PRETTY_FUNCTION__, "Failed to configure the pulser", JustWarning);
