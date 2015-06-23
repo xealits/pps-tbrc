@@ -203,9 +203,39 @@ namespace VME
   }
 
   void
-  TDCV1x90::SetPoI(uint16_t word)
+  TDCV1x90::SetPoI(uint16_t word1, uint16_t word2) const
   {
-    // ...
+    try {
+      WriteRegister(kMicro, TDCV1x90Opcodes::WRITE_EN_PATTERN);
+      WriteRegister(kMicro, word1);
+      WriteRegister(kMicro, word2);
+    } catch (Exception& e) { e.Dump(); }
+    if (fVerb>1) {
+      std::ostringstream os;
+      os << "Debug: Pattern of inhibit modified:" << "\n\t";
+      for (unsigned int i=0; i<16; i++) {
+        os << "Channel " << i << ": " << ((word1>>i)&0x1) << "\t"
+           << "Channel " << (i+16) << ": " << ((word2>>i)&0x1) << "\n\t";
+      }
+      PrintInfo(os.str());
+    }
+  }
+
+  std::map<unsigned short, bool>
+  TDCV1x90::GetPoI() const
+  {
+    uint16_t word1, word2;
+    std::map<unsigned short, bool> pattern;
+    try {
+      WriteRegister(kMicro, TDCV1x90Opcodes::READ_EN_PATTERN);
+      ReadRegister(kMicro, &word1);
+      ReadRegister(kMicro, &word2);
+    } catch (Exception& e) { e.Dump(); }
+    for (unsigned int i=0; i<16; i++) {
+      pattern.insert(std::pair<unsigned short, bool>(i, static_cast<bool>((word1>>i)&0x1)));
+      pattern.insert(std::pair<unsigned short, bool>(i+16, static_cast<bool>((word2>>i)&0x1)));
+    }
+    return pattern;
   }
 
   void
@@ -568,18 +598,50 @@ namespace VME
   //}
 
   void
+  TDCV1x90::SetChannelDeadTime(unsigned short dt) const
+  {
+    uint16_t word = (dt&0x3);
+    try {
+      WriteRegister(kMicro, TDCV1x90Opcodes::SET_DEAD_TIME);
+      WriteRegister(kMicro, word);
+    } catch (Exception& e) { e.Dump(); }
+    if (fVerb>1) {
+      std::ostringstream os;
+      os << "Debug: Channel dead time set to: ";
+      switch (word) {
+        case 0x0: os << "5 ns"; break;
+        case 0x1: os << "10 ns"; break;
+        case 0x2: os << "30 ns"; break;
+        case 0x3: os << "100 ns"; break;
+      }
+      PrintInfo(os.str());
+    }
+  }
+
+  unsigned short
+  TDCV1x90::GetChannelDeadTime() const
+  {
+    uint16_t dt;
+    try {
+      WriteRegister(kMicro, TDCV1x90Opcodes::READ_DEAD_TIME);
+      ReadRegister(kMicro, &dt);
+    } catch (Exception& e) { e.Dump(); }
+    return static_cast<unsigned short>(dt&0x3);
+  }
+
+  void
   TDCV1x90::SetFIFOSize(const uint16_t& size) const
   {
     uint16_t word;
     switch(size) {
-      case 2: word=0; break;
-      case 4: word=1; break;
-      case 8: word=2; break;
-      case 16: word=3; break;
-      case 32: word=4; break;
-      case 64: word=5; break;
-      case 128: word=6; break;
-      case 256: word=7; break;
+      case 2:   word=0x0; break;
+      case 4:   word=0x1; break;
+      case 8:   word=0x2; break;
+      case 16:  word=0x3; break;
+      case 32:  word=0x4; break;
+      case 64:  word=0x5; break;
+      case 128: word=0x6; break;
+      case 256: word=0x7; break;
       default:
         throw Exception(__PRETTY_FUNCTION__, "Trying to set a wrong FIFO size.", JustWarning);
     }
@@ -840,7 +902,7 @@ namespace VME
   TDCV1x90::WriteRegister(mod_reg addr, const uint32_t& data) const
   {
     uint32_t address = fBaseAddr+addr;
-    uint16_t* fdata = new uint16_t; *fdata = data;
+    uint32_t* fdata = new uint32_t; *fdata = data;
     if (addr==kMicro) WaitMicro(WRITE_OK);
     if (CAENVME_WriteCycle(fHandle, address, fdata, am, cvD32)!=cvSuccess) {
       std::ostringstream o; o << "Impossible to write register at 0x" << std::hex << addr;

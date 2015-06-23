@@ -131,4 +131,46 @@ namespace VME
     std::cout << "Input line 0 status: " << ((data&cvIn0Bit) >> 0) << std::endl;
     std::cout << "Input line 1 status: " << ((data&cvIn1Bit) >> 1) << std::endl;
   }
+
+  void
+  BridgeVx718::WriteRegister(mod_reg addr, const uint16_t& data) const
+  {
+    uint32_t address = fBaseAddr+addr;
+    uint16_t* fdata = new uint16_t; *fdata = data;
+    if (CAENVME_WriteCycle(fHandle, address, fdata, cvA32_U_DATA, cvD16)!=cvSuccess) {
+      std::ostringstream o; o << "Impossible to write register at 0x" << std::hex << addr;
+      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+    }
+  }
+
+  void
+  BridgeVx718::WriteRegister(mod_reg addr, const uint32_t& data) const
+  {
+    uint32_t address = fBaseAddr+addr;
+    uint32_t* fdata = new uint32_t; *fdata = data;
+    if (CAENVME_WriteCycle(fHandle, address, fdata, cvA32_U_DATA, cvD32)!=cvSuccess) {
+      std::ostringstream o; o << "Impossible to write register at 0x" << std::hex << addr;
+      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+    }
+  }
+
+  void
+  BridgeVx718::ReadRegister(mod_reg addr, uint16_t* data) const
+  {
+    uint32_t address = fBaseAddr+addr;
+    if (CAENVME_ReadCycle(fHandle, address, data, cvA32_U_DATA, cvD16)!=cvSuccess) {
+      std::ostringstream o; o << "Impossible to read register at 0x" << std::hex << addr;
+      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+    }
+  }
+
+  void
+  BridgeVx718::ReadRegister(mod_reg addr, uint32_t* data) const
+  {
+    uint32_t address = fBaseAddr+addr;
+    if (CAENVME_ReadCycle(fHandle, address, data, cvA32_U_DATA, cvD32)!=cvSuccess) {
+      std::ostringstream o; o << "Impossible to read register at 0x" << std::hex << addr;
+      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+    }
+  }
 }
