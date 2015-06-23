@@ -132,22 +132,10 @@ namespace VME
       void StopPulser() const;
 
     private:
-      enum mod_reg {
-        kIRQStatus      = 0x05,
-        kIRQMask        = 0x06,
-        kInput          = 0x08,
-        kOutputSet      = 0x0a,
-        kOutputClear    = 0x10,
-        kInputMUXSet    = 0x0b,
-        kInputMUXClear  = 0x11,
-        kOutputMUXSet   = 0x0c,
-        kOutputMUXClear = 0x12,
-        kLEDPolarity    = 0x0d
-      };
-      void WriteRegister(mod_reg addr, const uint16_t& data) const;
-      void WriteRegister(mod_reg addr, const uint32_t& data) const;
-      void ReadRegister(mod_reg addr, uint16_t* data) const;
-      void ReadRegister(mod_reg addr, uint32_t* data) const;
+      void WriteRegister(CVRegisters addr, const uint16_t& data) const;
+      void WriteRegister(CVRegisters addr, const uint32_t& data) const;
+      void ReadRegister(CVRegisters addr, uint16_t* data) const;
+      void ReadRegister(CVRegisters addr, uint32_t* data) const;
 
       /// Device handle
       int32_t fHandle;

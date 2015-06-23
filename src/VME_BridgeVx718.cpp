@@ -72,9 +72,11 @@ namespace VME
   void
   BridgeVx718::OutputConf(CVOutputSelect output) const
   {
-    if (CAENVME_SetOutputConf(fHandle, output, cvDirect, cvActiveHigh, cvManualSW)!=cvSuccess) {
+    CVErrorCodes out = CAENVME_SetOutputConf(fHandle, output, cvDirect, cvActiveHigh, cvManualSW);
+    if (out!=cvSuccess) {
       std::ostringstream o;
-      o << "Failed to configure output register #" << static_cast<int>(output);
+      o << "Failed to configure output register #" << static_cast<int>(output) << "\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(out);
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
   }
@@ -83,9 +85,11 @@ namespace VME
   void
   BridgeVx718::OutputOn(CVOutputSelect output) const
   {
-    if (CAENVME_SetOutputRegister(fHandle, output)!=cvSuccess) {
+    CVErrorCodes out = CAENVME_SetOutputRegister(fHandle, output);
+    if (out!=cvSuccess) {
       std::ostringstream o;
-      o << "Failed to enable output register #" << static_cast<int>(output);
+      o << "Failed to enable output register #" << static_cast<int>(output) << "\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(out);
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
   }
@@ -93,9 +97,11 @@ namespace VME
   void
   BridgeVx718::OutputOff(CVOutputSelect output) const
   {
-    if (CAENVME_ClearOutputRegister(fHandle, output)!=cvSuccess) {
+    CVErrorCodes out = CAENVME_ClearOutputRegister(fHandle, output);
+    if (out!=cvSuccess) {
       std::ostringstream o;
-      o << "Failed to disable output register #" << static_cast<int>(output);
+      o << "Failed to disable output register #" << static_cast<int>(output) << "\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(out);
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
   }
@@ -104,9 +110,11 @@ namespace VME
   void
   BridgeVx718::InputConf(CVInputSelect input) const
   {
-    if (CAENVME_SetInputConf(fHandle, input, cvDirect, cvActiveHigh)!=cvSuccess) {
+    CVErrorCodes out = CAENVME_SetInputConf(fHandle, input, cvDirect, cvActiveHigh);
+    if (out!=cvSuccess) {
       std::ostringstream o;
-      o << "Failed to configure input register #" << static_cast<int>(input);
+      o << "Failed to configure input register #" << static_cast<int>(input) << "\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(out);
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
   }
@@ -115,9 +123,11 @@ namespace VME
   BridgeVx718::InputRead(CVInputSelect input) const
   {
     short unsigned int data;
-    if (CAENVME_ReadRegister(fHandle, cvInputReg, &data)!=cvSuccess) {
+    CVErrorCodes out = CAENVME_ReadRegister(fHandle, cvInputReg, &data);
+    if (out!=cvSuccess) {
       std::ostringstream o;
-      o << "Failed to read data input register #" << static_cast<int>(input);
+      o << "Failed to read data input register #" << static_cast<int>(input) << "\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(out);
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
     // decoding with CVInputRegisterBits
@@ -183,43 +193,55 @@ namespace VME
   }
 
   void
-  BridgeVx718::WriteRegister(mod_reg addr, const uint16_t& data) const
+  BridgeVx718::WriteRegister(CVRegisters addr, const uint16_t& data) const
   {
     uint32_t address = fBaseAddr+addr;
     uint16_t* fdata = new uint16_t; *fdata = data;
-    if (CAENVME_WriteCycle(fHandle, address, fdata, cvA32_U_DATA, cvD16)!=cvSuccess) {
-      std::ostringstream o; o << "Impossible to write register at 0x" << std::hex << addr;
+    CVErrorCodes out = CAENVME_WriteCycle(fHandle, address, fdata, cvA32_U_DATA, cvD16);
+    if (out!=cvSuccess) {
+      std::ostringstream o;
+      o << "Impossible to write register at 0x" << std::hex << addr << "\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(out);
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
   }
 
   void
-  BridgeVx718::WriteRegister(mod_reg addr, const uint32_t& data) const
+  BridgeVx718::WriteRegister(CVRegisters addr, const uint32_t& data) const
   {
     uint32_t address = fBaseAddr+addr;
     uint32_t* fdata = new uint32_t; *fdata = data;
-    if (CAENVME_WriteCycle(fHandle, address, fdata, cvA32_U_DATA, cvD32)!=cvSuccess) {
-      std::ostringstream o; o << "Impossible to write register at 0x" << std::hex << addr;
+    CVErrorCodes out = CAENVME_WriteCycle(fHandle, address, fdata, cvA32_U_DATA, cvD32);
+    if (out!=cvSuccess) {
+      std::ostringstream o;
+      o << "Impossible to write register at 0x" << std::hex << addr << "\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(out);
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
   }
 
   void
-  BridgeVx718::ReadRegister(mod_reg addr, uint16_t* data) const
+  BridgeVx718::ReadRegister(CVRegisters addr, uint16_t* data) const
   {
     uint32_t address = fBaseAddr+addr;
-    if (CAENVME_ReadCycle(fHandle, address, data, cvA32_U_DATA, cvD16)!=cvSuccess) {
-      std::ostringstream o; o << "Impossible to read register at 0x" << std::hex << addr;
+    CVErrorCodes out = CAENVME_ReadCycle(fHandle, address, data, cvA32_U_DATA, cvD16);
+    if (out!=cvSuccess) {
+      std::ostringstream o;
+      o << "Impossible to read register at 0x" << std::hex << addr << "\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(out);
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
   }
 
   void
-  BridgeVx718::ReadRegister(mod_reg addr, uint32_t* data) const
+  BridgeVx718::ReadRegister(CVRegisters addr, uint32_t* data) const
   {
     uint32_t address = fBaseAddr+addr;
-    if (CAENVME_ReadCycle(fHandle, address, data, cvA32_U_DATA, cvD32)!=cvSuccess) {
-      std::ostringstream o; o << "Impossible to read register at 0x" << std::hex << addr;
+    CVErrorCodes out = CAENVME_ReadCycle(fHandle, address, data, cvA32_U_DATA, cvD32);
+    if (out!=cvSuccess) {
+      std::ostringstream o;
+      o << "Impossible to read register at 0x" << std::hex << addr << "\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(out);
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
   }
