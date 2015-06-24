@@ -8,7 +8,7 @@ namespace VME
     CVBoardTypes tp;
     CVErrorCodes ret; 
     std::ostringstream o;
-   
+ 
     char rel[20];
     CAENVME_SWRelease(rel);
     o.str("");
@@ -83,7 +83,7 @@ namespace VME
 
   // output := cvOutput[0,4]
   void
-  BridgeVx718::OutputOn(CVOutputSelect output) const
+  BridgeVx718::OutputOn(unsigned short output) const
   {
     CVErrorCodes out = CAENVME_SetOutputRegister(fHandle, output);
     if (out!=cvSuccess) {
@@ -95,7 +95,7 @@ namespace VME
   }
 
   void
-  BridgeVx718::OutputOff(CVOutputSelect output) const
+  BridgeVx718::OutputOff(unsigned short output) const
   {
     CVErrorCodes out = CAENVME_ClearOutputRegister(fHandle, output);
     if (out!=cvSuccess) {
@@ -136,16 +136,19 @@ namespace VME
   }
 
   void
-  BridgeVx718::StartPulser(double period, double width, unsigned char num_pulses) const
+  BridgeVx718::StartPulser(double period, double width, unsigned int num_pulses) const
   {
-    unsigned short per, wid;
+    unsigned char per, wid, np;
     CVTimeUnits unit;
+    CVErrorCodes out;
+    CVPulserSelect pulser = cvPulserA;
+    CVIOSources start = cvManualSW, stop = cvManualSW;
 
     try {
-      OutputConf(cvOutput0);
-      OutputConf(cvOutput1);
+      //OutputConf(cvOutput0);
+      /*OutputConf(cvOutput1);
       OutputConf(cvOutput2);
-      OutputConf(cvOutput3);
+      OutputConf(cvOutput3);*/
     } catch (Exception& e) {
       e.Dump();
     }
@@ -153,42 +156,118 @@ namespace VME
     // in us!
     if (width<0xFF*25.e-3) { // 6.375 us
       unit = cvUnit25ns;
-      wid = static_cast<unsigned short>(width*1000/25);
-      per = static_cast<unsigned short>(period*1000/25);
+      wid = static_cast<unsigned char>(width*1000/25);
+      per = static_cast<unsigned char>(period*1000/25);
     }
     else if (width<0xFF*1.6) { // 408 us
       unit = cvUnit1600ns;
-      wid = static_cast<unsigned short>(width*1000/1600);
-      per = static_cast<unsigned short>(period*1000/1600);
+      wid = static_cast<unsigned char>(width*1000/1600);
+      per = static_cast<unsigned char>(period*1000/1600);
     }
     else if (width<0xFF*410.) { // 104.55 ms
       unit = cvUnit410us;
-      wid = static_cast<unsigned short>(width/410);
-      per = static_cast<unsigned short>(period/410);
+      wid = static_cast<unsigned char>(width/410);
+      per = static_cast<unsigned char>(period/410);
     }
     else if (width<0xFF*104.e3)  { // 26.52 s
       unit = cvUnit104ms;
-      wid = static_cast<unsigned short>(width/104e3);
-      per = static_cast<unsigned short>(period/104e3);
+      wid = static_cast<unsigned char>(width/104e3);
+      per = static_cast<unsigned char>(period/104e3);
     }
     else throw Exception(__PRETTY_FUNCTION__, "Unsupported pulser width!", JustWarning);
+    np = static_cast<unsigned char>(num_pulses&0xFF);
 
-    std::cout << width << " / " << period << " --> " << wid << " / " << per << std::endl;
+    std::cout << width << " / " << period << " --> " << static_cast<unsigned short>(wid&0xFF) << " / " << static_cast<unsigned short>(per&0xFF) << std::endl;
 
-    if (CAENVME_SetPulserConf(fHandle, cvPulserB, per, wid, unit, num_pulses, cvManualSW, cvManualSW)!=cvSuccess) {
-      throw Exception(__PRETTY_FUNCTION__, "Failed to configure the pulser", JustWarning);
+    out = CAENVME_SetPulserConf(fHandle, pulser, per, wid, unit, np, start, stop);
+    if (out!=cvSuccess) {
+      std::ostringstream os;
+      os << "Failed to configure the pulser" << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+    }
+    
+    out = CAENVME_GetPulserConf(fHandle, pulser, &per, &wid, &unit, &np, &start, &stop);
+    if (out!=cvSuccess) {
+      std::ostringstream os;
+      os << "Failed to retrieve the pulser configuration" << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
     }
 
-    if (CAENVME_StartPulser(fHandle, cvPulserB)!=cvSuccess) {
-      throw Exception(__PRETTY_FUNCTION__, "Failed to start the pulser", JustWarning);
-    }
+    std::ostringstream os;
+    os << "Starting a pulser with:" << "\n\t"
+       << "  Pulse width:      " << width << " us" << "\n\t"
+       << "  Period:           " << period << " us" << "\n\t"
+       << "  Number of pulses: " << num_pulses << " (0 means infty)" << "\n\t"
+       << "  Debug: " << static_cast<unsigned short>(per) << " / "
+                      << static_cast<unsigned short>(wid) << " / "
+                      << static_cast<unsigned short>(np) << " / ("
+                      << static_cast<unsigned short>(unit) << " / "
+                      << static_cast<unsigned short>(start) << " / "
+                      << static_cast<unsigned short>(stop) << ")";
+    PrintInfo(os.str());
+    
+    /*out = CAENVME_StartPulser(fHandle, pulser);
+    if (out!=cvSuccess) {
+      std::ostringstream os;
+      os << "Failed to start the pulser" << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+    }*/
   }
 
   void
   BridgeVx718::StopPulser() const
   {
-    if (CAENVME_StopPulser(fHandle, cvPulserB)!=cvSuccess) {
+    CVPulserSelect pulser = cvPulserA;
+    if (CAENVME_StopPulser(fHandle, pulser)!=cvSuccess) {
       throw Exception(__PRETTY_FUNCTION__, "Failed to stop the pulser", JustWarning);
+    }
+  }
+
+  void
+  BridgeVx718::SinglePulse(unsigned short channel) const
+  {
+    unsigned short mask = 0x0;
+    CVErrorCodes out;
+    switch (channel) {
+      case 0: mask |= cvOut0Bit; break;
+      case 1: mask |= cvOut1Bit; break;
+      case 2: mask |= cvOut2Bit; break;
+      case 3: mask |= cvOut3Bit; break;
+      case 4: mask |= cvOut4Bit; break;
+      default: throw Exception(__PRETTY_FUNCTION__, "Trying to pulse on an undefined channel", JustWarning);
+    }
+    OutputConf(static_cast<CVOutputSelect>(channel));
+    out = CAENVME_PulseOutputRegister(fHandle, mask);
+    if (out!=cvSuccess) {
+      std::ostringstream o;
+      o << "Impossible to single-pulse output channel " << channel << "\n\t"
+        << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+    }
+  }
+
+  void
+  BridgeVx718::TestOutputs() const
+  {
+    /*bool on = false;
+    OutputConf(cvOutput0); OutputConf(cvOutput1); OutputConf(cvOutput2); OutputConf(cvOutput3);
+    while (true) {
+      if (!on) {
+        OutputOn(cvOut0Bit|cvOut1Bit|cvOut2Bit|cvOut3Bit);
+        on = true;
+        sleep(1);
+      }
+      else {
+        OutputOff(cvOut0Bit|cvOut1Bit|cvOut2Bit|cvOut3Bit);
+        on = false;
+        sleep(1);
+      }
+    }*/
+    while (true) {
+      SinglePulse(0); sleep(1);
     }
   }
 

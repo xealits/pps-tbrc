@@ -39,7 +39,7 @@ class VMEReader : public Client
     /// Ask the socket master a run number
     unsigned int GetRunNumber();
     
-    inline void StartPulser(double period, double width, unsigned char num_pulses=0) {
+    inline void StartPulser(double period, double width, unsigned int num_pulses=0) {
       try {
         fBridge->StartPulser(period, width, num_pulses);
         fIsPulserStarted = true;
@@ -50,6 +50,11 @@ class VMEReader : public Client
         fBridge->StopPulser();
         fIsPulserStarted = false;
       } catch (Exception& e) { throw e; }
+    }
+    inline void SendPulse(unsigned short output=0) const {
+      try {
+        fBridge->SinglePulse(output);
+      } catch (Exception& e) { e.Dump(); }
     }
 
     /// Abort data collection for all modules on the bus handled by the bridge

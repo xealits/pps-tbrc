@@ -114,13 +114,14 @@ namespace VME
        */ 
       inline int32_t GetHandle() const { return fHandle; }
       void CheckConfiguration() const;
+      void TestOutputs() const;
 
       /**
        * \brief Set and control the output lines
        */
       void OutputConf(CVOutputSelect output) const;
-      void OutputOn(CVOutputSelect output) const;
-      void OutputOff(CVOutputSelect output) const;
+      void OutputOn(unsigned short output) const;
+      void OutputOff(unsigned short output) const;
 
       /**
        * \brief Set and read the input lines
@@ -128,8 +129,9 @@ namespace VME
       void InputConf(CVInputSelect input) const;
       void InputRead(CVInputSelect input) const;
 
-      void StartPulser(double period, double width, unsigned char num_pulses=0) const;
+      void StartPulser(double period, double width, unsigned int num_pulses=0) const;
       void StopPulser() const;
+      void SinglePulse(unsigned short channel) const;
 
     private:
       void WriteRegister(CVRegisters addr, const uint16_t& data) const;

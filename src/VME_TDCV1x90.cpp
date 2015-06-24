@@ -857,9 +857,9 @@ namespace VME
                       << "trailing? " << trailing;*/
             break;
           case TRAILEAD:
-            std::cout << std::dec 
+            /*std::cout << std::dec 
                       << "value " << value << "\t"
-                      << "trailing? " << trailing;
+                      << "trailing? " << trailing;*/
             break;
           default:
             o.str(""); o << "Wrong detection mode: " << fDetectionMode;
