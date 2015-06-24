@@ -1,9 +1,9 @@
-#include "VME_SignalGenerator.h"
+#include "VME_IOModule.h"
 
 namespace VME
 {
   unsigned short
-  SignalGenerator::GetSerialNumber() const
+  IOModule::GetSerialNumber() const
   {
     uint16_t word;
     try {
@@ -14,7 +14,7 @@ namespace VME
   }
 
   unsigned short
-  SignalGenerator::GetModuleVersion() const
+  IOModule::GetModuleVersion() const
   {
     uint16_t word;
     try {
@@ -25,7 +25,7 @@ namespace VME
   }
 
   unsigned short
-  SignalGenerator::GetModuleType() const
+  IOModule::GetModuleType() const
   {
     uint16_t word;
     try {
@@ -36,7 +36,7 @@ namespace VME
   }
   
   unsigned short
-  SignalGenerator::GetManufacturerId() const
+  IOModule::GetManufacturerId() const
   {
     uint16_t word;
     try {

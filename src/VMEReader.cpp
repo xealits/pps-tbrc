@@ -44,9 +44,9 @@ VMEReader::AddTDC(uint32_t address)
 }
 
 void
-VMEReader::AddSignalGenerator(uint32_t address)
+VMEReader::AddIOModule(uint32_t address)
 {
-  fSG = new VME::SignalGenerator(fBridge->GetHandle(), address);
+  fSG = new VME::IOModule(fBridge->GetHandle(), address);
 }
 
 void

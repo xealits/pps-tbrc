@@ -5,7 +5,7 @@
 #include "VME_BridgeVx718.h"
 #include "VME_TDCV1x90.h"
 #include "VME_TDCEvent.h"
-#include "VME_SignalGenerator.h"
+#include "VME_IOModule.h"
 
 /**
  * VME reader object to fetch events on a HPTDC board
@@ -38,8 +38,8 @@ class VMEReader : public Client
       return fTDCCollection[address];
     }
 
-    void AddSignalGenerator(uint32_t address);
-    inline VME::SignalGenerator* GetSignalGenerator() { return fSG; }
+    void AddIOModule(uint32_t address);
+    inline VME::IOModule* GetIOModule() { return fSG; }
 
     /// Ask the socket master a run number
     unsigned int GetRunNumber();
@@ -72,8 +72,8 @@ class VMEReader : public Client
     VME::BridgeVx718* fBridge;
     /// A set of pointers to TDC objects indexed by their physical VME address
     TDCCollection fTDCCollection;
-    /// Pointer to the VME signal generator object
-    VME::SignalGenerator* fSG;
+    /// Pointer to the VME input/output module object
+    VME::IOModule* fSG;
     /// Are we dealing with socket message passing?
     bool fOnSocket;
     bool fIsPulserStarted;
