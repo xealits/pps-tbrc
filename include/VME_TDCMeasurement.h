@@ -63,6 +63,11 @@ namespace VME
         if (!fMap.count(TrailingEdge)) { return 0; }
         return fMap[TrailingEdge].GetTrailingTime();
       }
+      inline uint16_t GetToT() {
+        uint32_t tt = GetTrailingTime(), lt = GetLeadingTime();
+        if ((tt-lt)>(1<<21)) tt += ((1<<21));
+        return tt-lt;
+      }
       inline uint16_t GetChannelId() {
         if (!fMap.count(LeadingEdge) or !fMap.count(TrailingEdge)) { return 0; }
         return fMap[TrailingEdge].GetChannelId();

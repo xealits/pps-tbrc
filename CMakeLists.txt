@@ -16,8 +16,8 @@ include_directories("${PROJECT_SOURCE_DIR}/external")
 add_executable(ppsRun main.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
 add_executable(listener listener.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
 
-add_library(reader_lib OBJECT ${PROJECT_SOURCE_DIR}/src/FileReader.cpp)
-add_executable(reader test/reader.cpp $<TARGET_OBJECTS:reader_lib>)
+# Here have tests
+add_subdirectory(test)
 
 # CAEN stuff
 add_library(caen SHARED IMPORTED)

@@ -46,51 +46,6 @@ namespace VME
     READ_OK       = 1, /*!< \brief Is the TDC ready for reading? */
   } micro_handshake;
 
-  typedef enum {
-    PAIR      = 0,
-    OTRAILING = 1,
-    OLEADING  = 2,
-    TRAILEAD  = 3,
-  } det_mode;
-
-  typedef enum {
-
-    kOutputBuffer            = 0x0000, // D32 R
-    kControl                 = 0x1000, // D16 R/W
-    kStatus                  = 0x1002, // D16 R
-    kInterruptLevel          = 0x100a, // D16 R/W
-    kInterruptVector         = 0x100c, // D16 R/W
-    kGeoAddress              = 0x100e, // D16 R/W
-    kMCSTBase                = 0x1010, // D16 R/W
-    kMCSTControl             = 0x1012, // D16 R/W
-    kModuleReset             = 0x1014, // D16 W
-    kSoftwareClear           = 0x1016, // D16 W
-    kEventCounter            = 0x101c, // D32 R
-    kEventStored             = 0x1020, // D16 R
-    kBLTEventNumber          = 0x1024, // D16 R/W
-    kFirmwareRev             = 0x1026, // D16 R
-    kMicro                   = 0x102e, // D16 R/W
-    kMicroHandshake          = 0x1030, // D16 R
-    
-    kEventFIFO               = 0x1038, // D32 R
-    kEventFIFOStoredRegister = 0x103c, // D16 R
-    kEventFIFOStatusRegister = 0x103e, // D16 R  
-    
-    kROMOui2                 = 0x4024,
-    kROMOui1                 = 0x4028,
-    kROMOui0                 = 0x402c,
-    
-    kROMBoard2               = 0x4034,
-    kROMBoard1               = 0x4038,
-    kROMBoard0               = 0x403c,
-    kROMRevis3               = 0x4040,
-    kROMRevis2               = 0x4044,
-    kROMRevis1               = 0x4048,
-    kROMRevis0               = 0x404c,
-    kROMSerNum1              = 0x4080,
-    kROMSerNum0              = 0x4084,
-    
-  } mod_reg;
 
 
   struct GlobalOffset {
@@ -248,14 +203,14 @@ namespace VME
   class TDCV1x90
   {
     public:
-      typedef enum {
+      enum DLLMode {
         DLL_Direct_LowRes = 0x0,
         DLL_PLL_LowRes = 0x1,
         DLL_PLL_MedRes = 0x2,
         DLL_PLL_HighRes = 0x3
-      } DLLMode;
+      };
       
-      TDCV1x90(int32_t bhandle, uint32_t baseaddr, const ReadoutMode& acqm=TRIG_MATCH, det_mode detm=TRAILEAD);
+      TDCV1x90(int32_t bhandle, uint32_t baseaddr, const AcquisitionMode& acqm=TRIG_MATCH, const DetectionMode& detm=TRAILEAD);
       ~TDCV1x90();
       void SetVerboseLevel(unsigned short verb=1) { fVerb=verb; }
 
@@ -265,29 +220,28 @@ namespace VME
       uint32_t GetModel() const;
       uint32_t GetOUI() const;
       uint32_t GetSerialNumber() const;
-      void GetFirmwareRev() const;
+      void GetFirmwareRevision() const;
       
       void CheckConfiguration() const;
      
       void EnableChannel(short) const;
       void DisableChannel(short) const;
-      void SetPoI(uint16_t);
+      void SetPoI(uint16_t word1, uint16_t word2) const;
+      std::map<unsigned short, bool> GetPoI() const;
 
       void SetLSBTraileadEdge(trailead_edge_lsb) const;
 
-      void SetAcquisitionMode(const ReadoutMode&);
-      void ReadAcquisitionMode();
-      inline ReadoutMode GetAcquisitionMode() {
+      void SetAcquisitionMode(const AcquisitionMode&);
+      inline AcquisitionMode GetAcquisitionMode() {
         ReadAcquisitionMode();
         return fAcquisitionMode;
       }
       void SetTriggerMatching();
       void SetContinuousStorage();
 
-      void SetDetection(det_mode);
-      void ReadDetection();
-      inline det_mode GetDetection() {
-        ReadDetection();
+      void SetDetectionMode(const DetectionMode& detm);
+      inline DetectionMode GetDetectionMode() {
+        ReadDetectionMode();
         return fDetectionMode;
       }
 
@@ -318,7 +272,7 @@ namespace VME
       inline bool GetErrorMarks() const { return fErrorMarks; }
       
       void SetPairModeResolution(int,int) const;
-      uint16_t GetResolution(const det_mode&) const;
+      uint16_t GetResolution() const;
 
       void SetBLTEventNumberRegister(const uint16_t&) const;
       uint16_t GetBLTEventNumberRegister() const;
@@ -331,7 +285,6 @@ namespace VME
 
       uint16_t GetTriggerConfiguration(const trig_conf&) const;
 
-      bool WaitMicro(micro_handshake) const;
       bool SoftwareClear() const;
       bool SoftwareReset() const;
       bool HardwareReset() const;
@@ -351,6 +304,9 @@ namespace VME
 
       TDCEventCollection FetchEvents();
 
+      void SetChannelDeadTime(unsigned short dt) const;
+      unsigned short GetChannelDeadTime() const;
+
       //bool IsEventFIFOReady();
       void SetFIFOSize(const uint16_t&) const;
       uint16_t GetFIFOSize() const;
@@ -359,6 +315,43 @@ namespace VME
       void abort();
       
     private:
+      enum mod_reg {
+        kOutputBuffer            = 0x0000, // D32 R
+        kControl                 = 0x1000, // D16 R/W
+        kStatus                  = 0x1002, // D16 R
+        kInterruptLevel          = 0x100a, // D16 R/W
+        kInterruptVector         = 0x100c, // D16 R/W
+        kGeoAddress              = 0x100e, // D16 R/W
+        kMCSTBase                = 0x1010, // D16 R/W
+        kMCSTControl             = 0x1012, // D16 R/W
+        kModuleReset             = 0x1014, // D16 W
+        kSoftwareClear           = 0x1016, // D16 W
+        kEventCounter            = 0x101c, // D32 R
+        kEventStored             = 0x1020, // D16 R
+        kBLTEventNumber          = 0x1024, // D16 R/W
+        kFirmwareRev             = 0x1026, // D16 R
+        kMicro                   = 0x102e, // D16 R/W
+        kMicroHandshake          = 0x1030, // D16 R
+        
+        kEventFIFO               = 0x1038, // D32 R
+        kEventFIFOStoredRegister = 0x103c, // D16 R
+        kEventFIFOStatusRegister = 0x103e, // D16 R  
+    
+        kROMOui2                 = 0x4024,
+        kROMOui1                 = 0x4028,
+        kROMOui0                 = 0x402c,
+        
+        kROMBoard2               = 0x4034,
+        kROMBoard1               = 0x4038,
+        kROMBoard0               = 0x403c,
+        kROMRevis3               = 0x4040,
+        kROMRevis2               = 0x4044,
+        kROMRevis1               = 0x4048,
+        kROMRevis0               = 0x404c,
+        kROMSerNum1              = 0x4080,
+        kROMSerNum0              = 0x4084,
+      };
+      bool WaitMicro(micro_handshake mode) const;
       /**
        * Write a 16-bit word in the register
        * \brief Write on register
@@ -388,12 +381,15 @@ namespace VME
        */  
       void ReadRegister(mod_reg, uint32_t*) const;
 
+      void ReadAcquisitionMode();
+      void ReadDetectionMode();
+
       uint32_t fBaseAddr;
       int32_t fHandle;
       unsigned short fVerb;
 
-      ReadoutMode fAcquisitionMode;
-      det_mode fDetectionMode;
+      AcquisitionMode fAcquisitionMode;
+      DetectionMode fDetectionMode;
 
       bool fErrorMarks;
       uint16_t fWindowWidth;

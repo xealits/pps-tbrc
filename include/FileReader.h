@@ -25,7 +25,7 @@ class FileReader
      * \param[in] name Path to the file to read
      * \param[in] ro Data readout mode (continuous storage or trigger matching)
      */
-    FileReader(std::string name, const VME::ReadoutMode& ro);
+    FileReader(std::string name, const VME::AcquisitionMode& ro);
     ~FileReader();
     
     inline unsigned int GetNumTDCs() const { return fHeader.num_hptdc; }
@@ -42,7 +42,7 @@ class FileReader
   private:
     std::ifstream fFile;
     file_header_t fHeader;
-    VME::ReadoutMode fReadoutMode;
+    VME::AcquisitionMode fReadoutMode;
 };
 
 #endif

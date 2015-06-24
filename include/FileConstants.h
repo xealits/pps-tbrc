@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string>
 
+#include "VME_TDCEvent.h"
+
 /**
  * General header to store in each collected data file for offline readout. It
  * enable any reader to retrieve the run/spill number, as well as the HPTDC
@@ -18,6 +20,8 @@ struct file_header_t {
   uint32_t run_id;
   uint32_t spill_id;
   uint8_t num_hptdc;
+  VME::AcquisitionMode acq_mode;
+  VME::DetectionMode det_mode;
 };
 
 /// Generate a random file name
