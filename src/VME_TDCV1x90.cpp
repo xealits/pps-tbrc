@@ -2,7 +2,7 @@
 
 namespace VME
 {
-  TDCV1x90::TDCV1x90(int32_t bhandle,uint32_t baseaddr, const ReadoutMode& acqm, det_mode detm) :
+  TDCV1x90::TDCV1x90(int32_t bhandle, uint32_t baseaddr, const AcquisitionMode& acqm, const DetectionMode& detm) :
     fBaseAddr(baseaddr), fHandle(bhandle),
     am(cvA32_U_DATA), am_blt(cvA32_U_BLT)
   {
@@ -26,11 +26,10 @@ namespace VME
     SetAcquisitionMode(acqm);
    
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::EN_ALL_CHANNEL);
     } catch (Exception& e) { e.Dump(); }
  
-    SetDetection(TRAILEAD);
+    SetDetectionMode(TRAILEAD);
     SetLSBTraileadEdge(r25ps);
     /*SetRCAdjust(0,0);
     SetRCAdjust(1,0);*/
@@ -46,7 +45,8 @@ namespace VME
     SetWindowWidth(2045);
     SetWindowOffset(-2050);
     //SetPairModeResolution(0,0x4);
-    GetResolution(detm);
+    SetPoI(0xFFFF, 0xFFFF);
+    GetResolution();
     
     gEnd = false;
     
@@ -139,7 +139,7 @@ namespace VME
   }
 
   void
-  TDCV1x90::GetFirmwareRev() const
+  TDCV1x90::GetFirmwareRevision() const
   {
     //FIXME need to clean up
     uint32_t fr[2];
@@ -193,7 +193,6 @@ namespace VME
     word = (en) ? TDCV1x90Opcodes::ENABLE_TEST_MODE : TDCV1x90Opcodes::DISABLE_TEST_MODE;
 
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, word);
     } catch (Exception& e) { e.Dump(); }
 
@@ -205,9 +204,39 @@ namespace VME
   }
 
   void
-  TDCV1x90::SetPoI(uint16_t word)
+  TDCV1x90::SetPoI(uint16_t word1, uint16_t word2) const
   {
-    // ...
+    try {
+      WriteRegister(kMicro, TDCV1x90Opcodes::WRITE_EN_PATTERN);
+      WriteRegister(kMicro, word1);
+      WriteRegister(kMicro, word2);
+    } catch (Exception& e) { e.Dump(); }
+    if (fVerb>1) {
+      std::ostringstream os;
+      os << "Debug: Pattern of inhibit modified:" << "\n\t";
+      for (unsigned int i=0; i<16; i++) {
+        os << "Channel " << i << ": " << ((word1>>i)&0x1) << "\t"
+           << "Channel " << (i+16) << ": " << ((word2>>i)&0x1) << "\n\t";
+      }
+      PrintInfo(os.str());
+    }
+  }
+
+  std::map<unsigned short, bool>
+  TDCV1x90::GetPoI() const
+  {
+    uint16_t word1, word2;
+    std::map<unsigned short, bool> pattern;
+    try {
+      WriteRegister(kMicro, TDCV1x90Opcodes::READ_EN_PATTERN);
+      ReadRegister(kMicro, &word1);
+      ReadRegister(kMicro, &word2);
+    } catch (Exception& e) { e.Dump(); }
+    for (unsigned int i=0; i<16; i++) {
+      pattern.insert(std::pair<unsigned short, bool>(i, static_cast<bool>((word1>>i)&0x1)));
+      pattern.insert(std::pair<unsigned short, bool>(i+16, static_cast<bool>((word2>>i)&0x1)));
+    }
+    return pattern;
   }
 
   void
@@ -215,7 +244,6 @@ namespace VME
   {
     uint16_t value = TDCV1x90Opcodes::EN_CHANNEL+(channel_id&0xFF);
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, value);
     } catch (Exception& e) { e.Dump(); }
     
@@ -230,7 +258,6 @@ namespace VME
   {
     uint16_t value = TDCV1x90Opcodes::DIS_CHANNEL+(channel_id&0xFF);
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, value);
     } catch (Exception& e) { e.Dump(); }
     
@@ -243,9 +270,7 @@ namespace VME
   void TDCV1x90::SetLSBTraileadEdge(trailead_edge_lsb conf) const
   {
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::SET_TR_LEAD_LSB);
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, static_cast<uint16_t>(conf));
     } catch (Exception& e) { e.Dump(); }
     
@@ -265,11 +290,8 @@ namespace VME
   TDCV1x90::SetGlobalOffset(const GlobalOffset& offs) const
   {
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::SET_GLOB_OFFS);
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, offs.coarse);
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, offs.fine);
     } catch (Exception& e) { e.Dump(); }
     
@@ -288,11 +310,9 @@ namespace VME
     GlobalOffset ret;
     uint16_t data[2];
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::READ_GLOB_OFFS);
       int i;
       for(i=0;i<2;i++){
-        WaitMicro(READ_OK);
         ReadRegister(kMicro, &(data[i]));
       }
     } catch (Exception& e) { e.Dump(); }
@@ -316,16 +336,12 @@ namespace VME
     uint16_t word = value;
     uint16_t opcode = TDCV1x90Opcodes::SET_RC_ADJ+(tdc&0x3);
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, opcode);
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, word);
     } catch (Exception& e) { e.Dump(); }
     
     /*opcode = TDCV1x90Opcodes::SAVE_RC_ADJ;
-    WaitMicro(WRITE_OK);
     WriteRegister(kMicro, opcode);
-    WaitMicro(WRITE_OK);
     WriteRegister(kMicro, word); */
     if (fVerb>1) {
       std::ostringstream o; o << "Debug: TDC " << tdc << ", value " << value;
@@ -339,9 +355,7 @@ namespace VME
     uint16_t opcode = TDCV1x90Opcodes::READ_RC_ADJ+(tdc&0x3);
     uint16_t data;
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, opcode);
-      WaitMicro(READ_OK);
       ReadRegister(kMicro, &data);
     } catch (Exception& e) { e.Dump(); }
     
@@ -362,14 +376,13 @@ namespace VME
   }
 
   void
-  TDCV1x90::SetDetection(det_mode mode)
+  TDCV1x90::SetDetectionMode(const DetectionMode& mode)
   {
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::SET_DETECTION);
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, static_cast<uint16_t>(mode));
     } catch (Exception& e) { e.Dump(); }
+    fDetectionMode = mode;
     
     if (fVerb>1) {
       std::ostringstream o; o << "Debug: ";
@@ -381,23 +394,21 @@ namespace VME
       }
       PrintInfo(o.str());
     }
-    fDetectionMode = mode;
   }
 
   void
-  TDCV1x90::ReadDetection()
+  TDCV1x90::ReadDetectionMode()
   {
     uint16_t data;
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::READ_DETECTION);
-      WaitMicro(READ_OK);
       ReadRegister(kMicro, &data);
     } catch (Exception& e) { e.Dump(); }
+    fDetectionMode = static_cast<DetectionMode>(data&0x3);
     
     if (fVerb>1) {
       std::ostringstream o; o << "Debug: ";
-      switch(data){
+      switch(fDetectionMode){
         case PAIR: o << "pair mode"; break;
         case OTRAILING: o << "only trailing"; break;
         case OLEADING: o << "only leading"; break;
@@ -405,16 +416,13 @@ namespace VME
       }
       PrintInfo(o.str());
     }
-    fDetectionMode = static_cast<det_mode>(data&0x3);
   }
 
   void
   TDCV1x90::SetWindowWidth(const uint16_t& width)
   {
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::SET_WIN_WIDTH);
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, width);
     } catch (Exception& e) { e.Dump(); return; }
     fWindowWidth = width;
@@ -426,9 +434,7 @@ namespace VME
     //FIXME warning at sign bit
     uint16_t data = offs;
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::SET_WIN_OFFS);
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, data);
     } catch (Exception& e) { e.Dump(); }
   }
@@ -438,10 +444,8 @@ namespace VME
   {
     uint16_t buff[5];
     try { 
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::READ_TRG_CONF);
       for (int i=0; i<5; i++) {
-        WaitMicro(READ_OK);
         ReadRegister(kMicro,&(buff[i]));
       }
     } catch (Exception& e) { e.Dump(); }
@@ -449,19 +453,17 @@ namespace VME
   }
 
   uint16_t
-  TDCV1x90::GetResolution(const det_mode& det) const
+  TDCV1x90::GetResolution() const
   {
     uint16_t data;
     try { 
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::READ_RES);
-      WaitMicro(READ_OK);
       ReadRegister(kMicro, &data);
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
       std::cout << __PRETTY_FUNCTION__ << " Debug: ";
-      switch(det) {
+      switch(fDetectionMode) {
         case PAIR: 
           std::cout << "(pair mode) leading edge res.: " << pair_lead_res[data&0x7]
                     << ", pulse width res.: " << pair_width_res[(data&0xF00)>>8]
@@ -485,16 +487,14 @@ namespace VME
     /*(data&0x7)=lead_time_res;
     (data&0xf00)=pulse_width_res;*/
     try { 
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::SET_PAIR_RES);
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, data);
     } catch (Exception& e) { e.Dump(); }
   }
 
 
   void
-  TDCV1x90::SetAcquisitionMode(const ReadoutMode& mode)
+  TDCV1x90::SetAcquisitionMode(const AcquisitionMode& mode)
   {
     try {
       switch(mode){
@@ -510,10 +510,8 @@ namespace VME
   TDCV1x90::SetTriggerMatching()
   {
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::TRG_MATCH);
       WaitMicro(WRITE_OK);
-
       if (GetAcquisitionMode()!=TRIG_MATCH)
         throw Exception(__PRETTY_FUNCTION__, "Error while setting the acquisition mode to trigger matching!", Fatal);
 
@@ -528,10 +526,8 @@ namespace VME
   TDCV1x90::SetContinuousStorage()
   {
     try { 
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::CONT_STOR);
       WaitMicro(WRITE_OK);
-
       if (GetAcquisitionMode()!=CONT_STORAGE)
         throw Exception(__PRETTY_FUNCTION__, "Error while setting the acquisition mode to continuous storage!", Fatal);
 
@@ -552,9 +548,7 @@ namespace VME
     std::cout << "isTriggerMatching: value: " << ((data>>3)&0x1) << std::endl;*/
 
     try { 
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::READ_ACQ_MOD);
-      WaitMicro(READ_OK);
       ReadRegister(kMicro, &data);
     } catch (Exception& e) { e.Dump(); }
     if (fVerb>1) {  
@@ -605,25 +599,55 @@ namespace VME
   //}
 
   void
+  TDCV1x90::SetChannelDeadTime(unsigned short dt) const
+  {
+    uint16_t word = (dt&0x3);
+    try {
+      WriteRegister(kMicro, TDCV1x90Opcodes::SET_DEAD_TIME);
+      WriteRegister(kMicro, word);
+    } catch (Exception& e) { e.Dump(); }
+    if (fVerb>1) {
+      std::ostringstream os;
+      os << "Debug: Channel dead time set to: ";
+      switch (word) {
+        case 0x0: os << "5 ns"; break;
+        case 0x1: os << "10 ns"; break;
+        case 0x2: os << "30 ns"; break;
+        case 0x3: os << "100 ns"; break;
+      }
+      PrintInfo(os.str());
+    }
+  }
+
+  unsigned short
+  TDCV1x90::GetChannelDeadTime() const
+  {
+    uint16_t dt;
+    try {
+      WriteRegister(kMicro, TDCV1x90Opcodes::READ_DEAD_TIME);
+      ReadRegister(kMicro, &dt);
+    } catch (Exception& e) { e.Dump(); }
+    return static_cast<unsigned short>(dt&0x3);
+  }
+
+  void
   TDCV1x90::SetFIFOSize(const uint16_t& size) const
   {
     uint16_t word;
     switch(size) {
-      case 2: word=0; break;
-      case 4: word=1; break;
-      case 8: word=2; break;
-      case 16: word=3; break;
-      case 32: word=4; break;
-      case 64: word=5; break;
-      case 128: word=6; break;
-      case 256: word=7; break;
+      case 2:   word=0x0; break;
+      case 4:   word=0x1; break;
+      case 8:   word=0x2; break;
+      case 16:  word=0x3; break;
+      case 32:  word=0x4; break;
+      case 64:  word=0x5; break;
+      case 128: word=0x6; break;
+      case 256: word=0x7; break;
       default:
         throw Exception(__PRETTY_FUNCTION__, "Trying to set a wrong FIFO size.", JustWarning);
     }
     try { 
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::SET_FIFO_SIZE);
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, word);
     } catch (Exception& e) { e.Dump(); }
     
@@ -638,9 +662,7 @@ namespace VME
   {
     uint16_t data;
     try { 
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::READ_FIFO_SIZE);
-      WaitMicro(READ_OK);
       ReadRegister(kMicro, &data);
     } catch (Exception& e) { e.Dump(); }
     
@@ -658,7 +680,6 @@ namespace VME
     if (mode) opcode = TDCV1x90Opcodes::EN_HEAD_TRAILER;
     else      opcode = TDCV1x90Opcodes::DIS_HEAD_TRAILER;
     try { 
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, opcode);
     } catch (Exception& e) { e.Dump(); }
     
@@ -673,9 +694,7 @@ namespace VME
   {
     uint16_t enc;
     try { 
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::READ_HEAD_TRAILER);
-      WaitMicro(READ_OK);
       ReadRegister(kMicro, &enc);
     } catch (Exception& e) { e.Dump(); }
     
@@ -709,7 +728,6 @@ namespace VME
     if (mode) opcode = TDCV1x90Opcodes::EN_ERROR_MARK;
     else      opcode = TDCV1x90Opcodes::DIS_ERROR_MARK;
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, opcode);
     } catch (Exception& e) { e.Dump(); return; }
     if (fVerb>1) {
@@ -745,9 +763,7 @@ namespace VME
   TDCV1x90::SetDLLClock(const DLLMode& dll) const
   {
     try {
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::SET_DLL_CLOCK);
-      WaitMicro(WRITE_OK);
       WriteRegister(kMicro, static_cast<uint16_t>(dll));
     } catch (Exception& e) { e.Dump(); return; }
   }
@@ -876,6 +892,7 @@ namespace VME
   {
     uint32_t address = fBaseAddr+addr;
     uint16_t* fdata = new uint16_t; *fdata = data;
+    if (addr==kMicro) WaitMicro(WRITE_OK);
     if (CAENVME_WriteCycle(fHandle, address, fdata, am, cvD16)!=cvSuccess) {
       std::ostringstream o; o << "Impossible to write register at 0x" << std::hex << addr;
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
@@ -886,7 +903,8 @@ namespace VME
   TDCV1x90::WriteRegister(mod_reg addr, const uint32_t& data) const
   {
     uint32_t address = fBaseAddr+addr;
-    uint16_t* fdata = new uint16_t; *fdata = data;
+    uint32_t* fdata = new uint32_t; *fdata = data;
+    if (addr==kMicro) WaitMicro(WRITE_OK);
     if (CAENVME_WriteCycle(fHandle, address, fdata, am, cvD32)!=cvSuccess) {
       std::ostringstream o; o << "Impossible to write register at 0x" << std::hex << addr;
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
@@ -897,6 +915,7 @@ namespace VME
   TDCV1x90::ReadRegister(mod_reg addr, uint16_t* data) const
   {
     uint32_t address = fBaseAddr+addr;
+    if (addr==kMicro) WaitMicro(READ_OK);
     if (CAENVME_ReadCycle(fHandle, address, data, am, cvD16)!=cvSuccess) {
       std::ostringstream o; o << "Impossible to read register at 0x" << std::hex << addr;
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
@@ -907,6 +926,7 @@ namespace VME
   TDCV1x90::ReadRegister(mod_reg addr, uint32_t* data) const
   {
     uint32_t address = fBaseAddr+addr;
+    if (addr==kMicro) WaitMicro(READ_OK);
     if (CAENVME_ReadCycle(fHandle, address, data, am, cvD32)!=cvSuccess) {
       std::ostringstream o; o << "Impossible to read register at 0x" << std::hex << addr;
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
@@ -921,14 +941,9 @@ namespace VME
     while (!status) {
       ReadRegister(kMicroHandshake, &data);
       switch(mode){
-        case WRITE_OK:
-          status = static_cast<bool>(data&1);
-          break;
-        case READ_OK:
-          status = static_cast<bool>((data&2)/2);
-          break;
-        default:
-          return false;
+        case WRITE_OK: status = static_cast<bool>(data&0x1); break;
+        case READ_OK:  status = static_cast<bool>((data>>1)&0x1); break;
+        default: return false;
       }
     }
     return status;
