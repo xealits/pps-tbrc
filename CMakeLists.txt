@@ -17,7 +17,7 @@ add_executable(ppsRun main.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib
 add_executable(listener listener.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
 
 # Here have tests
-add_subdirectory(test)
+add_subdirectory(test EXCLUDE_FROM_ALL)
 
 # CAEN stuff
 add_library(caen SHARED IMPORTED)
