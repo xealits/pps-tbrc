@@ -2,11 +2,6 @@
 
 namespace VME
 {
-  SignalGenerator::SignalGenerator(int32_t bhandle, uint32_t baseaddr) :
-    fHandle(bhandle), fBaseAddr(baseaddr)
-  {
-  }
-
   unsigned short
   SignalGenerator::GetSerialNumber() const
   {
@@ -50,25 +45,4 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     return 0;
   }
-
-  void
-  SignalGenerator::WriteRegister(const ModuleRegister& reg, const uint16_t& data) const
-  {
-    uint32_t address = fBaseAddr+reg;
-    uint16_t* fdata = new uint16_t; *fdata = data;
-    if (CAENVME_WriteCycle(fHandle, address, fdata, cvA32_U_DATA, cvD16)!=cvSuccess) {
-      std::ostringstream o; o << "Impossible to write register at 0x" << std::hex << reg;
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
-    }
-  }
-
-  void
-  SignalGenerator::ReadRegister(const ModuleRegister& reg, uint16_t* data) const
-  {
-    uint32_t address = fBaseAddr+reg;
-    if (CAENVME_ReadCycle(fHandle, address, data, cvA32_U_DATA, cvD16)!=cvSuccess) {
-      std::ostringstream o; o << "Impossible to read register at 0x" << std::hex << reg;
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
-    }
-  } 
 }
