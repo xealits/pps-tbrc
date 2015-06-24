@@ -25,7 +25,7 @@ main(int argc, char* argv[])
   num_events = 0;
   try {
     while (f.GetNextMeasurement(channel_id, &m)) {
-      cout << m.GetLeadingTime()-m.GetTrailingTime() << endl;
+      cout << m.GetTrailingTime()-m.GetLeadingTime() << endl;
       //m.Dump();
       num_events++;
     }
