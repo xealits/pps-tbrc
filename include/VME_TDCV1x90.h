@@ -224,7 +224,7 @@ namespace VME
    * \date Jun 2010 (NA62-Gigatracker)
    * \date May 2015 (CMS-TOTEM PPS)
    */
-  class TDCV1x90 : public GenericBoard<TDCV1x90Register>
+  class TDCV1x90 : public GenericBoard<TDCV1x90Register,cvA32_U_DATA>
   {
     public:
       enum DLLMode {

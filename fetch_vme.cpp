@@ -52,12 +52,15 @@ int main(int argc, char *argv[]) {
     fh.run_id = vme->GetRunNumber();
     
     // TDC configuration
-    //const uint32_t tdc_address = 0x000d0000; // V1290N (16 ch., Louvain-la-Neuve)
-    const uint32_t tdc_address = 0x00aa0000; // V1290A (32 ch., CERN)
-    //const uint32_t tdc_address = 0x00bb0000; // V1290A (32 ch., CERN)
+    //const uint32_t tdc_address = 0x0d0000; // V1290N (16 ch., Louvain-la-Neuve)
+    const uint32_t tdc_address = 0xaa0000; // V1290A (32 ch., CERN)
+    //const uint32_t tdc_address = 0xbb0000; // V1290A (32 ch., CERN)
     
     //vme->SendPulse();
     //vme->StartPulser(1000000., 200000.);
+
+    //vme->AddIOModule(0xdd0f00);
+    //vme->AddIOModule(0x0d0000);
 
     vme->AddTDC(tdc_address);
     tdc = vme->GetTDC(tdc_address);
@@ -83,7 +86,9 @@ int main(int argc, char *argv[]) {
     switch (tdc->GetAcquisitionMode()) {
       case VME::CONT_STORAGE: acqmode = "Continuous storage"; break;
       case VME::TRIG_MATCH: acqmode = "Trigger matching"; break;
-      default: acqmode = "[Invalid mode]"; throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
+      default:
+        acqmode = "[Invalid mode]";
+        throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
     }
     switch (tdc->GetDetectionMode()) {
       case VME::PAIR: detmode = "Pair measurement"; break;
@@ -103,9 +108,7 @@ int main(int argc, char *argv[]) {
     while (true) {
       ec = tdc->FetchEvents();
       if (ec.size()==0) { // no events were fetched
-        tdc->GetStatus().Dump();
-        sleep(2);
-        continue;
+        tdc->GetStatus().Dump(); sleep(2); continue;
       }
       for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
         //e->Dump();

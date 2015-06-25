@@ -12,7 +12,7 @@
 
 namespace VME
 {
-  template<class Register>
+  template<class Register, CVAddressModifier am>
   class GenericBoard
   {
     public:
@@ -29,8 +29,14 @@ namespace VME
       inline void WriteRegister(const Register& reg, const uint16_t& data) const {
         uint32_t address = fBaseAddr+reg;
         uint16_t* fdata = new uint16_t; *fdata = data;
-        if (CAENVME_WriteCycle(fHandle, address, fdata, cvA32_U_DATA, cvD16)!=cvSuccess) {
-          std::ostringstream o; o << "Impossible to write register at 0x" << std::hex << reg;
+        std::cout << __PRETTY_FUNCTION__ << " -> address modifier = " << am << std::endl;
+        CVErrorCodes out = CAENVME_WriteCycle(fHandle, address, fdata, am, cvD16);
+        if (out!=cvSuccess) {
+          std::ostringstream o;
+          o << "Impossible to write register at 0x" << std::hex << reg << "\n\t"
+            << "Addressing mode: 0x" << std::hex << am << "\n\t"
+            << "Base address: 0x" << std::hex << fBaseAddr << "\n\t"
+            << "CAEN error: " << CAENVME_DecodeError(out);
           throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
         }
       }
@@ -43,8 +49,14 @@ namespace VME
       inline void WriteRegister(const Register& reg, const uint32_t& data) const {
         uint32_t address = fBaseAddr+reg;
         uint32_t* fdata = new uint32_t; *fdata = data;
-        if (CAENVME_WriteCycle(fHandle, address, fdata, cvA32_U_DATA, cvD32)!=cvSuccess) {
-          std::ostringstream o; o << "Impossible to write register at 0x" << std::hex << reg;
+        std::cout << __PRETTY_FUNCTION__ << " -> address modifier = " << am << std::endl;
+        CVErrorCodes out = CAENVME_WriteCycle(fHandle, address, fdata, am, cvD32);
+        if (out!=cvSuccess) {
+          std::ostringstream o;
+          o << "Impossible to write register at 0x" << std::hex << reg << "\n\t"
+            << "Addressing mode: 0x" << std::hex << am << "\n\t"
+            << "Base address: 0x" << std::hex << fBaseAddr << "\n\t"
+            << "CAEN error: " << CAENVME_DecodeError(out);
           throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
         }
       }
@@ -56,8 +68,14 @@ namespace VME
        */
       inline void ReadRegister(const Register& reg, uint16_t* data) const {
         uint32_t address = fBaseAddr+reg;
-        if (CAENVME_ReadCycle(fHandle, address, data, cvA32_U_DATA, cvD16)!=cvSuccess) {
-          std::ostringstream o; o << "Impossible to read register at 0x" << std::hex << reg;
+        std::cout << __PRETTY_FUNCTION__ << " -> address modifier = " << am << std::endl;
+        CVErrorCodes out = CAENVME_ReadCycle(fHandle, address, data, am, cvD16);
+        if (out!=cvSuccess) {
+          std::ostringstream o;
+          o << "Impossible to read register at 0x" << std::hex << reg << "\n\t"
+            << "Addressing mode: 0x" << std::hex << am << "\n\t"
+            << "Base address: 0x" << std::hex << fBaseAddr << "\n\t"
+            << "CAEN error: " << CAENVME_DecodeError(out);
           throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
         }
       }
@@ -69,8 +87,14 @@ namespace VME
        */
       inline void ReadRegister(const Register& reg, uint32_t* data) const {
         uint32_t address = fBaseAddr+reg;
-        if (CAENVME_ReadCycle(fHandle, address, data, cvA32_U_DATA, cvD32)!=cvSuccess) {
-          std::ostringstream o; o << "Impossible to read register at 0x" << std::hex << reg;
+        std::cout << __PRETTY_FUNCTION__ << " -> address modifier = " << am << std::endl;
+        CVErrorCodes out = CAENVME_ReadCycle(fHandle, address, data, am, cvD32);
+        if (out!=cvSuccess) {
+          std::ostringstream o;
+          o << "Impossible to read register at 0x" << std::hex << reg << "\n\t"
+            << "Addressing mode: 0x" << std::hex << am << "\n\t"
+            << "Base address: 0x" << std::hex << fBaseAddr << "\n\t"
+            << "CAEN error: " << CAENVME_DecodeError(out);
           throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
         }
       }

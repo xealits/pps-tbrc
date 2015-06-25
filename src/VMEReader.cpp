@@ -8,6 +8,7 @@ VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
   }
   fBridge = new VME::BridgeVx718(device, type);
   //fBridge->TestOutputs();
+
   try {
     StopPulser();
   } catch (Exception& e) { e.Dump(); }
@@ -47,6 +48,7 @@ void
 VMEReader::AddIOModule(uint32_t address)
 {
   fSG = new VME::IOModule(fBridge->GetHandle(), address);
+  std::cout << __PRETTY_FUNCTION__ << " --> " << fSG->GetSerialNumber() << " / " << fSG->GetModuleVersion() << std::endl;
 }
 
 void

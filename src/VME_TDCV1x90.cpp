@@ -3,7 +3,7 @@
 namespace VME
 {
   TDCV1x90::TDCV1x90(int32_t bhandle, uint32_t baseaddr, const AcquisitionMode& acqm, const DetectionMode& detm) :
-    GenericBoard<TDCV1x90Register>(bhandle, baseaddr)
+    GenericBoard<TDCV1x90Register,cvA32_U_DATA>(bhandle, baseaddr)
   {
     //event_nb = 0;
     //event_max = 1024;

@@ -9,16 +9,16 @@ namespace VME
     kECLLevelWrite = 0x04,
     kNIMLevelWrite = 0x06,
     kNIMPulseWrite = 0x08,
-    kNIMPulseRead  = 0x0A,
-    kIdentifier    = 0xFA,
-    kBoardInfo0    = 0xFC,
-    kBoardInfo1    = 0xFE
+    kNIMPulseRead  = 0x0a,
+    kIdentifier    = 0xfa,
+    kBoardInfo0    = 0xfc,
+    kBoardInfo1    = 0xfe
   };
-  class IOModule : public GenericBoard<IOModuleRegister>
+  class IOModule : public GenericBoard<IOModuleRegister,cvA24_U_DATA>
   {
     public:
       inline IOModule(int32_t bhandle, uint32_t baseaddr) :
-        GenericBoard<IOModuleRegister>(bhandle, baseaddr) {;}
+        GenericBoard<IOModuleRegister,cvA24_U_DATA>(bhandle, baseaddr) {;}
       inline ~IOModule() {;}
 
       unsigned short GetSerialNumber() const;
