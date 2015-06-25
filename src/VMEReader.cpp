@@ -47,7 +47,7 @@ VMEReader::AddTDC(uint32_t address)
 void
 VMEReader::AddIOModule(uint32_t address)
 {
-  fSG = new VME::IOModule(fBridge->GetHandle(), address);
+  fSG = new VME::IOModuleV262(fBridge->GetHandle(), address);
 }
 
 void

@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
   unsigned int num_events;
   VME::TDCEventCollection ec;
   VME::TDCV1x90* tdc;
-  VME::IOModule* io;
+  VME::IOModuleV262* io;
   string filename;
 
   VME::AcquisitionMode acq_mode = VME::CONT_STORAGE;
