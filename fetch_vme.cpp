@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     //cout << "io module address: " << io->GetModuleAddress() << endl;*/
 
     vme->AddFPGAUnit(0xcc000000);
-exit(0);
+    //exit(0);
     vme->AddTDC(tdc_address);
     tdc = vme->GetTDC(tdc_address);
     //tdc->SetVerboseLevel(0);
