@@ -3,6 +3,7 @@
 
 #include "Client.h"
 #include "VME_BridgeVx718.h"
+#include "VME_FPGAUnitV1495.h"
 #include "VME_IOModuleV262.h"
 #include "VME_TDCV1x90.h"
 #include "VME_TDCEvent.h"
@@ -41,6 +42,9 @@ class VMEReader : public Client
     void AddIOModule(uint32_t address);
     inline VME::IOModuleV262* GetIOModule() { return fSG; }
 
+    void AddFPGAUnit(uint32_t address);
+    inline VME::FPGAUnitV1495* GetFPGAUnit() { return fFPGA; }
+
     /// Ask the socket master a run number
     unsigned int GetRunNumber();
     
@@ -74,6 +78,8 @@ class VMEReader : public Client
     TDCCollection fTDCCollection;
     /// Pointer to the VME input/output module object
     VME::IOModuleV262* fSG;
+    /// Pointer to the VME general purpose FPGA unit object
+    VME::FPGAUnitV1495* fFPGA;
     /// Are we dealing with socket message passing?
     bool fOnSocket;
     bool fIsPulserStarted;

@@ -60,10 +60,12 @@ int main(int argc, char *argv[]) {
     //vme->SendPulse();
     //vme->StartPulser(1000000., 200000.);
 
-    vme->AddIOModule(0x0d0000);
+    /*vme->AddIOModule(0x0d0000);
     io = vme->GetIOModule();
-    //cout << "io module address: " << io->GetModuleAddress() << endl;
+    //cout << "io module address: " << io->GetModuleAddress() << endl;*/
 
+    vme->AddFPGAUnit(0xcc000000);
+exit(0);
     vme->AddTDC(tdc_address);
     tdc = vme->GetTDC(tdc_address);
     //tdc->SetVerboseLevel(0);
