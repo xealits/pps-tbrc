@@ -48,7 +48,6 @@ void
 VMEReader::AddIOModule(uint32_t address)
 {
   fSG = new VME::IOModule(fBridge->GetHandle(), address);
-  std::cout << __PRETTY_FUNCTION__ << " --> " << fSG->GetSerialNumber() << " / " << fSG->GetModuleVersion() << std::endl;
 }
 
 void

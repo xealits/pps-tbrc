@@ -17,14 +17,14 @@ namespace VME
   class IOModule : public GenericBoard<IOModuleRegister,cvA24_U_DATA>
   {
     public:
-      inline IOModule(int32_t bhandle, uint32_t baseaddr) :
-        GenericBoard<IOModuleRegister,cvA24_U_DATA>(bhandle, baseaddr) {;}
+      IOModule(int32_t bhandle, uint32_t baseaddr);
       inline ~IOModule() {;}
 
       unsigned short GetSerialNumber() const;
       unsigned short GetModuleVersion() const;
       unsigned short GetModuleType() const;
       unsigned short GetManufacturerId() const;
+      unsigned short GetIdentifier() const;
 
     private:
 

@@ -30,6 +30,7 @@ int main(int argc, char *argv[]) {
   unsigned int num_events;
   VME::TDCEventCollection ec;
   VME::TDCV1x90* tdc;
+  VME::IOModule* io;
   string filename;
 
   VME::AcquisitionMode acq_mode = VME::CONT_STORAGE;
@@ -53,14 +54,15 @@ int main(int argc, char *argv[]) {
     
     // TDC configuration
     //const uint32_t tdc_address = 0x0d0000; // V1290N (16 ch., Louvain-la-Neuve)
-    const uint32_t tdc_address = 0xaa0000; // V1290A (32 ch., CERN)
-    //const uint32_t tdc_address = 0xbb0000; // V1290A (32 ch., CERN)
+    //const uint32_t tdc_address = 0xaa000000; // V1290A (32 ch., CERN)
+    const uint32_t tdc_address = 0xbb000000; // V1290A (32 ch., CERN)
     
     //vme->SendPulse();
     //vme->StartPulser(1000000., 200000.);
 
-    //vme->AddIOModule(0xdd0f00);
-    //vme->AddIOModule(0x0d0000);
+    vme->AddIOModule(0x0d0000);
+    io = vme->GetIOModule();
+    //cout << "io module address: " << io->GetModuleAddress() << endl;
 
     vme->AddTDC(tdc_address);
     tdc = vme->GetTDC(tdc_address);
@@ -116,7 +118,7 @@ int main(int argc, char *argv[]) {
       }
       num_events += ec.size();
     }
-    //while(true) {;}
+    while(true) {;}
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
       if (out_file.is_open()) out_file.close();
