@@ -2,7 +2,8 @@
 
 namespace VME
 {
-  BridgeVx718::BridgeVx718(const char *device, BridgeType type)
+  BridgeVx718::BridgeVx718(const char *device, BridgeType type) :
+    GenericBoard<CVRegisters,cvA32_U_DATA>(0, 0x0)
   {
     int dev = atoi(device);
     CVBoardTypes tp;
@@ -45,6 +46,8 @@ namespace VME
     PrintInfo(o.str());
     
     CheckConfiguration();
+
+    SetIRQ(IRQ1|IRQ2|IRQ3|IRQ4|IRQ5|IRQ6|IRQ7, true);
   }
 
   BridgeVx718::~BridgeVx718()
@@ -60,12 +63,55 @@ namespace VME
     std::ostringstream o;
     ret = CAENVME_ReadDisplay(fHandle, &config);
     if (ret!=cvSuccess) {
-      o.str("");
-      o << "Failed to retrieve configuration displayed on\n\t"
-        << "module's front panel\n\t"
-        << "CAEN error: " << CAENVME_DecodeError(ret);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
+      std::ostringstream os;
+      os << "Failed to retrieve configuration displayed on\n\t"
+         << "module's front panel\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(ret);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), Fatal);
     }
+  }
+
+  void
+  BridgeVx718::SetIRQ(unsigned int irq, bool enable)
+  {
+    CVErrorCodes out;
+    unsigned long word = static_cast<unsigned long>(irq);
+    if (enable) out = CAENVME_IRQEnable (fHandle, word);
+    else        out = CAENVME_IRQDisable(fHandle, word);
+    if (out!=cvSuccess) {
+      std::ostringstream os;
+      os << "Failed to set IRQ enable status to " << enable << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+    }
+    fHasIRQ = enable;
+  }
+
+  void
+  BridgeVx718::WaitIRQ(unsigned int irq, unsigned long timeout) const
+  {
+    uint8_t word = static_cast<uint8_t>(irq);
+    CVErrorCodes out = CAENVME_IRQWait(fHandle, word, timeout);
+    if (out!=cvSuccess) {
+      std::ostringstream os;
+      os << "Failed to request IRQ" << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+    }
+  }
+
+  unsigned int
+  BridgeVx718::GetIRQStatus() const
+  {
+    uint8_t mask;
+    CVErrorCodes out = CAENVME_IRQCheck(fHandle, &mask);
+    if (out!=cvSuccess) {
+      std::ostringstream os;
+      os << "Failed to retrieve IRQ status" << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+    }
+    return static_cast<unsigned int>(mask);
   }
 
   // output := cvOutput[0,4] 
@@ -74,10 +120,10 @@ namespace VME
   {
     CVErrorCodes out = CAENVME_SetOutputConf(fHandle, output, cvDirect, cvActiveHigh, cvManualSW);
     if (out!=cvSuccess) {
-      std::ostringstream o;
-      o << "Failed to configure output register #" << static_cast<int>(output) << "\n\t"
-        << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+      std::ostringstream os;
+      os << "Failed to configure output register #" << static_cast<int>(output) << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
     }
   }
 
@@ -87,10 +133,10 @@ namespace VME
   {
     CVErrorCodes out = CAENVME_SetOutputRegister(fHandle, output);
     if (out!=cvSuccess) {
-      std::ostringstream o;
-      o << "Failed to enable output register #" << static_cast<int>(output) << "\n\t"
-        << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+      std::ostringstream os;
+      os << "Failed to enable output register #" << static_cast<int>(output) << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
     }
   }
 
@@ -99,10 +145,10 @@ namespace VME
   {
     CVErrorCodes out = CAENVME_ClearOutputRegister(fHandle, output);
     if (out!=cvSuccess) {
-      std::ostringstream o;
-      o << "Failed to disable output register #" << static_cast<int>(output) << "\n\t"
-        << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+      std::ostringstream os;
+      os << "Failed to disable output register #" << static_cast<int>(output) << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
     }
   }
 
@@ -112,10 +158,10 @@ namespace VME
   {
     CVErrorCodes out = CAENVME_SetInputConf(fHandle, input, cvDirect, cvActiveHigh);
     if (out!=cvSuccess) {
-      std::ostringstream o;
-      o << "Failed to configure input register #" << static_cast<int>(input) << "\n\t"
-        << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+      std::ostringstream os;
+      os << "Failed to configure input register #" << static_cast<int>(input) << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
     }
   }
 
@@ -125,10 +171,10 @@ namespace VME
     short unsigned int data;
     CVErrorCodes out = CAENVME_ReadRegister(fHandle, cvInputReg, &data);
     if (out!=cvSuccess) {
-      std::ostringstream o;
-      o << "Failed to read data input register #" << static_cast<int>(input) << "\n\t"
-        << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+      std::ostringstream os;
+      os << "Failed to read data input register #" << static_cast<int>(input) << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
     }
     // decoding with CVInputRegisterBits
     std::cout << "Input line 0 status: " << ((data&cvIn0Bit) >> 0) << std::endl;
@@ -268,60 +314,6 @@ namespace VME
     }*/
     while (true) {
       SinglePulse(0); sleep(1);
-    }
-  }
-
-  void
-  BridgeVx718::WriteRegister(CVRegisters addr, const uint16_t& data) const
-  {
-    uint32_t address = fBaseAddr+addr;
-    uint16_t* fdata = new uint16_t; *fdata = data;
-    CVErrorCodes out = CAENVME_WriteCycle(fHandle, address, fdata, cvA32_U_DATA, cvD16);
-    if (out!=cvSuccess) {
-      std::ostringstream o;
-      o << "Impossible to write register at 0x" << std::hex << addr << "\n\t"
-        << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
-    }
-  }
-
-  void
-  BridgeVx718::WriteRegister(CVRegisters addr, const uint32_t& data) const
-  {
-    uint32_t address = fBaseAddr+addr;
-    uint32_t* fdata = new uint32_t; *fdata = data;
-    CVErrorCodes out = CAENVME_WriteCycle(fHandle, address, fdata, cvA32_U_DATA, cvD32);
-    if (out!=cvSuccess) {
-      std::ostringstream o;
-      o << "Impossible to write register at 0x" << std::hex << addr << "\n\t"
-        << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
-    }
-  }
-
-  void
-  BridgeVx718::ReadRegister(CVRegisters addr, uint16_t* data) const
-  {
-    uint32_t address = fBaseAddr+addr;
-    CVErrorCodes out = CAENVME_ReadCycle(fHandle, address, data, cvA32_U_DATA, cvD16);
-    if (out!=cvSuccess) {
-      std::ostringstream o;
-      o << "Impossible to read register at 0x" << std::hex << addr << "\n\t"
-        << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
-    }
-  }
-
-  void
-  BridgeVx718::ReadRegister(CVRegisters addr, uint32_t* data) const
-  {
-    uint32_t address = fBaseAddr+addr;
-    CVErrorCodes out = CAENVME_ReadCycle(fHandle, address, data, cvA32_U_DATA, cvD32);
-    if (out!=cvSuccess) {
-      std::ostringstream o;
-      o << "Impossible to read register at 0x" << std::hex << addr << "\n\t"
-        << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
   }
 }

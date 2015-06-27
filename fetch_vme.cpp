@@ -30,7 +30,6 @@ int main(int argc, char *argv[]) {
   unsigned int num_events;
   VME::TDCEventCollection ec;
   VME::TDCV1x90* tdc;
-  VME::IOModuleV262* io;
   string filename;
 
   VME::AcquisitionMode acq_mode = VME::CONT_STORAGE;
@@ -60,12 +59,9 @@ int main(int argc, char *argv[]) {
     //vme->SendPulse();
     //vme->StartPulser(1000000., 200000.);
 
-    /*vme->AddIOModule(0x0d0000);
-    io = vme->GetIOModule();
-    //cout << "io module address: " << io->GetModuleAddress() << endl;*/
-
     vme->AddFPGAUnit(0xcc000000);
     //exit(0);
+
     vme->AddTDC(tdc_address);
     tdc = vme->GetTDC(tdc_address);
     //tdc->SetVerboseLevel(0);

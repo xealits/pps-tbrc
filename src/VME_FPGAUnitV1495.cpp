@@ -26,6 +26,24 @@ namespace VME
        << "Firmware revision: " << std::dec << ((fwrev>>8)&0xff) << "." << (fwrev&0xff) << "\n\t"
        << "Geo address: 0x" << std::hex << GetGeoAddress();
     PrintInfo(os.str());
+
+    //uint32_t word, word_read;
+    /*unsigned short bits;
+    //for (int i=0; i<1000; i++) {
+    int i = 0;
+    while (true) {
+      if (i%2==0) bits = kReset|kTrigger|kClear;
+      else        bits = 0x0;
+      SetTDCBits(bits); std::cout << "word: 0x" << std::hex << GetTDCBits() << std::endl;
+      //WriteRegister((FPGAUnitV1495Register)0x1018, word);
+      //ReadRegister((FPGAUnitV1495Register)0x1018, &word_read);
+      i++;
+      usleep(1000);
+    }*/
+    //ReadRegister((FPGAUnitV1495Register)0x1018, &word);
+
+    //uint32_t word = 0x3;
+    //WriteRegister((FPGAUnitV1495Register)0x1018, word);
   }
 
   unsigned short
@@ -110,5 +128,105 @@ namespace VME
          << board0 << "/" << board1 << "/" << board2;
       throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
     }
+  }
+
+  unsigned short
+  FPGAUnitV1495::GetTDCBits() const
+  {
+    uint32_t word;
+    try {
+      ReadRegister(kV1495TDCBoardInterface, &word);
+      return static_cast<unsigned short>(word&0x7);
+    } catch (Exception& e) { e.Dump(); }
+    return 0;
+  }
+
+  void
+  FPGAUnitV1495::SetTDCBits(unsigned short bits) const
+  {
+    uint32_t word = (bits&0x7);
+    try {
+      if (bits==GetTDCBits()) return;
+      WriteRegister(kV1495TDCBoardInterface, word);
+    } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to set TDC bits", JustWarning);
+    }
+  }
+
+  void
+  FPGAUnitV1495::PulseTDCBits(unsigned short bits, unsigned int time_us) const
+  {
+    // FIXME need to check what is the previous bits status before any pulse -> exception?
+    try {
+      SetTDCBits(bits);
+      usleep(time_us); // we let it high for a given time (in ns)
+      SetTDCBits(0x0);
+    } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to send a pulse to TDC bits", JustWarning);
+    }
+  }
+
+  FPGAUnitV1495Control
+  FPGAUnitV1495::GetControl() const
+  {
+    uint32_t word;
+    try { ReadRegister(kV1495Control, &word); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve the control word from FW", JustWarning);
+    }
+    return FPGAUnitV1495Control(word);
+  }
+
+  void
+  FPGAUnitV1495::SetControl(const FPGAUnitV1495Control& control) const
+  {
+    try { WriteRegister(kV1495Control, control.GetWord()); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to set the control word to FW", JustWarning);
+    }
+  }
+
+  void
+  FPGAUnitV1495::SetClockPeriod(uint32_t period) const
+  {
+    try { WriteRegister(kV1495ClockSettings, period); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to set internal clock's period", JustWarning);
+    }
+  }
+
+  uint32_t
+  FPGAUnitV1495::GetClockPeriod() const
+  {
+    uint32_t word;
+    try { ReadRegister(kV1495ClockSettings, &word); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve internal clock's period", JustWarning);
+      return 0;
+    }
+    return word;
+  }
+
+  void
+  FPGAUnitV1495::SetTriggerPeriod(uint32_t period) const
+  {
+    try { WriteRegister(kV1495TriggerSettings, period); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to set internal trigger's period", JustWarning);
+    }
+  }
+
+  uint32_t
+  FPGAUnitV1495::GetTriggerPeriod() const
+  {
+    uint32_t word;
+    try { ReadRegister(kV1495TriggerSettings, &word); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve internal trigger's period", JustWarning);
+      return 0;
+    }
+    return word;
   }
 }
