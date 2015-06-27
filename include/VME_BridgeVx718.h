@@ -1,14 +1,9 @@
 /* Interface for CAEN Vx718 VME Bridge */
 
-#ifndef BRIDGEVx718_H 
-#define BRIDGEVx718_H
+#ifndef VME_BridgeVx718_h 
+#define VME_BridgeVx718_h
 
-#include "CAENVMElib.h"
-#include <iostream>
-#include <sstream>
-#include <map>
-
-#include "Exception.h"
+#include "VME_GenericBoard.h"
 
 namespace VME
 {
@@ -82,7 +77,7 @@ namespace VME
     private:
       uint16_t fWord;
   };
-  
+ 
   /**
    * This class initializes the CAEN V1718 VME bridge in order to control the crate.
    * \brief class defining the VME bridge
@@ -90,10 +85,10 @@ namespace VME
    * \author Bob Velghe <bob.velghe@cern.ch>
    * \date Jun 2010
    */
-  class BridgeVx718
+  class BridgeVx718 : public GenericBoard<CVRegisters,cvA32_U_DATA>
   {
     public:
-      /* device : /dev/xxx */
+      enum IRQId { IRQ1=0x1, IRQ2=0x2, IRQ3=0x4, IRQ4=0x8, IRQ5=0x10, IRQ6=0x20, IRQ7=0x40 };
       /**
        * Bridge class constructor
        * \brief Constructor
@@ -108,13 +103,16 @@ namespace VME
       ~BridgeVx718();
 
       /**
-       * Gives bhandle value
-       * \brief Gets bhandle
-       * \return bhandle value
+       * \brief Bridge's handle value
+       * \return Handle value
        */ 
       inline int32_t GetHandle() const { return fHandle; }
       void CheckConfiguration() const;
       void TestOutputs() const;
+
+      void SetIRQ(unsigned int irq, bool enable=true);
+      void WaitIRQ(unsigned int irq, unsigned long timeout=1000) const;
+      unsigned int GetIRQStatus() const;
 
       /**
        * \brief Set and control the output lines
@@ -134,14 +132,7 @@ namespace VME
       void SinglePulse(unsigned short channel) const;
 
     private:
-      void WriteRegister(CVRegisters addr, const uint16_t& data) const;
-      void WriteRegister(CVRegisters addr, const uint32_t& data) const;
-      void ReadRegister(CVRegisters addr, uint16_t* data) const;
-      void ReadRegister(CVRegisters addr, uint32_t* data) const;
-
-      /// Device handle
-      int32_t fHandle;
-      uint32_t fBaseAddr;
+      bool fHasIRQ;
   };
 }
 

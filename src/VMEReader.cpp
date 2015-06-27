@@ -1,7 +1,7 @@
 #include "VMEReader.h"
 
 VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
-  Client(1987), fSG(0), fOnSocket(on_socket), fIsPulserStarted(false)
+  Client(1987), fSG(0), fFPGA(0), fOnSocket(on_socket), fIsPulserStarted(false)
 {
   if (fOnSocket) {
     Client::Connect();
@@ -17,6 +17,7 @@ VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
 VMEReader::~VMEReader()
 {
   if (fSG) delete fSG;
+  if (fFPGA) delete fFPGA;
   if (fIsPulserStarted) fBridge->StopPulser();
   delete fBridge;
 }
@@ -47,7 +48,13 @@ VMEReader::AddTDC(uint32_t address)
 void
 VMEReader::AddIOModule(uint32_t address)
 {
-  fSG = new VME::IOModule(fBridge->GetHandle(), address);
+  fSG = new VME::IOModuleV262(fBridge->GetHandle(), address);
+}
+
+void
+VMEReader::AddFPGAUnit(uint32_t address)
+{
+  fFPGA = new VME::FPGAUnitV1495(fBridge->GetHandle(), address);
 }
 
 void

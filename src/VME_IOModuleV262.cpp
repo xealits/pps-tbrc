@@ -1,9 +1,9 @@
-#include "VME_IOModule.h"
+#include "VME_IOModuleV262.h"
 
 namespace VME
 {
-  IOModule::IOModule(int32_t bhandle, uint32_t baseaddr) :
-    GenericBoard<IOModuleRegister,cvA24_U_DATA>(bhandle, baseaddr)
+  IOModuleV262::IOModuleV262(int32_t bhandle, uint32_t baseaddr) :
+    GenericBoard<IOModuleV262Register,cvA24_U_DATA>(bhandle, baseaddr)
   {
     std::ostringstream os;
     os << "New I/O module added:" << "\n\t"
@@ -21,7 +21,7 @@ namespace VME
   }
 
   unsigned short
-  IOModule::GetSerialNumber() const
+  IOModuleV262::GetSerialNumber() const
   {
     uint16_t word;
     try {
@@ -32,7 +32,7 @@ namespace VME
   }
 
   unsigned short
-  IOModule::GetModuleVersion() const
+  IOModuleV262::GetModuleVersion() const
   {
     uint16_t word;
     try {
@@ -43,7 +43,7 @@ namespace VME
   }
 
   unsigned short
-  IOModule::GetModuleType() const
+  IOModuleV262::GetModuleType() const
   {
     uint16_t word;
     try {
@@ -54,7 +54,7 @@ namespace VME
   }
   
   unsigned short
-  IOModule::GetManufacturerId() const
+  IOModuleV262::GetManufacturerId() const
   {
     uint16_t word;
     try {
@@ -65,7 +65,7 @@ namespace VME
   }
 
   unsigned short
-  IOModule::GetIdentifier() const
+  IOModuleV262::GetIdentifier() const
   {
     uint16_t word;
     try {

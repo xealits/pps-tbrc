@@ -57,6 +57,7 @@ namespace VME
             << "CAEN error: " << CAENVME_DecodeError(out);
           throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
         }
+        //WaitIRQ(IRQ1|IRQ2|IRQ3|IRQ4|IRQ5|IRQ6|, 100);
       }
       /**
        * Read a 16-bit word in the register
