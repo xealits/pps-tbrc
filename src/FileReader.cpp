@@ -75,7 +75,10 @@ FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* m)
     bool has_lead = false, has_trail = false, has_error = false;
     while (true) {
       if (!GetNextEvent(&ev)) return false;
-      if (ev.GetChannelId()!=channel_id) continue;
+      if (ev.GetChannelId()!=channel_id) {
+        //std::cerr << "measurement in channel " << ev.GetChannelId() << std::endl;
+        continue;
+      }
 
       ec.push_back(ev);
 

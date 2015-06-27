@@ -48,18 +48,21 @@ int main(int argc, char *argv[]) {
     bool with_socket = false;
     //vme = new VMEReader("/dev/usb/v1718_0", VME::CAEN_V1718, with_socket);
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
+    //vme->SendPulse();
+    //vme->StartPulser(1000000., 200000.);
     
     fh.run_id = vme->GetRunNumber();
     
+    vme->AddFPGAUnit(0xcc000000);
+    //exit(0);
+
     // TDC configuration
-    //const uint32_t tdc_address = 0x000d0000; // V1290N (16 ch., Louvain-la-Neuve)
     const uint32_t tdc_address_board1 = 0x00aa0000; // V1290A (32 ch., CERN)
     const uint32_t tdc_address_board2 = 0x00bb0000; // V1290A (32 ch., CERN)
     
     vme->AddTDC(tdc_address_board1);
     tdc1 = vme->GetTDC(tdc_address_board1);
     tdc1->SetVerboseLevel(0);
-    //tdc1->GetControl().Dump();
     tdc1->SetAcquisitionMode(acq_mode);
     tdc1->SetDetectionMode(det_mode);
     tdc1->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
@@ -68,7 +71,6 @@ int main(int argc, char *argv[]) {
     vme->AddTDC(tdc_address_board2);
     tdc2 = vme->GetTDC(tdc_address_board2);
     tdc2->SetVerboseLevel(0);
-    //tdc2->GetControl().Dump();
     tdc2->SetAcquisitionMode(acq_mode);
     tdc2->SetDetectionMode(det_mode);
     tdc2->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
@@ -86,7 +88,9 @@ int main(int argc, char *argv[]) {
     switch (tdc1->GetAcquisitionMode()) {
       case VME::CONT_STORAGE: acqmode = "Continuous storage"; break;
       case VME::TRIG_MATCH: acqmode = "Trigger matching"; break;
-      default: acqmode = "[Invalid mode]"; throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
+      default:
+        acqmode = "[Invalid mode]";
+        throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
     }
     switch (tdc1->GetDetectionMode()) {
       case VME::PAIR: detmode = "Pair measurement"; break;
@@ -101,6 +105,9 @@ int main(int argc, char *argv[]) {
     
     out_file_board1.write((char*)&fh, sizeof(file_header_t));
     out_file_board2.write((char*)&fh, sizeof(file_header_t));
+
+    vme->SendPulse(0); // send a CLR signal from bridge to TDC
+
     while (true) {
       // board 1
       ec = tdc1->FetchEvents();
@@ -118,6 +125,7 @@ int main(int argc, char *argv[]) {
       }
       num_events_board2 += ec.size();
     }
+    while(true) {;}
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
       if (out_file_board1.is_open()) out_file_board1.close();

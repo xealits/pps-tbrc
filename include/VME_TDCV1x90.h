@@ -1,26 +1,16 @@
 #ifndef VMETDCV1x90_H 
 #define VMETDCV1x90_H
 
-//#define DEBUG
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-
 #include <cmath>
-#include <string>
 #include <map>
+#include <iomanip>
 
-#include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 
-#include "CAENVMElib.h"
-#include "CAENVMEoslib.h"
-#include "CAENVMEtypes.h"
-
-#include "VME_TDCV1x90Opcodes.h"
+#include "VME_GenericBoard.h"
 #include "VME_TDCEvent.h"
-#include "Exception.h"
+#include "VME_TDCV1x90Opcodes.h"
 
 #define TDC_ACQ_STOP 20000
 
@@ -193,6 +183,40 @@ namespace VME
       uint16_t fWord;
   };
 
+  enum TDCV1x90Register {
+    kOutputBuffer            = 0x0000, // D32 R
+    kControl                 = 0x1000, // D16 R/W
+    kStatus                  = 0x1002, // D16 R
+    kInterruptLevel          = 0x100a, // D16 R/W
+    kInterruptVector         = 0x100c, // D16 R/W
+    kGeoAddress              = 0x100e, // D16 R/W
+    kMCSTBase                = 0x1010, // D16 R/W
+    kMCSTControl             = 0x1012, // D16 R/W
+    kModuleReset             = 0x1014, // D16 W
+    kSoftwareClear           = 0x1016, // D16 W
+    kEventCounter            = 0x101c, // D32 R
+    kEventStored             = 0x1020, // D16 R
+    kBLTEventNumber          = 0x1024, // D16 R/W
+    kFirmwareRev             = 0x1026, // D16 R
+    kMicro                   = 0x102e, // D16 R/W
+    kMicroHandshake          = 0x1030, // D16 R
+    kEventFIFO               = 0x1038, // D32 R
+    kEventFIFOStoredRegister = 0x103c, // D16 R
+    kEventFIFOStatusRegister = 0x103e, // D16 R  
+    kROMOui2                 = 0x4024,
+    kROMOui1                 = 0x4028,
+    kROMOui0                 = 0x402c,
+    kROMBoard2               = 0x4034,
+    kROMBoard1               = 0x4038,
+    kROMBoard0               = 0x403c,
+    kROMRevis3               = 0x4040,
+    kROMRevis2               = 0x4044,
+    kROMRevis1               = 0x4048,
+    kROMRevis0               = 0x404c,
+    kROMSerNum1              = 0x4080,
+    kROMSerNum0              = 0x4084,
+  };
+
   /**
    * 
    * \author Laurent Forthomme <laurent.forthomme@cern.ch>
@@ -200,7 +224,7 @@ namespace VME
    * \date Jun 2010 (NA62-Gigatracker)
    * \date May 2015 (CMS-TOTEM PPS)
    */
-  class TDCV1x90
+  class TDCV1x90 : public GenericBoard<TDCV1x90Register,cvA32_U_DATA>
   {
     public:
       enum DLLMode {
@@ -210,7 +234,7 @@ namespace VME
         DLL_PLL_HighRes = 0x3
       };
       
-      TDCV1x90(int32_t, uint32_t, const AcquisitionMode& acqm=TRIG_MATCH, const DetectionMode& detm=TRAILEAD);
+      TDCV1x90(int32_t bhandle, uint32_t baseaddr, const AcquisitionMode& acqm=TRIG_MATCH, const DetectionMode& detm=TRAILEAD);
       ~TDCV1x90();
       void SetVerboseLevel(unsigned short verb=1) { fVerb=verb; }
 
@@ -315,77 +339,11 @@ namespace VME
       void abort();
       
     private:
-      enum mod_reg {
-        kOutputBuffer            = 0x0000, // D32 R
-        kControl                 = 0x1000, // D16 R/W
-        kStatus                  = 0x1002, // D16 R
-        kInterruptLevel          = 0x100a, // D16 R/W
-        kInterruptVector         = 0x100c, // D16 R/W
-        kGeoAddress              = 0x100e, // D16 R/W
-        kMCSTBase                = 0x1010, // D16 R/W
-        kMCSTControl             = 0x1012, // D16 R/W
-        kModuleReset             = 0x1014, // D16 W
-        kSoftwareClear           = 0x1016, // D16 W
-        kEventCounter            = 0x101c, // D32 R
-        kEventStored             = 0x1020, // D16 R
-        kBLTEventNumber          = 0x1024, // D16 R/W
-        kFirmwareRev             = 0x1026, // D16 R
-        kMicro                   = 0x102e, // D16 R/W
-        kMicroHandshake          = 0x1030, // D16 R
-        
-        kEventFIFO               = 0x1038, // D32 R
-        kEventFIFOStoredRegister = 0x103c, // D16 R
-        kEventFIFOStatusRegister = 0x103e, // D16 R  
-    
-        kROMOui2                 = 0x4024,
-        kROMOui1                 = 0x4028,
-        kROMOui0                 = 0x402c,
-        
-        kROMBoard2               = 0x4034,
-        kROMBoard1               = 0x4038,
-        kROMBoard0               = 0x403c,
-        kROMRevis3               = 0x4040,
-        kROMRevis2               = 0x4044,
-        kROMRevis1               = 0x4048,
-        kROMRevis0               = 0x404c,
-        kROMSerNum1              = 0x4080,
-        kROMSerNum0              = 0x4084,
-      };
       bool WaitMicro(micro_handshake mode) const;
-      /**
-       * Write a 16-bit word in the register
-       * \brief Write on register
-       * \param[in] addr register
-       * \param[in] data word
-       */
-      void WriteRegister(mod_reg, const uint16_t&) const;
-      /**
-       * Write a 32-bit word in the register
-       * \brief Write on register
-       * \param[in] addr register
-       * \param[in] data word
-       */
-      void WriteRegister(mod_reg, const uint32_t&) const;
-      /**
-       * Read a 16-bit word in the register
-       * \brief Read on register
-       * \param[in] addr register
-       * \param[out] data word
-       */  
-      void ReadRegister(mod_reg, uint16_t*) const;
-      /**
-       * Read a 32-bit word in the register
-       * \brief Read on register
-       * \param[in] addr register
-       * \param[out] data word
-       */  
-      void ReadRegister(mod_reg, uint32_t*) const;
 
       void ReadAcquisitionMode();
       void ReadDetectionMode();
 
-      uint32_t fBaseAddr;
-      int32_t fHandle;
       unsigned short fVerb;
 
       AcquisitionMode fAcquisitionMode;
@@ -393,9 +351,6 @@ namespace VME
 
       bool fErrorMarks;
       uint16_t fWindowWidth;
-      
-      CVAddressModifier am; // Address modifier
-      CVAddressModifier am_blt; // Address modifier (Block Transfert)
       
       uint32_t* fBuffer;
         
