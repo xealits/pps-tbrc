@@ -9,7 +9,7 @@ namespace VME
       CheckBoardVersion();
     } catch (Exception& e) { e.Dump(); }
 
-    unsigned short fwrev = GetFirmwareRevision();
+    unsigned short cfwrev = GetCAENFirmwareRevision(), ufwrev = GetUserFirmwareRevision();
     unsigned int hwrev = GetHardwareRevision();
     std::ostringstream os;
     os << "New FPGA unit added at base address 0x" << std::hex << fBaseAddr << "\n\t"
@@ -23,7 +23,8 @@ namespace VME
                                 << ((hwrev>>16)&0xff) << "."
                                 << ((hwrev>>8)&0xff) << "."
                                 << (hwrev&0xff) << "\n\t"
-       << "Firmware revision: " << std::dec << ((fwrev>>8)&0xff) << "." << (fwrev&0xff) << "\n\t"
+       << "CAEN Firmware revision: " << std::dec << ((cfwrev>>8)&0xff) << "." << (cfwrev&0xff) << "\n\t"
+       << "User Firmware revision: " << std::dec << ((ufwrev>>8)&0xff) << "." << (ufwrev&0xff) << "\n\t"
        << "Geo address: 0x" << std::hex << GetGeoAddress();
     PrintInfo(os.str());
 
@@ -47,11 +48,22 @@ namespace VME
   }
 
   unsigned short
-  FPGAUnitV1495::GetFirmwareRevision() const
+  FPGAUnitV1495::GetCAENFirmwareRevision() const
   {
     uint16_t word;
     try {
       ReadRegister(kV1495FWRevision, &word);
+      return static_cast<unsigned short>(word&0xffff);
+    } catch (Exception& e) { e.Dump(); }
+    return 0;
+  }
+
+  unsigned short
+  FPGAUnitV1495::GetUserFirmwareRevision() const
+  {
+    uint16_t word;
+    try {
+      ReadRegister(kV1495UserFWRevision, &word);
       return static_cast<unsigned short>(word&0xffff);
     } catch (Exception& e) { e.Dump(); }
     return 0;

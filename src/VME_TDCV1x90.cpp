@@ -57,10 +57,8 @@ namespace VME
       "100ps", "200ps", "400ps", "800ps", "1.6ns", "3.2ns", "6.25ns", "12.5ns",
       "25ns", "50ns", "100ns", "200ns", "400ns", "800ns", "invalid","invalid"
     };
-    const char* c_trailead_edge_res[] = { "800ps", "200ps", "100ps", "25ps" };
     for (int i=0; i<8; i++) pair_lead_res[i] = c_pair_lead_res[i];
     for (int i=0; i<16; i++) pair_width_res[i] = c_pair_width_res[i];
-    for (int i=0; i<4; i++) trailead_edge_res[i] = c_trailead_edge_res[i];
 
     if (fVerb>1) {
       std::stringstream s; s << "TDC with base address 0x" << std::hex << baseaddr << " successfully built!";
@@ -496,20 +494,20 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << __PRETTY_FUNCTION__ << " Debug: ";
+      const char* trailead_edge_res[] = { "800ps", "200ps", "100ps", "25ps" };
+      std::ostringstream os; os << " Debug: ";
       switch(fDetectionMode) {
         case PAIR: 
-          std::cout << "(pair mode) leading edge res.: " << pair_lead_res[data&0x7]
-                    << ", pulse width res.: " << pair_width_res[(data&0xF00)>>8]
-                    << std::endl;
+          os << "(pair mode) leading edge res.: " << pair_lead_res[data&0x7]
+             << ", pulse width res.: " << pair_width_res[(data&0xF00)>>8];
           break;
         case OLEADING:
         case OTRAILING:
         case TRAILEAD:
-          std::cout << "(l/t mode) leading/trailing edge res.: "
-                    << trailead_edge_res[data&0x3] << std::endl;
+          os << "(l/t mode) leading/trailing edge res.: " << trailead_edge_res[data&0x3];
           break;
       }
+      PrintInfo(os.str());
     }
     return data;
   }

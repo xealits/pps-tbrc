@@ -358,7 +358,6 @@ namespace VME
       bool gEnd;
       std::string pair_lead_res[8]; 
       std::string pair_width_res[16];
-      std::string trailead_edge_res[4];
 
   };
 }

@@ -7,6 +7,7 @@ namespace VME
 {
   enum FPGAUnitV1495Register {
     // User-defined registers
+    kV1495UserFWRevision    = 0x100c,
     kV1495TDCBoardInterface = 0x1018,
     kV1495ClockSettings     = 0x101c,
     kV1495Control           = 0x1020,
@@ -73,7 +74,8 @@ namespace VME
       FPGAUnitV1495(int32_t bhandle, uint32_t baseaddr);
       inline ~FPGAUnitV1495() {;}
 
-      unsigned short GetFirmwareRevision() const;
+      unsigned short GetCAENFirmwareRevision() const;
+      unsigned short GetUserFirmwareRevision() const;
       unsigned int GetHardwareRevision() const;
       unsigned short GetSerialNumber() const;
       unsigned short GetGeoAddress() const;
