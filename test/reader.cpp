@@ -13,7 +13,7 @@ main(int argc, char* argv[])
 {
   unsigned int channel_id = 0;
   if (argc<2) {
-    cout << "Usage:\n\t" << argv[0] << " <input file>" << endl;
+    cerr << "Usage:\n\t" << argv[0] << " <input file>" << endl;
     return -1;
   }
   if (argc>=3) {
@@ -24,7 +24,7 @@ main(int argc, char* argv[])
   int num_events;
   TH1D* hist_tot = new TH1D("tot", "", 100000, 0., 10000.);
   
-  FileReader f(argv[1], VME::CONT_STORAGE);
+  FileReader f(argv[1]);
   //cout << f.GetNumTDCs() << " TDCs recorded" << endl;
   num_events = 0;
   try {

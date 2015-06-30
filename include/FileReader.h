@@ -25,11 +25,12 @@ class FileReader
      * \param[in] name Path to the file to read
      * \param[in] ro Data readout mode (continuous storage or trigger matching)
      */
-    FileReader(std::string name, const VME::AcquisitionMode& ro);
+    FileReader(std::string name);
     ~FileReader();
     
     inline unsigned int GetNumTDCs() const { return fHeader.num_hptdc; }
     
+    unsigned long GetNumEvents() const { return fNumEvents; }
     bool GetNextEvent(VME::TDCEvent*);
     /**
      * \brief Fetch the next full measurement on a given channel
@@ -43,6 +44,7 @@ class FileReader
     std::ifstream fFile;
     file_header_t fHeader;
     VME::AcquisitionMode fReadoutMode;
+    unsigned long fNumEvents;
 };
 
 #endif

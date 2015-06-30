@@ -26,5 +26,9 @@ if (ROOT_FOUND)
   target_link_libraries(reader ${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRARIES})
   set_property(TARGET reader PROPERTY EXCLUDE_FROM_ALL true)
 
+  add_executable(reader_2boards ${PROJECT_SOURCE_DIR}/test/reader_2boards.cpp $<TARGET_OBJECTS:reader_lib>)
+  target_link_libraries(reader_2boards ${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRARIES})
+  set_property(TARGET reader_2boards PROPERTY EXCLUDE_FROM_ALL true)
+
 endif()
 
