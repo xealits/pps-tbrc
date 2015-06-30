@@ -2,17 +2,18 @@
 
 namespace VME
 {
-  TDCV1x90::TDCV1x90(int32_t bhandle, uint32_t baseaddr, const AcquisitionMode& acqm, const DetectionMode& detm) :
-    GenericBoard<TDCV1x90Register,cvA32_U_DATA>(bhandle, baseaddr)
+  TDCV1x90::TDCV1x90(int32_t bhandle, uint32_t baseaddr) :
+    GenericBoard<TDCV1x90Register,cvA32_U_DATA>(bhandle, baseaddr),
+    fVerb(1), fAcquisitionMode(TRIG_MATCH), fDetectionMode(TRAILEAD) 
   {
     //event_nb = 0;
     //event_max = 1024;
 
-    fBuffer = (uint32_t*)malloc(16*1024*1024); // 16MB of buffer!
+    fBuffer = (uint32_t*)malloc(32*1024*1024); // 32MB of buffer!
     if (fBuffer==NULL) {
       throw Exception(__PRETTY_FUNCTION__, "Output buffer has not been allocated!", Fatal);
     }
-    
+  
     try {
       CheckConfiguration();
     } catch (Exception& e) {
@@ -22,46 +23,34 @@ namespace VME
     
     SoftwareReset();
     //SoftwareClear();
-    SetAcquisitionMode(acqm);
    
     try {
       WaitMicro(WRITE_OK);
       WriteRegister(kMicro, TDCV1x90Opcodes::EN_ALL_CHANNEL);
     } catch (Exception& e) { e.Dump(); }
  
-    SetDetectionMode(TRAILEAD);
+    SetAcquisitionMode(fAcquisitionMode);
+    SetDetectionMode(fDetectionMode);
     SetLSBTraileadEdge(r25ps);
-    /*SetRCAdjust(0,0);
-    SetRCAdjust(1,0);*/
+    SetRCAdjust(0,0);
+    SetRCAdjust(1,0);
 
     GlobalOffset offs; offs.fine = 0x0; offs.coarse = 0x0;
     SetGlobalOffset(offs); // coarse and fine set
     //GetGlobalOffset();
 
     //SetBLTEventNumberRegister(1); // FIXME find good value!
-    SetTDCEncapsulation(true);
+    SetTDCEncapsulation(false);
     SetErrorMarks(true);
     SetETTT(true);
     SetWindowWidth(2045);
     SetWindowOffset(-2050);
     //SetPairModeResolution(0,0x4);
     SetPoI(0xFFFF, 0xFFFF);
-    GetResolution();
+    //GetResolution();
     
     gEnd = false;
     
-    const char* c_pair_lead_res[] = {
-      "100ps", "200ps", "400ps", "800ps", "1.6ns", "3.12ns", "6.25ns", "12.5ns"
-    };
-    const char* c_pair_width_res[] = {
-      "100ps", "200ps", "400ps", "800ps", "1.6ns", "3.2ns", "6.25ns", "12.5ns",
-      "25ns", "50ns", "100ns", "200ns", "400ns", "800ns", "invalid","invalid"
-    };
-    const char* c_trailead_edge_res[] = { "800ps", "200ps", "100ps", "25ps" };
-    for (int i=0; i<8; i++) pair_lead_res[i] = c_pair_lead_res[i];
-    for (int i=0; i<16; i++) pair_width_res[i] = c_pair_width_res[i];
-    for (int i=0; i<4; i++) trailead_edge_res[i] = c_trailead_edge_res[i];
-
     if (fVerb>1) {
       std::stringstream s; s << "TDC with base address 0x" << std::hex << baseaddr << " successfully built!";
       PrintInfo(s.str());
@@ -496,20 +485,27 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
     
     if (fVerb>1) {
-      std::cout << __PRETTY_FUNCTION__ << " Debug: ";
+      const char* pair_lead_res[] = {
+        "100ps", "200ps", "400ps", "800ps", "1.6ns", "3.12ns", "6.25ns", "12.5ns"
+      };
+      const char* pair_width_res[] = {
+        "100ps", "200ps", "400ps", "800ps", "1.6ns", "3.2ns", "6.25ns", "12.5ns",
+        "25ns", "50ns", "100ns", "200ns", "400ns", "800ns", "invalid","invalid"
+      };
+      const char* trailead_edge_res[] = { "800ps", "200ps", "100ps", "25ps" };
+      std::ostringstream os; os << " Debug: ";
       switch(fDetectionMode) {
         case PAIR: 
-          std::cout << "(pair mode) leading edge res.: " << pair_lead_res[data&0x7]
-                    << ", pulse width res.: " << pair_width_res[(data&0xF00)>>8]
-                    << std::endl;
+          os << "(pair mode) leading edge res.: " << pair_lead_res[data&0x7]
+             << ", pulse width res.: " << pair_width_res[(data&0xF00)>>8];
           break;
         case OLEADING:
         case OTRAILING:
         case TRAILEAD:
-          std::cout << "(l/t mode) leading/trailing edge res.: "
-                    << trailead_edge_res[data&0x3] << std::endl;
+          os << "(l/t mode) leading/trailing edge res.: " << trailead_edge_res[data&0x3];
           break;
       }
+      PrintInfo(os.str());
     }
     return data;
   }
@@ -862,9 +858,9 @@ namespace VME
     memset(fBuffer, 0, sizeof(uint32_t));
     
     int count=0;
-    const int blts = 1024;
+    const int blts = 2048;
     bool finished;
-    int value, channel, trailing, width; // for continuous storage mode
+    //int value, channel, trailing, width; // for continuous storage mode
     std::ostringstream o;
 
     CVErrorCodes ret;
@@ -880,6 +876,7 @@ namespace VME
     switch (fAcquisitionMode) {
     case TRIG_MATCH:
       for (int i=0; i<count/4; i++) { // FIXME need to use the knowledge of the TDCEvent behaviour there...
+        //if (fBuffer[i]==0) continue;
         TDCEvent ev(fBuffer[i]);
         if (ev.GetType()==TDCEvent::Filler) continue; // Filter out filler data
         ec.push_back(ev);
@@ -889,38 +886,36 @@ namespace VME
     case CONT_STORAGE:
       for (int i=0; i<count; i++) {
         TDCEvent ev(fBuffer[i]);
-        trailing = ev.IsTrailing();
-        value = (trailing) ? ev.GetTrailingTime() : ev.GetLeadingTime();
-        channel = ev.GetChannelId();
-        if (value!=0) {
-          ec.push_back(ev);
-          /*std::cout << std::dec
-                    << "event " << i << "\t"
-                    << "channel " << channel << "\t";*/
-          switch(fDetectionMode) {
-            case PAIR:
-              width = (fBuffer[i]&0x7F000)>>12;
-              value = fBuffer[i]&0xFFF;
-              /*std::cout << "width " << std::hex << width << "\t\t"
-                        << "value " << std::dec << value;*/
-            break;
-          case OTRAILING:
-          case OLEADING:
-            /*std::cout << std::dec
-                      << "value " << value << "\t"
-                      << "trailing? " << trailing;*/
-            break;
-          case TRAILEAD:
-            /*std::cout << std::dec 
-                      << "value " << value << "\t"
-                      << "trailing? " << trailing;*/
-            break;
-          default:
-            o.str(""); o << "Wrong detection mode: " << fDetectionMode;
-            throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
-          }
-          //std::cout << std::endl;
+        ec.push_back(ev);
+        //trailing = ev.IsTrailing();
+        //value = (trailing) ? ev.GetTrailingTime() : ev.GetLeadingTime();
+        //channel = ev.GetChannelId();
+        /*std::cout << std::dec
+                  << "event " << i << "\t"
+                  << "channel " << channel << "\t";
+        switch(fDetectionMode) {
+          case PAIR:
+            width = (fBuffer[i]&0x7F000)>>12;
+            value = fBuffer[i]&0xFFF;
+            std::cout << "width " << std::hex << width << "\t\t"
+                      << "value " << std::dec << value;
+          break;
+        case OTRAILING:
+        case OLEADING:
+          std::cout << std::dec
+                    << "value " << value << "\t"
+                    << "trailing? " << trailing;
+          break;
+        case TRAILEAD:
+          std::cout << std::dec 
+                    << "value " << value << "\t"
+                    << "trailing? " << trailing;
+          break;
+        default:
+          o.str(""); o << "Wrong detection mode: " << fDetectionMode;
+          throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
         }
+        //std::cout << std::endl;*/
       }
       return ec;
       

@@ -9,49 +9,65 @@ namespace VME
       CheckBoardVersion();
     } catch (Exception& e) { e.Dump(); }
 
-    unsigned short fwrev = GetFirmwareRevision();
+    unsigned short cfwrev = GetCAENFirmwareRevision();
     unsigned int hwrev = GetHardwareRevision();
     std::ostringstream os;
     os << "New FPGA unit added at base address 0x" << std::hex << fBaseAddr << "\n\t"
-     /*<< "Identifier: 0x" << std::hex << GetIdentifier() << "\n\t"
-       << "Version: " << std::dec << GetModuleVersion() << "\n\t"
-       << "Type: " << std::dec << GetModuleType() << "\n\t"
-       << "Manufacturer: 0x" << std::hex << GetManufacturerId();*/
        << "Serial number: " << std::dec << GetSerialNumber() << "\n\t"
        << "Hardware revision: " << std::dec
                                 << ((hwrev>>24)&0xff) << "."
                                 << ((hwrev>>16)&0xff) << "."
                                 << ((hwrev>>8)&0xff) << "."
                                 << (hwrev&0xff) << "\n\t"
-       << "Firmware revision: " << std::dec << ((fwrev>>8)&0xff) << "." << (fwrev&0xff) << "\n\t"
+       << "CAEN Firmware revision: " << std::dec << ((cfwrev>>8)&0xff) << "." << (cfwrev&0xff) << "\n\t"
        << "Geo address: 0x" << std::hex << GetGeoAddress();
     PrintInfo(os.str());
+  }
+ 
+  void
+  FPGAUnitV1495::DumpFWInformation() const
+  {
+    unsigned short ufwrev = GetUserFirmwareRevision();
+    FPGAUnitV1495Control control = GetControl();
 
-    //uint32_t word, word_read;
-    /*unsigned short bits;
-    //for (int i=0; i<1000; i++) {
-    int i = 0;
-    while (true) {
-      if (i%2==0) bits = kReset|kTrigger|kClear;
-      else        bits = 0x0;
-      SetTDCBits(bits); std::cout << "word: 0x" << std::hex << GetTDCBits() << std::endl;
-      //WriteRegister((FPGAUnitV1495Register)0x1018, word);
-      //ReadRegister((FPGAUnitV1495Register)0x1018, &word_read);
-      i++;
-      usleep(1000);
-    }*/
-    //ReadRegister((FPGAUnitV1495Register)0x1018, &word);
-
-    //uint32_t word = 0x3;
-    //WriteRegister((FPGAUnitV1495Register)0x1018, word);
+    std::ostringstream os;
+    os << "User Firmware information" << "\n\t"
+       << "FW revision: " << std::dec << ((ufwrev>>8)&0xff) << "." << (ufwrev&0xff) << "\n\t"
+       << "Clock source:   ";
+    switch (control.GetClockSource()) {
+      case FPGAUnitV1495Control::ExternalClock: os << "external"; break;
+      case FPGAUnitV1495Control::InternalClock:
+        os << "internal (period: " << (GetInternalClockPeriod()*25) << " ns)"; break;
+      default: os << "invalid (" << control.GetClockSource() << ")"; break;
+    }
+    os << "\n\t"
+       << "Trigger source: ";
+    switch (control.GetTriggerSource()) {
+      case FPGAUnitV1495Control::ExternalTrigger: os << "external"; break;
+      case FPGAUnitV1495Control::InternalTrigger:
+        os << "internal (period: " << (GetInternalTriggerPeriod()*25/1e6) << " ms)"; break;
+      default: os << "invalid (" << control.GetTriggerSource() << ")"; break;
+    }
+    PrintInfo(os.str());
   }
 
   unsigned short
-  FPGAUnitV1495::GetFirmwareRevision() const
+  FPGAUnitV1495::GetCAENFirmwareRevision() const
   {
     uint16_t word;
     try {
       ReadRegister(kV1495FWRevision, &word);
+      return static_cast<unsigned short>(word&0xffff);
+    } catch (Exception& e) { e.Dump(); }
+    return 0;
+  }
+
+  unsigned short
+  FPGAUnitV1495::GetUserFirmwareRevision() const
+  {
+    uint16_t word;
+    try {
+      ReadRegister(kV1495UserFWRevision, &word);
       return static_cast<unsigned short>(word&0xffff);
     } catch (Exception& e) { e.Dump(); }
     return 0;
@@ -189,8 +205,13 @@ namespace VME
   }
 
   void
-  FPGAUnitV1495::SetClockPeriod(uint32_t period) const
+  FPGAUnitV1495::SetInternalClockPeriod(uint32_t period) const
   {
+    //if (period<=0 or (period>1 and period%2!=0)) {
+    if (period<=0) {
+      std::ostringstream os; os << "Trying to set an invalid clock period (" << period << ")";
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+    }
     try { WriteRegister(kV1495ClockSettings, period); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to set internal clock's period", JustWarning);
@@ -198,7 +219,7 @@ namespace VME
   }
 
   uint32_t
-  FPGAUnitV1495::GetClockPeriod() const
+  FPGAUnitV1495::GetInternalClockPeriod() const
   {
     uint32_t word;
     try { ReadRegister(kV1495ClockSettings, &word); } catch (Exception& e) {
@@ -210,8 +231,12 @@ namespace VME
   }
 
   void
-  FPGAUnitV1495::SetTriggerPeriod(uint32_t period) const
+  FPGAUnitV1495::SetInternalTriggerPeriod(uint32_t period) const
   {
+    if (period<=0) {
+      std::ostringstream os; os << "Trying to set an invalid trigger period (" << period << ")";
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+    }
     try { WriteRegister(kV1495TriggerSettings, period); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to set internal trigger's period", JustWarning);
@@ -219,7 +244,7 @@ namespace VME
   }
 
   uint32_t
-  FPGAUnitV1495::GetTriggerPeriod() const
+  FPGAUnitV1495::GetInternalTriggerPeriod() const
   {
     uint32_t word;
     try { ReadRegister(kV1495TriggerSettings, &word); } catch (Exception& e) {

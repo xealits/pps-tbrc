@@ -11,7 +11,6 @@
 using namespace std;
 
 VMEReader* vme;
-fstream out_file;
 int gEnd = 0;
 
 void CtrlC(int aSig) {
@@ -27,12 +26,17 @@ void CtrlC(int aSig) {
 int main(int argc, char *argv[]) {
   signal(SIGINT, CtrlC);
   
-  unsigned int num_events;
-  VME::TDCEventCollection ec;
-  VME::TDCV1x90* tdc;
-  string filename;
+  const unsigned int num_tdc = 1;
 
-  VME::AcquisitionMode acq_mode = VME::CONT_STORAGE;
+  fstream out_file[num_tdc];
+
+  unsigned int num_events[num_tdc];
+  VME::TDCEventCollection ec;
+  VME::TDCV1x90* tdc[num_tdc];
+  VME::FPGAUnitV1495* fpga;
+
+  //VME::AcquisitionMode acq_mode = VME::CONT_STORAGE;
+  VME::AcquisitionMode acq_mode = VME::TRIG_MATCH;
   VME::DetectionMode det_mode = VME::TRAILEAD;
   
   file_header_t fh;
@@ -43,83 +47,101 @@ int main(int argc, char *argv[]) {
   fh.det_mode = det_mode;
   
   std::time_t t_beg;
-  num_events = 0;
   try {
     bool with_socket = false;
     //vme = new VMEReader("/dev/usb/v1718_0", VME::CAEN_V1718, with_socket);
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
+    //vme->SendPulse();
+    //vme->StartPulser(1000000., 200000.);
     
     fh.run_id = vme->GetRunNumber();
     
-    // TDC configuration
-    //const uint32_t tdc_address = 0x0d0000; // V1290N (16 ch., Louvain-la-Neuve)
-    //const uint32_t tdc_address = 0xaa000000; // V1290A (32 ch., CERN)
-    const uint32_t tdc_address = 0xbb000000; // V1290A (32 ch., CERN)
-    
-    //vme->SendPulse();
-    //vme->StartPulser(1000000., 200000.);
-
     vme->AddFPGAUnit(0xcc000000);
+    fpga = vme->GetFPGAUnit();
+
+    VME::FPGAUnitV1495Control c = fpga->GetControl();
+    //c.SetClockSource(VME::FPGAUnitV1495Control::ExternalClock);
+    c.SetClockSource(VME::FPGAUnitV1495Control::InternalClock);
+    //c.SetTriggerSource(VME::FPGAUnitV1495Control::ExternalTrigger);
+    c.SetTriggerSource(VME::FPGAUnitV1495Control::InternalTrigger);
+    fpga->SetControl(c);
+
+    fpga->SetInternalClockPeriod(1); // in units of 25 ns
+    fpga->SetInternalTriggerPeriod(40000000); // in units of 25 ns
+
+    fpga->DumpFWInformation();
+    fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear);
     //exit(0);
 
-    vme->AddTDC(tdc_address);
-    tdc = vme->GetTDC(tdc_address);
-    //tdc->SetVerboseLevel(0);
-    tdc->GetControl().Dump();
-    tdc->SetAcquisitionMode(acq_mode);
-    tdc->SetDetectionMode(det_mode);
-    tdc->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
-    tdc->SetETTT();
-    //tdc->SetTestMode();
-    //tdc->SetWindowWidth(2040);
-    //tdc->SetWindowOffset(-2045);
+    // TDC configuration
+    const uint32_t tdc_address[] = { 0xaa000000, 0xbb000000 }; // V1290A (32 ch., CERN)
+
+    for (unsigned int i=0; i<num_tdc; i++) {
+      vme->AddTDC(tdc_address[i]);
+      tdc[i] = vme->GetTDC(tdc_address[i]);
+      tdc[i]->SetVerboseLevel(1);
+      tdc[i]->SetAcquisitionMode(acq_mode);
+      tdc[i]->SetDetectionMode(det_mode);
+      tdc[i]->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
+      //tdc[i]->SetETTT();
     
-    filename = GenerateFileName(0);
-    out_file.open(filename.c_str(), fstream::out | ios::binary );	
-    if (!out_file.is_open()) {
-      ostringstream o; o << "Error opening file " << filename;
-      throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
-    }
-    
-    t_beg = std::time(0);
+      std::ostringstream filename;
+      filename << "events_board" << i << ".dat";
+      //filename << GenerateFileName(0);
+      out_file[i].open(filename.str().c_str(), fstream::out | ios::binary );	
+      if (!out_file[i].is_open()) {
+        throw Exception(__PRETTY_FUNCTION__, "Error opening file", Fatal);
+      }
+      out_file[i].write((char*)&fh, sizeof(file_header_t));
+      num_events[i] = 0;
+   }
+ 
     std::string acqmode, detmode;
-    switch (tdc->GetAcquisitionMode()) {
+    switch (tdc[0]->GetAcquisitionMode()) {
       case VME::CONT_STORAGE: acqmode = "Continuous storage"; break;
       case VME::TRIG_MATCH: acqmode = "Trigger matching"; break;
       default:
         acqmode = "[Invalid mode]";
         throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
     }
-    switch (tdc->GetDetectionMode()) {
+    switch (tdc[0]->GetDetectionMode()) {
       case VME::PAIR: detmode = "Pair measurement"; break;
       case VME::OLEADING: detmode = "Leading edge only"; break;
       case VME::OTRAILING: detmode = "Trailing edge only"; break;
       case VME::TRAILEAD: detmode = "Leading and trailing edges"; break;
     }
+
+    t_beg = std::time(0);
+
     cerr << endl << "*** Ready for acquisition! ***" << endl
          << "Acquisition mode: " << acqmode << endl 
          << "Detection mode: " << detmode << endl 
          << "Local time: " << asctime(std::localtime(&t_beg));
-    
-    out_file.write((char*)&fh, sizeof(file_header_t));
 
-    vme->SendPulse(0); // send a CLR signal from bridge to TDC
+    //vme->SendPulse(0); // send a CLR signal from bridge to TDC
+    fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
 
     while (true) {
-      ec = tdc->FetchEvents();
-      if (ec.size()==0) { // no events were fetched
-        tdc->GetStatus().Dump(); sleep(2); continue;
+      for (unsigned int i=0; i<num_tdc; i++) {
+        ec = tdc[i]->FetchEvents();
+        if (ec.size()==0) continue; // no events were fetched
+        for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
+          uint32_t word = e->GetWord();
+          out_file[i].write((char*)&word, sizeof(uint32_t));
+          //if (e->GetType()!=0x0) continue;
+          //e->Dump();
+          cout << hex << e->GetType() << endl;
+        }
+        num_events[i] += ec.size();
       }
-      for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
-        //e->Dump();
-        out_file.write((char*)&(*e), sizeof(VME::TDCEvent));
-      }
-      num_events += ec.size();
     }
-    while(true) {;}
+    //while(true) {;}
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
-      if (out_file.is_open()) out_file.close();
+      for (unsigned int i=0; i<num_tdc; i++) {
+        if (out_file[i].is_open()) out_file[i].close();
+      }
+
       std::time_t t_end = std::time(0);
       double nsec_tot = difftime(t_end, t_beg), nsec = fmod(nsec_tot,60), nmin = (nsec_tot-nsec)/60.;
       cerr << endl << "*** Acquisition stopped! ***" << endl
@@ -127,9 +149,13 @@ int main(int argc, char *argv[]) {
            << "Total acquisition time: " << difftime(t_end, t_beg) << " seconds"
            << " (" << nmin << " min " << nsec << " sec)"
            << endl;
-      out_file.close();
     
-      cerr << endl << "Acquired " << num_events << " words in this run" << endl;
+      cerr << endl << "Acquired ";
+      for (unsigned int i=0; i<num_tdc; i++) {
+        if (i>0) cerr << " / ";
+        cerr << num_events[i];
+      }
+      cerr << " words in this run" << endl;
   
       delete vme;
       return 0;

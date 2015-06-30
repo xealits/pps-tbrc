@@ -7,6 +7,7 @@ namespace VME
 {
   enum FPGAUnitV1495Register {
     // User-defined registers
+    kV1495UserFWRevision    = 0x100c,
     kV1495TDCBoardInterface = 0x1018,
     kV1495ClockSettings     = 0x101c,
     kV1495Control           = 0x1020,
@@ -45,14 +46,26 @@ namespace VME
       inline uint32_t GetWord() const { return fWord; }
       
       enum ClockSource { InternalClock=0x0, ExternalClock=0x1 };
+      /**
+       * \brief Get the clock source
+       */
       inline ClockSource GetClockSource() const { return static_cast<ClockSource>(fWord&0x1); }
+      /**
+       * \brief Switch between internal and external clock source
+       */
       inline void SetClockSource(const ClockSource& cs) {
         if (cs==GetClockSource()) return;
         unsigned short sign = (cs==InternalClock) ? -1 : 1; fWord += sign*0x1;
       }
       
       enum TriggerSource { InternalTrigger=0x0, ExternalTrigger=0x1 };
-      inline TriggerSource GetTriggerSource() const { return static_cast<TriggerSource>(fWord&0x2); }
+      /**
+       * \brief Get the trigger source
+       */
+      inline TriggerSource GetTriggerSource() const { return static_cast<TriggerSource>((fWord>>1)&0x1); }
+      /**
+       * \brief Switch between internal and external trigger source
+       */
       inline void SetTriggerSource(const TriggerSource& cs) {
         if (cs==GetTriggerSource()) return;
         unsigned short sign = (cs==InternalTrigger) ? -1 : 1; fWord += sign*0x2;
@@ -73,11 +86,14 @@ namespace VME
       FPGAUnitV1495(int32_t bhandle, uint32_t baseaddr);
       inline ~FPGAUnitV1495() {;}
 
-      unsigned short GetFirmwareRevision() const;
+      unsigned short GetCAENFirmwareRevision() const;
+      unsigned short GetUserFirmwareRevision() const;
       unsigned int GetHardwareRevision() const;
       unsigned short GetSerialNumber() const;
       unsigned short GetGeoAddress() const;
       void CheckBoardVersion() const;
+
+      void DumpFWInformation() const;
 
       enum TDCBits { kReset=0x1, kTrigger=0x2, kClear=0x4 };
       /**
@@ -109,23 +125,23 @@ namespace VME
        * \brief Set the internal clock period
        * \param[in] period Clock period (in units of 25 ns)
        */
-      void SetClockPeriod(uint32_t period) const;
+      void SetInternalClockPeriod(uint32_t period) const;
       /**
        * \brief Retrieve the internal clock period
        * \return Clock period (in units of 25 ns)
        */
-      uint32_t GetClockPeriod() const;
+      uint32_t GetInternalClockPeriod() const;
 
       /**
        * \brief Set the internal trigger period
-       * \param[in] period Trigger period (in units of 25 ns)
+       * \param[in] period Trigger period (in units of 50 ns)
        */
-      void SetTriggerPeriod(uint32_t period) const;
+      void SetInternalTriggerPeriod(uint32_t period) const;
       /**
        * \brief Retrieve the internal trigger period
-       * \return Trigger period (in units of 25 ns)
+       * \return Trigger period (in units of 50 ns)
        */
-      uint32_t GetTriggerPeriod() const;
+      uint32_t GetInternalTriggerPeriod() const;
 
   };
 }

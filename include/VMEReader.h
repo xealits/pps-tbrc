@@ -65,6 +65,12 @@ class VMEReader : public Client
         fBridge->SinglePulse(output);
       } catch (Exception& e) { e.Dump(); }
     }
+    inline void SendClear() const {
+      if (!fFPGA) return;
+      try {
+        fFPGA->PulseTDCBits(VME::FPGAUnitV1495::kClear);
+      } catch (Exception& e) { e.Dump(); }
+    }
 
     /// Abort data collection for all modules on the bus handled by the bridge
     void Abort();

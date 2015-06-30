@@ -234,7 +234,7 @@ namespace VME
         DLL_PLL_HighRes = 0x3
       };
       
-      TDCV1x90(int32_t bhandle, uint32_t baseaddr, const AcquisitionMode& acqm=TRIG_MATCH, const DetectionMode& detm=TRAILEAD);
+      TDCV1x90(int32_t bhandle, uint32_t baseaddr);
       ~TDCV1x90();
       void SetVerboseLevel(unsigned short verb=1) { fVerb=verb; }
 
@@ -358,7 +358,6 @@ namespace VME
       bool gEnd;
       std::string pair_lead_res[8]; 
       std::string pair_width_res[16];
-      std::string trailead_edge_res[4];
 
   };
 }
