@@ -26,13 +26,14 @@ void CtrlC(int aSig) {
 int main(int argc, char *argv[]) {
   signal(SIGINT, CtrlC);
   
-  const unsigned int num_tdc = 2;
+  const unsigned int num_tdc = 1;
 
   fstream out_file[num_tdc];
 
   unsigned int num_events[num_tdc];
   VME::TDCEventCollection ec;
   VME::TDCV1x90* tdc[num_tdc];
+  VME::FPGAUnitV1495* fpga;
 
   //VME::AcquisitionMode acq_mode = VME::CONT_STORAGE;
   VME::AcquisitionMode acq_mode = VME::TRIG_MATCH;
@@ -56,15 +57,29 @@ int main(int argc, char *argv[]) {
     fh.run_id = vme->GetRunNumber();
     
     vme->AddFPGAUnit(0xcc000000);
+    fpga = vme->GetFPGAUnit();
+
+    VME::FPGAUnitV1495Control c = fpga->GetControl();
+    //c.SetClockSource(VME::FPGAUnitV1495Control::ExternalClock);
+    c.SetClockSource(VME::FPGAUnitV1495Control::InternalClock);
+    //c.SetTriggerSource(VME::FPGAUnitV1495Control::ExternalTrigger);
+    c.SetTriggerSource(VME::FPGAUnitV1495Control::InternalTrigger);
+    fpga->SetControl(c);
+
+    fpga->SetInternalClockPeriod(1); // in units of 25 ns
+    fpga->SetInternalTriggerPeriod(40000000); // in units of 25 ns
+
+    fpga->DumpFWInformation();
+    fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear);
     //exit(0);
 
     // TDC configuration
-    const uint32_t tdc_address[num_tdc] = { 0xaa000000, 0xbb000000 }; // V1290A (32 ch., CERN)
-    
+    const uint32_t tdc_address[] = { 0xaa000000, 0xbb000000 }; // V1290A (32 ch., CERN)
+
     for (unsigned int i=0; i<num_tdc; i++) {
       vme->AddTDC(tdc_address[i]);
       tdc[i] = vme->GetTDC(tdc_address[i]);
-      tdc[i]->SetVerboseLevel(0);
+      tdc[i]->SetVerboseLevel(1);
       tdc[i]->SetAcquisitionMode(acq_mode);
       tdc[i]->SetDetectionMode(det_mode);
       tdc[i]->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
@@ -103,14 +118,19 @@ int main(int argc, char *argv[]) {
          << "Detection mode: " << detmode << endl 
          << "Local time: " << asctime(std::localtime(&t_beg));
 
-    vme->SendPulse(0); // send a CLR signal from bridge to TDC
+    //vme->SendPulse(0); // send a CLR signal from bridge to TDC
+    fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
 
     while (true) {
       for (unsigned int i=0; i<num_tdc; i++) {
         ec = tdc[i]->FetchEvents();
         if (ec.size()==0) continue; // no events were fetched
         for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
-          out_file[i].write((char*)&(*e), sizeof(VME::TDCEvent));
+          uint32_t word = e->GetWord();
+          out_file[i].write((char*)&word, sizeof(uint32_t));
+          //if (e->GetType()!=0x0) continue;
+          //e->Dump();
+          cout << hex << e->GetType() << endl;
         }
         num_events[i] += ec.size();
       }
