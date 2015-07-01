@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(PPS_TB_RC)
 
-set(CAEN_LOCATION "/opt/xdaq/lib")
+set(CAEN_LOCATION "/usr/lib")
 set(GCC_COMPILE_FLAGS "-Wall -fPIC -O2")
 add_definitions(${GCC_COMPILE_FLAGS})
 

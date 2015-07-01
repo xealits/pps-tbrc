@@ -168,7 +168,7 @@ namespace VME
   void
   BridgeVx718::InputRead(CVInputSelect input) const
   {
-    short unsigned int data;
+    unsigned int data;
     CVErrorCodes out = CAENVME_ReadRegister(fHandle, cvInputReg, &data);
     if (out!=cvSuccess) {
       std::ostringstream os;
