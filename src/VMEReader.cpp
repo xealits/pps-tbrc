@@ -3,19 +3,17 @@
 VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
   Client(1987), fSG(0), fFPGA(0), fOnSocket(on_socket), fIsPulserStarted(false)
 {
-  if (fOnSocket) {
-    Client::Connect();
-  }
-  fBridge = new VME::BridgeVx718(device, type);
-  //fBridge->TestOutputs();
-
   try {
+    if (fOnSocket) Client::Connect(DETECTOR);
+    fBridge = new VME::BridgeVx718(device, type);
+    //fBridge->TestOutputs();
     StopPulser();
-  } catch (Exception& e) { e.Dump(); }
+  } catch (Exception& e) { e.Dump(); Client::Send(e); }
 }
 
 VMEReader::~VMEReader()
 {
+  if (fOnSocket) Client::Disconnect();
   if (fSG) delete fSG;
   if (fFPGA) delete fFPGA;
   if (fIsPulserStarted) fBridge->StopPulser();
@@ -40,6 +38,7 @@ VMEReader::GetRunNumber()
 void
 VMEReader::AddTDC(uint32_t address)
 {
+  if (!fBridge) throw Exception(__PRETTY_FUNCTION__, "No bridge detected! Aborting...", Fatal);
   fTDCCollection.insert(std::pair<uint32_t,VME::TDCV1x90*>(
     address,
     new VME::TDCV1x90(fBridge->GetHandle(), address)
@@ -49,18 +48,21 @@ VMEReader::AddTDC(uint32_t address)
 void
 VMEReader::AddIOModule(uint32_t address)
 {
+  if (!fBridge) throw Exception(__PRETTY_FUNCTION__, "No bridge detected! Aborting...", Fatal);
   fSG = new VME::IOModuleV262(fBridge->GetHandle(), address);
 }
 
 void
 VMEReader::AddFPGAUnit(uint32_t address)
 {
+  if (!fBridge) throw Exception(__PRETTY_FUNCTION__, "No bridge detected! Aborting...", Fatal);
   fFPGA = new VME::FPGAUnitV1495(fBridge->GetHandle(), address);
 }
 
 void
 VMEReader::Abort()
 {
+  if (!fBridge) throw Exception(__PRETTY_FUNCTION__, "No bridge detected! Aborting...", Fatal);
   for (TDCCollection::iterator t=fTDCCollection.begin(); t!=fTDCCollection.end(); t++) {
     t->second->abort();
   }

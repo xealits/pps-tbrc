@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
   
   const unsigned int num_tdc = 1;
 
+  std::cout << "hahaha" << std::endl;
   fstream out_file[num_tdc];
 
   unsigned int num_events[num_tdc];
@@ -48,11 +49,12 @@ int main(int argc, char *argv[]) {
   
   std::time_t t_beg;
   try {
-    bool with_socket = false;
+    bool with_socket = true;
     //vme = new VMEReader("/dev/usb/v1718_0", VME::CAEN_V1718, with_socket);
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
     //vme->SendPulse();
     //vme->StartPulser(1000000., 200000.);
+    std::cout << "haha" << std::endl;
     
     fh.run_id = vme->GetRunNumber();
     
@@ -135,8 +137,9 @@ int main(int argc, char *argv[]) {
         num_events[i] += ec.size();
       }
     }
-    //while(true) {;}
   } catch (Exception& e) {
+    while(true) {;}
+    std::cout << "huhu" << std::endl;
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
       for (unsigned int i=0; i<num_tdc; i++) {
         if (out_file[i].is_open()) out_file[i].close();

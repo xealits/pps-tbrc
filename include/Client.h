@@ -24,12 +24,13 @@ class Client : public Socket
     virtual ~Client();
 
     /// Bind this client to the socket
-    bool Connect();
+    bool Connect(const SocketType& type=CLIENT);
     /// Unbind this client from the socket
     void Disconnect();
   
     /// Send a message to the master through the socket
     inline void Send(const Message& m) const { SendMessage(m); }
+    inline void Send(const Exception& e) const { SendMessage(SocketMessage(EXCEPTION, e.OneLine())); }
     inline SocketMessage SendAndReceive(const SocketMessage& m, const MessageKey& a) const {
       SocketMessage msg; int i = 0;
       try {
@@ -44,7 +45,7 @@ class Client : public Socket
     /// Parse a SocketMessage received from the master
     virtual void ParseMessage(const SocketMessage& m) {;}
     /// Socket actor type retrieval method
-    virtual SocketType GetType() const { return CLIENT; }
+    virtual SocketType GetType() const { return fType; }
   
   private:
     /// Announce our entry on the socket to its master
@@ -52,6 +53,7 @@ class Client : public Socket
   
     int fClientId;
     bool fIsConnected;
+    SocketType fType;
 };
 
 #endif

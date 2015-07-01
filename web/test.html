@@ -8,7 +8,7 @@
   
   window.addEventListener("load", socket_init, false);
   window.addEventListener("beforeunload", socket_close, false);
-  window.setInterval(socket_refresh, 500);
+  window.setInterval(socket_refresh, 1000);
 
 </script>
 
@@ -25,3 +25,11 @@
   <textarea id="console_log" cols=60 rows=4 disabled></textarea>
 </div>
 <div id="output"></div>
+
+Legend:
+<div class="legend block_master"></div> = Master
+<div class="legend block_websocket"></div> = Web connexion
+<div class="legend block_regularsocket"></div> = Terminal
+<div class="legend block_detsocket"></div> = Detector
+<div class="legend block_othersocket"></div> = Other
+

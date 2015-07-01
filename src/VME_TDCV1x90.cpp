@@ -131,7 +131,7 @@ namespace VME
   TDCV1x90::GetFirmwareRevision() const
   {
     //FIXME need to clean up
-    uint32_t fr[2];
+    uint32_t fr[2] = { 0, 0 };
     uint16_t data;
     try {
       ReadRegister(kFirmwareRev,&data);
