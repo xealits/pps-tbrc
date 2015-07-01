@@ -42,3 +42,36 @@ input
 {
   font-size: 9pt;
 }
+
+.block_master
+{
+  background-color: cornflowerblue;
+}
+
+.block_websocket
+{
+  background-color: yellow;
+}
+
+.block_regularsocket
+{
+  background-color: lightgreen;
+}
+
+.block_detsocket
+{
+  background-color: lightblue;
+}
+
+.block_othersocket
+{
+  background-color: white;
+}
+
+.legend
+{
+  border: 1px solid #aaa;
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+}

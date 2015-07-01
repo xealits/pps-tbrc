@@ -10,8 +10,9 @@ Client::~Client()
 }
 
 bool
-Client::Connect()
+Client::Connect(const SocketType& type)
 {
+  fType = type;
   try {
     Start();
     PrepareConnection();

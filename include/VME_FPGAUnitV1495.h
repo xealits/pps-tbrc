@@ -3,6 +3,8 @@
 
 #include "VME_GenericBoard.h"
 
+#include <unistd.h>
+
 namespace VME
 {
   enum FPGAUnitV1495Register {

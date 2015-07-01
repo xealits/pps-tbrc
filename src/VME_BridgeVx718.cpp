@@ -165,7 +165,7 @@ namespace VME
     }
   }
 
-  void
+  /*void
   BridgeVx718::InputRead(CVInputSelect input) const
   {
     short unsigned int data;
@@ -179,7 +179,7 @@ namespace VME
     // decoding with CVInputRegisterBits
     std::cout << "Input line 0 status: " << ((data&cvIn0Bit) >> 0) << std::endl;
     std::cout << "Input line 1 status: " << ((data&cvIn1Bit) >> 1) << std::endl;
-  }
+  }*/
 
   void
   BridgeVx718::StartPulser(double period, double width, unsigned int num_pulses) const

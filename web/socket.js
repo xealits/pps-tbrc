@@ -4,6 +4,7 @@ var upper_fields;
 var bind_button, unbind_button, refresh_button, acquisition_button, time_field;
 var socket_id, console_log;
 var built_clients;
+var acquisition_started;
 
 Array.prototype.diff = function(b) {
   return this.filter(function(i) { return b.indexOf(i)<0; });
@@ -64,8 +65,10 @@ function bind_socket() {
     connection = 0;
     return;
   }
-  
-  connection = new WebSocket('ws://localhost:'+port);
+
+  hostname = 'localhost';
+  //hostname = '137.138.105.83';
+  connection = new WebSocket('ws://'+hostname+':'+port);
 
   bind_button.disabled = true;
   built_clients = [];
@@ -178,11 +181,13 @@ function parse_message(event) {
     alert("Acquisition process successfully launched!");
     acquisition_button.innerHTML = "Stop acquisition";
     acquisition_button.setAttribute('onClick', 'stop_acquisition()');
+    acquisition_started = true;
   }
   else if (d.indexOf("ACQUISITION_STOPPED")>-1) {
     alert("Acquisition process terminated!");
     acquisition_button.innerHTML = "Start acquisition";
     acquisition_button.setAttribute('onClick', 'start_acquisition()');
+    acquisition_started = false;
   }
   else if (d.indexOf("MASTER_DISCONNECT")>-1) {
     alert("ALERT:\nMaster disconnected!");
@@ -233,21 +238,27 @@ function create_block(obj) {
   
   switch (obj.type) {
     case 0: // master socket
-      block.style.backgroundColor = "cornflowerblue";
+      block.className += ' block_master';
       button_close.disabled = true;
+      button_ping.disabled = true;
       break;
     case 1: // web socket
-      block.style.backgroundColor = "yellow";
+      block.className += ' block_websocket';
       button_ping.disabled = true;
       break;
     case 2: // regular socket
-      block.style.backgroundColor = "lightgreen";
+      block.className += ' block_regularsocket';
       break;
     case 3: // detector socket
-      block.style.backgroundColor = "lightblue";
+      block.className += ' block_detsocket';
+      button_close.disabled = true;
+      button_ping.disabled = true;
+      acquisition_button.innerHTML = "Stop acquisition";
+      acquisition_button.setAttribute('onClick', 'stop_acquisition()');
+      acquisition_started = true;
       break;
     default:
-      block.style.backgroundColor = "white";
+      block.className += ' block_othersocket';
       break;
   }
   

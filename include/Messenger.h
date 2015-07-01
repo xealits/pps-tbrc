@@ -78,6 +78,8 @@ class Messenger : public Socket
     WebSocket* fWS;
     int fNumAttempts;
     pid_t fPID;
+    
+    int fStdoutPipe[2], fStderrPipe[2];
 };
 
 #endif
