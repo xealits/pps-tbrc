@@ -59,7 +59,7 @@ FileReader::GetNextEvent(VME::TDCEvent* ev)
 }
 
 bool
-FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* m)
+FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* mc)
 {
   VME::TDCEvent ev;
   std::vector<VME::TDCEvent> ec;
@@ -107,25 +107,36 @@ FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* m)
     if (has_error) throw Exception(__PRETTY_FUNCTION__, "Measurement has at least one error word.", JustWarning);
   }
   else if (fReadoutMode==VME::TRIG_MATCH) {
+    bool has_error = false;
     while (true) {
       if (!GetNextEvent(&ev)) return false;
-      //if (ev.GetChannelId()!=channel_id) { continue; }
-      std::cout << "0x" << std::hex << ev.GetType();
+      if (ev.GetType()==VME::TDCEvent::TDCMeasurement) {
+        if (ev.GetChannelId()!=channel_id) { continue; }
+      }
+      ec.push_back(ev);
+
+      switch (ev.GetType()) {
+        case VME::TDCEvent::TDCError: has_error = true; break;
+        default: break;
+      }
+
+      //ev.Dump();
+      /*std::cout << "0x" << std::hex << ev.GetType();
       if (ev.GetType()==VME::TDCEvent::TDCMeasurement) {
         std::cout << "\t" << ev.IsTrailing() << "\t" << ev.GetChannelId();
       }
-      std::cout << std::endl;
-      
+      std::cout << std::endl;*/
+
+      if (ev.GetType()==VME::TDCEvent::GlobalTrailer) break;
     }
+    if (has_error) throw Exception(__PRETTY_FUNCTION__, "Measurement has at least one error word.", JustWarning);
   }
   else {
     std::ostringstream os;
     os << "Unrecognized readout/acquisition mode: " << fReadoutMode;
     throw Exception(__PRETTY_FUNCTION__, os.str(), Fatal);
   }
-  //std::cout << "--> " << ec.size() << std::endl;
-  m->SetEventsCollection(ec);
-  //std::cerr << "Events collection built!" << std::endl;
+  mc->SetEventsCollection(ec);
   return true;
 }
 

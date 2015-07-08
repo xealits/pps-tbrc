@@ -21,20 +21,25 @@ main(int argc, char* argv[])
   }
 
   TDCMeasurement m;
-  int num_events;
-  TH1D* hist_tot = new TH1D("tot", "", 100000, 0., 10000.);
+  unsigned int num_events, num_triggers;
+  TH1D* hist_tot = new TH1D("tot", "", 800, 450., 470.);
   
   FileReader f(argv[1]);
   //cout << f.GetNumTDCs() << " TDCs recorded" << endl;
-  num_events = 0;
+  num_triggers = num_events = 0;
   try {
     while (f.GetNextMeasurement(channel_id, &m)) {
-      hist_tot->Fill(m.GetToT()*25./1024.);
       //m.Dump();
-      num_events++;
+      for (unsigned int i=0; i<m.NumEvents(); i++) {
+        std::cout << "--> " << (m.GetToT(i)*25./1024.) << std::endl;
+        hist_tot->Fill(m.GetToT(i)*25./1024.);
+      }
+      num_events += m.NumEvents();
+      num_triggers += 1;
     }
   } catch (Exception& e) { e.Dump(); }
-  cerr << "number of events in channel " << channel_id << ": " << num_events << endl;
+  cerr << "total number of triggers: " << num_triggers << endl;
+  cerr << "mean number of events per trigger in channel " << channel_id << ": " << ((float)num_events/num_triggers) << endl;
   
   TCanvas* c = new TCanvas;
   hist_tot->Draw();

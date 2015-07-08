@@ -130,6 +130,16 @@ namespace VME
           ss << (unsigned int)((fWord>>i)&0x1);
           if (i%4==0) ss << " ";
         }
+        switch (GetType()) {
+          case TDCMeasurement: ss << "TDC measurement, channel " << GetChannelId() << ", trailing? " << IsTrailing(); break;
+          case TDCHeader: ss << "TDC header"; break;
+          case TDCTrailer: ss << "TDC trailer"; break;
+          case TDCError: ss << "TDC error"; break;
+          case GlobalHeader: ss << "Global header"; break;
+          case GlobalTrailer: ss << "Global trailer"; break;
+          case ETTT: ss << "ETTT"; break;
+          case Filler: ss << "Filler"; break;
+        }
         PrintInfo(ss.str());
       }
       

@@ -5,8 +5,19 @@ namespace VME
   FPGAUnitV1495::FPGAUnitV1495(int32_t bhandle, uint32_t baseaddr) :
     GenericBoard<FPGAUnitV1495Register,cvA32_U_DATA>(bhandle, baseaddr)
   {
+    /*uint32_t registers[] = {0x1018, 0x101c, 0x1020, 0x1024, 0x1028};
+    uint32_t word, word_in = 0x42;
+    for (unsigned int i=0; i<sizeof(registers)/sizeof(registers[0]); i++) {
+      try {
+        WriteRegister((FPGAUnitV1495Register)registers[i], word_in);
+        ReadRegister((FPGAUnitV1495Register)registers[i], &word);
+        std::cout << "word 0x" << std::hex << registers[i] << " = 0x" << word << std::endl;
+      } catch (Exception& e) { e.Dump(); }
+    }
+    exit(0);*/
     try {
       CheckBoardVersion();
+      ClearOutputPulser();
     } catch (Exception& e) { e.Dump(); }
 
     unsigned short cfwrev = GetCAENFirmwareRevision();
@@ -22,6 +33,14 @@ namespace VME
        << "CAEN Firmware revision: " << std::dec << ((cfwrev>>8)&0xff) << "." << (cfwrev&0xff) << "\n\t"
        << "Geo address: 0x" << std::hex << GetGeoAddress();
     PrintInfo(os.str());
+
+    /*uint32_t word;
+    try {
+      //ReadRegister((FPGAUnitV1495Register)0x1020, &word);
+      ReadRegister(kV1495Control, &word);
+      std::cout << word << std::endl;
+    } catch (Exception& e) { e.Dump(); }*/
+    GetControl();
   }
  
   void
@@ -176,7 +195,7 @@ namespace VME
     // FIXME need to check what is the previous bits status before any pulse -> exception?
     try {
       SetTDCBits(bits);
-      usleep(time_us); // we let it high for a given time (in ns)
+      usleep(time_us); // we let it high for a given time (in us)
       SetTDCBits(0x0);
     } catch (Exception& e) {
       e.Dump();
@@ -201,6 +220,16 @@ namespace VME
     try { WriteRegister(kV1495Control, control.GetWord()); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to set the control word to FW", JustWarning);
+    }
+  }
+
+  void
+  FPGAUnitV1495::ResetFPGA() const
+  {
+    uint32_t word = 0x1;
+    try { WriteRegister(kV1495UserFPGAConfig, word); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to reset the FPGA configuration", JustWarning);
     }
   }
 
@@ -253,5 +282,44 @@ namespace VME
       return 0;
     }
     return word;
+  }
+
+  uint32_t
+  FPGAUnitV1495::GetOutputPulser() const
+  {
+    uint32_t word;
+    try { ReadRegister(kV1495OutputSettings, &word); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve output pulser's word", JustWarning);
+      return 0;
+    }
+    return word;
+  }
+
+  void
+  FPGAUnitV1495::ClearOutputPulser() const
+  {
+    uint32_t word = 0x0;
+    try { WriteRegister(kV1495OutputSettings, word); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to clear output pulser's word", JustWarning);
+    }
+  }
+
+  void
+  FPGAUnitV1495::SetOutputPulser(unsigned short id, bool internal_trigger, bool enable) const
+  {
+    uint32_t word = GetOutputPulser();
+    if (word>> id)     word -= (1<< id);
+    if (word>>(id+16)) word -= (1<<(id+16));
+    if (enable) {
+      if (internal_trigger) word += (1<< id);
+      else                  word += (1<<(id+16));
+    }
+    std::cout << word << std::endl;
+    try { WriteRegister(kV1495OutputSettings, word); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to set output pulser's word", JustWarning);
+    }
   }
 }

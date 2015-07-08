@@ -14,8 +14,11 @@ namespace VME
     kV1495ClockSettings     = 0x101c,
     kV1495Control           = 0x1020,
     kV1495TriggerSettings   = 0x1024,
+    kV1495OutputSettings    = 0x1028,
     // CAEN board registers
     kV1495GeoAddress        = 0x8008,
+    kV1495UserFPGAFlashMem  = 0x8014,
+    kV1495UserFPGAConfig    = 0x8016,
     kV1495ModuleReset       = 0x800a,
     kV1495FWRevision        = 0x800c,
     kV1495ConfigurationROM  = 0x8100,
@@ -94,6 +97,7 @@ namespace VME
       unsigned short GetSerialNumber() const;
       unsigned short GetGeoAddress() const;
       void CheckBoardVersion() const;
+      void ResetFPGA() const;
 
       void DumpFWInformation() const;
 
@@ -105,9 +109,9 @@ namespace VME
       /**
        * \brief Send a pulse to TDCs' front panel
        * \param[in] bits The pattern to send (3 bits)
-       * \param[in] time_us Pulse width (in ms)
+       * \param[in] time_us Pulse width (in us)
        */
-      void PulseTDCBits(unsigned short bits, unsigned int time_us=1) const;
+      void PulseTDCBits(unsigned short bits, unsigned int time_us=10) const;
       /**
        * \brief Retrieve the current bits sent to TDCs' front panel
        * \return A 3-bit word PoI
@@ -144,6 +148,10 @@ namespace VME
        * \return Trigger period (in units of 50 ns)
        */
       uint32_t GetInternalTriggerPeriod() const;
+
+      uint32_t GetOutputPulser() const;
+      void ClearOutputPulser() const;
+      void SetOutputPulser(unsigned short id, bool internal_trigger, bool enable=true) const;
 
   };
 }

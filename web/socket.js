@@ -140,6 +140,7 @@ function parse_message(event) {
     var list = listeners.split(';');
     var retrieved = [];
     var retrieved_ids = [];
+    var num_det = 0;
     for (var i=0; i<list.length; i++) {
       var fields = list[i].split(',');
       if (fields.length<3) continue;
@@ -149,6 +150,7 @@ function parse_message(event) {
       var socket_type = parseInt(fields[2]);
       retrieved.push({'id': id, 'name': name, 'type': socket_type});
       retrieved_ids.push(id);
+      if (socket_type===3) num_det += 1;
     }
     var difference = retrieved_ids.diff(built_clients);
     for (var i=0; i<difference.length; i++) {
@@ -160,6 +162,16 @@ function parse_message(event) {
     for (var i=0; i<difference.length; i++) {
       remove_block(difference[i]);
       built_clients.splice(built_clients.indexOf(difference[i]), 1);
+    }
+    if (num_det===0) { // no detector process has been found
+      acquisition_button.innerHTML = "Start acquisition";
+      acquisition_button.setAttribute('onClick', 'start_acquisition()');
+      acquisition_started = false;
+    }
+    else {
+      acquisition_button.innerHTML = "Stop acquisition";
+      acquisition_button.setAttribute('onClick', 'stop_acquisition()');
+      acquisition_started = true;
     }
   }
   else if (d.indexOf("THIS_CLIENT_DELETED")>-1) {
@@ -188,6 +200,10 @@ function parse_message(event) {
     acquisition_button.innerHTML = "Start acquisition";
     acquisition_button.setAttribute('onClick', 'start_acquisition()');
     acquisition_started = false;
+  }
+  else if (d.indexOf("EXCEPTION")>-1) {
+    console_log.innerHTML = d;
+    console.log(d);
   }
   else if (d.indexOf("MASTER_DISCONNECT")>-1) {
     alert("ALERT:\nMaster disconnected!");

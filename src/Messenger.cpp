@@ -259,6 +259,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   else if (m.GetKey()==EXCEPTION) {
     try {
       Broadcast(m);
+      std::cout << "------> " << m.GetValue() << std::endl;
     } catch (Exception& e) { e.Dump(); }
   }
   else {
@@ -285,7 +286,6 @@ Messenger::Broadcast(const Message& m) const
 void
 Messenger::StartAcquisition()
 {
-  //pipe(fStdoutPipe); //pipe(fStderrPipe);
   fPID = fork();
 
   try {
@@ -294,72 +294,24 @@ Messenger::StartAcquisition()
         throw Exception(__PRETTY_FUNCTION__, "Failed to fork the current process!", JustWarning);
       case 0:
         PrintInfo("Launching the daughter acquisition process");
-/*
-        // 0 = input, 1 = output
-        close(fStdoutPipe[0]);
-        if (dup2(fStdoutPipe[1], 1)<0) {
-          throw Exception(__PRETTY_FUNCTION__, "Failed to set stdout for the child process", JustWarning);
-        }*/
-        /*close(fStderrPipe[0]);
-        if (dup2(fStderrPipe[1], 2)<0) {
-          throw Exception(__PRETTY_FUNCTION__, "Failed to set stderr for the child process", JustWarning);
-        }*/
         execl("ppsFetch", "", (char*)NULL);
         close(fStdoutPipe[1]);
-        //close(fStderrPipe[1]);
-        //char *args[] = { "", (char*)NULL };
-        //if (execl("ppsFetch", "", (char*)NULL)<0) {
         throw Exception(__PRETTY_FUNCTION__, "Failed to launch the daughter process!", JustWarning);
-        //}
-    
-
       default:
         break;
     }
   } catch (Exception& e) { e.Dump(); }
-        /*std::string cntStdOut, cntStdErr;
-        ssize_t bytesRead;
-        char buf[32] = {0};
-        
-        fcntl(fStdoutPipe[0], F_SETFL, O_NONBLOCK | O_ASYNC);
-        do {
-          bytesRead = read(fStdoutPipe[0], buf, sizeof(buf)-1);
-          buf[bytesRead] = 0; // append null terminator
-          std::cout << "------ " << buf << std::endl;
-          cntStdOut += buf; // append what wuz read to the string
-        } while (bytesRead>0);
-        std::cout << "<stdout>\n" << cntStdOut << "\n</stdout>" << std::endl;
-        close(fStdoutPipe[0]);
-        close(fStdoutPipe[1]);*/
-
-        /*fcntl(fStderrPipe[0], F_SETFL, O_NONBLOCK | O_ASYNC);
-        while(1) {
-          bytesRead = read(fStderrPipe[0], buf, sizeof(buf)-1);
-          if (bytesRead <= 0) break;
-          buf[bytesRead] = 0; // append null terminator
-          cntStdErr += buf; // append what wuz read to the string
-        }
-        std::cout << "<stderr>\n" << cntStdErr << "\n</stderr>" << std::endl;
-        close(fStderrPipe[0]);
-        close(fStderrPipe[1]);*/
-        
-  /*catch (std::exception& e) {
-    std::ostringstream os;
-    os << e.what();
-    throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
-  }*/
 }
 
 void
 Messenger::StopAcquisition()
 {
-  
   signal(SIGCHLD, SIG_IGN);
   int ret = kill(fPID, SIGINT);
   if (ret<1) {
-    std::cout << "--> " << ret << ", " << errno << std::endl;
+    std::ostringstream os;
+    os << "Failed to kill the acquisition process with pid=" << fPID << "\n\t"
+       << "Return value: " << ret << " (errno=" << errno << ")";
+    throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
   }
-  
-
-
 }

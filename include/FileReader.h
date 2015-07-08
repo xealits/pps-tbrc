@@ -38,7 +38,7 @@ class FileReader
      * \param[out] m A full measurement with leading, trailing times, ...
      * \return A boolean stating the success of retrieval operation
      */
-    bool GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* m);
+    bool GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* mc);
     
   private:
     std::ifstream fFile;

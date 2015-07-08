@@ -28,10 +28,9 @@ int main(int argc, char *argv[]) {
   
   const unsigned int num_tdc = 1;
 
-  std::cout << "hahaha" << std::endl;
   fstream out_file[num_tdc];
-
   unsigned int num_events[num_tdc];
+
   VME::TDCEventCollection ec;
   VME::TDCV1x90* tdc[num_tdc];
   VME::FPGAUnitV1495* fpga;
@@ -48,35 +47,44 @@ int main(int argc, char *argv[]) {
   fh.det_mode = det_mode;
   
   std::time_t t_beg;
+  for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
+
   try {
-    bool with_socket = true;
-    //vme = new VMEReader("/dev/usb/v1718_0", VME::CAEN_V1718, with_socket);
+    bool with_socket = false;
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
-    //vme->SendPulse();
-    //vme->StartPulser(1000000., 200000.);
-    std::cout << "haha" << std::endl;
     
     fh.run_id = vme->GetRunNumber();
     
-    vme->AddFPGAUnit(0xcc000000);
+    vme->AddFPGAUnit(0x00ee0000);
     fpga = vme->GetFPGAUnit();
+    if (!fpga) throw Exception(__PRETTY_FUNCTION__, "FPGA not detected!", Fatal);
 
-    VME::FPGAUnitV1495Control c = fpga->GetControl();
-    //c.SetClockSource(VME::FPGAUnitV1495Control::ExternalClock);
-    c.SetClockSource(VME::FPGAUnitV1495Control::InternalClock);
-    //c.SetTriggerSource(VME::FPGAUnitV1495Control::ExternalTrigger);
-    c.SetTriggerSource(VME::FPGAUnitV1495Control::InternalTrigger);
-    fpga->SetControl(c);
+    /*fpga->ResetFPGA();
+    exit(0);*/
+    cout << ">>> " << fpga->GetUserFirmwareRevision() << endl;
 
-    fpga->SetInternalClockPeriod(1); // in units of 25 ns
-    fpga->SetInternalTriggerPeriod(40000000); // in units of 25 ns
+    //fpga->SetInternalClockPeriod(1); // in units of 25 ns
+    fpga->SetInternalTriggerPeriod(400000); // in units of 25 ns
 
     fpga->DumpFWInformation();
-    fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear);
     //exit(0);
 
+    //VME::FPGAUnitV1495Control c = fpga->GetControl();
+    //c.SetClockSource(VME::FPGAUnitV1495Control::ExternalClock);
+    //c.SetClockSource(VME::FPGAUnitV1495Control::InternalClock);
+    //c.SetTriggerSource(VME::FPGAUnitV1495Control::ExternalTrigger);
+    //c.SetTriggerSource(VME::FPGAUnitV1495Control::InternalTrigger);
+    //fpga->SetControl(c);
+
+    fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear);
+    for (unsigned short i=0; i<16; i++) {
+      //bool enabled = (i%2==0);
+      bool enabled = true;
+      fpga->SetOutputPulser(i, true, enabled);
+    }
+    //exit(0);
     // TDC configuration
-    const uint32_t tdc_address[] = { 0xaa000000, 0xbb000000 }; // V1290A (32 ch., CERN)
+    const uint32_t tdc_address[] = { 0x00aa0000, 0x00bb0000 }; // V1290A (32 ch., CERN)
 
     for (unsigned int i=0; i<num_tdc; i++) {
       vme->AddTDC(tdc_address[i]);
@@ -86,6 +94,9 @@ int main(int argc, char *argv[]) {
       tdc[i]->SetDetectionMode(det_mode);
       tdc[i]->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
       //tdc[i]->SetETTT();
+
+      /*tdc[i]->SetWindowWidth(4095);
+      tdc[i]->SetWindowOffset(0);*/
     
       std::ostringstream filename;
       filename << "events_board" << i << ".dat";
@@ -95,7 +106,6 @@ int main(int argc, char *argv[]) {
         throw Exception(__PRETTY_FUNCTION__, "Error opening file", Fatal);
       }
       out_file[i].write((char*)&fh, sizeof(file_header_t));
-      num_events[i] = 0;
    }
  
     std::string acqmode, detmode;
@@ -120,7 +130,6 @@ int main(int argc, char *argv[]) {
          << "Detection mode: " << detmode << endl 
          << "Local time: " << asctime(std::localtime(&t_beg));
 
-    //vme->SendPulse(0); // send a CLR signal from bridge to TDC
     fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
 
     while (true) {
@@ -130,16 +139,13 @@ int main(int argc, char *argv[]) {
         for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
           uint32_t word = e->GetWord();
           out_file[i].write((char*)&word, sizeof(uint32_t));
-          //if (e->GetType()!=0x0) continue;
-          //e->Dump();
-          cout << hex << e->GetType() << endl;
+          //cout << hex << e->GetType() << endl;
+          if (e->GetType()==VME::TDCEvent::TDCMeasurement) cout << e->GetChannelId() << endl;
         }
         num_events[i] += ec.size();
       }
     }
   } catch (Exception& e) {
-    while(true) {;}
-    std::cout << "huhu" << std::endl;
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
       for (unsigned int i=0; i<num_tdc; i++) {
         if (out_file[i].is_open()) out_file[i].close();
@@ -154,10 +160,7 @@ int main(int argc, char *argv[]) {
            << endl;
     
       cerr << endl << "Acquired ";
-      for (unsigned int i=0; i<num_tdc; i++) {
-        if (i>0) cerr << " / ";
-        cerr << num_events[i];
-      }
+      for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << num_events[i]; }
       cerr << " words in this run" << endl;
   
       delete vme;

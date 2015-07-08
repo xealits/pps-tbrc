@@ -300,10 +300,20 @@ namespace VME
 
       void SetBLTEventNumberRegister(const uint16_t&) const;
       uint16_t GetBLTEventNumberRegister() const;
-      
+     
+      /**
+       * Set the width of the match window (in number of clock cycles)
+       * \param[in] Window width, in units of clock cycles
+       */ 
       void SetWindowWidth(const uint16_t&);
       inline uint16_t GetWindowWidth() const { return fWindowWidth; }
 
+      /**
+       * Set the offset of the match window with respect to the trigger itself, i.e. the
+       * time difference (expressed in clock cycles) between the start of the match window
+       * and the trigger time
+       * \param[in] Window offset, in units of clock cycles
+       */ 
       void SetWindowOffset(const int16_t&) const;
       int16_t GetWindowOffset() const;
 

@@ -4,7 +4,7 @@ namespace VME
 {
   TDCV1x90::TDCV1x90(int32_t bhandle, uint32_t baseaddr) :
     GenericBoard<TDCV1x90Register,cvA32_U_DATA>(bhandle, baseaddr),
-    fVerb(1), fAcquisitionMode(TRIG_MATCH), fDetectionMode(TRAILEAD) 
+    fVerb(2), fAcquisitionMode(TRIG_MATCH), fDetectionMode(TRAILEAD) 
   {
     //event_nb = 0;
     //event_max = 1024;
@@ -43,8 +43,8 @@ namespace VME
     SetTDCEncapsulation(false);
     SetErrorMarks(true);
     SetETTT(true);
-    SetWindowWidth(2045);
-    SetWindowOffset(-2050);
+    SetWindowWidth(2045); // in units of clock cycles
+    SetWindowOffset(-2050); // in units of clock cycles
     //SetPairModeResolution(0,0x4);
     SetPoI(0xFFFF, 0xFFFF);
     //GetResolution();
