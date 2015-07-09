@@ -17,25 +17,19 @@ main(int argc, char* argv[])
     channel_id = atoi(argv[2]);
   }
 
-  TDCEvent e;
+  TDCMeasurement m;
   int num_events;
   
-  FileReader f(argv[1], VME::CONT_STORAGE);
+  FileReader f(argv[1]);
   //cout << f.GetNumTDCs() << " TDCs recorded" << endl;
   num_events = 0;
   int last_value = -1;
   try {
-    while (f.GetNextEvent(&e)) {
-      //cout << m.GetTrailingTime()-m.GetLeadingTime() << endl;
-      //m.Dump();
-      if (e.GetType()!=TDCEvent::TDCMeasurement) continue;
-      if (e.GetChannelId()!=channel_id) continue;
-      if (e.IsTrailing()) continue;
-
-      if (last_value<0) { last_value = e.GetLeadingTime(); continue; }
-
-      cout << e.GetLeadingTime()-last_value << endl;
-      last_value = e.GetLeadingTime();
+    while (f.GetNextMeasurement(channel_id, &m)) {
+      if (last_value<0) { last_value = m.GetLeadingTime(); continue; }
+      
+      cout << m.GetLeadingTime() << "\t" << m.GetLeadingTime()-last_value << endl;
+      last_value = m.GetLeadingTime();
 
       num_events++;
     }

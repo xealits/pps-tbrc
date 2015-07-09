@@ -51,38 +51,42 @@ int main(int argc, char *argv[]) {
 
   try {
     bool with_socket = false;
+    bool use_fpga = true;
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
     
     fh.run_id = vme->GetRunNumber();
     
-    vme->AddFPGAUnit(0x00ee0000);
-    fpga = vme->GetFPGAUnit();
-    if (!fpga) throw Exception(__PRETTY_FUNCTION__, "FPGA not detected!", Fatal);
+    if (use_fpga) {
+      vme->AddFPGAUnit(0x00ee0000);
+      fpga = vme->GetFPGAUnit();
+      if (!fpga) throw Exception(__PRETTY_FUNCTION__, "FPGA not detected/reachable!", Fatal);
 
-    /*fpga->ResetFPGA();
-    exit(0);*/
-    cout << ">>> " << fpga->GetUserFirmwareRevision() << endl;
+      /*fpga->ResetFPGA();
+      exit(0);*/
+      //cout << ">>> " << fpga->GetUserFirmwareRevision() << endl;
 
-    //fpga->SetInternalClockPeriod(1); // in units of 25 ns
-    fpga->SetInternalTriggerPeriod(400000); // in units of 25 ns
+      //fpga->SetInternalClockPeriod(1); // in units of 25 ns
+      //fpga->SetInternalTriggerPeriod(40000); // in units of 25 ns
+      //sleep(2);
+      //fpga->DumpFWInformation();
+      //exit(0);
 
-    fpga->DumpFWInformation();
-    //exit(0);
+      //VME::FPGAUnitV1495Control c = fpga->GetControl();
+      //c.SetClockSource(VME::FPGAUnitV1495Control::ExternalClock);
+      //c.SetClockSource(VME::FPGAUnitV1495Control::InternalClock);
+      //c.SetTriggerSource(VME::FPGAUnitV1495Control::ExternalTrigger);
+      //c.SetTriggerSource(VME::FPGAUnitV1495Control::InternalTrigger);
+      //fpga->SetControl(c);
 
-    //VME::FPGAUnitV1495Control c = fpga->GetControl();
-    //c.SetClockSource(VME::FPGAUnitV1495Control::ExternalClock);
-    //c.SetClockSource(VME::FPGAUnitV1495Control::InternalClock);
-    //c.SetTriggerSource(VME::FPGAUnitV1495Control::ExternalTrigger);
-    //c.SetTriggerSource(VME::FPGAUnitV1495Control::InternalTrigger);
-    //fpga->SetControl(c);
-
-    fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear);
-    for (unsigned short i=0; i<16; i++) {
-      //bool enabled = (i%2==0);
-      bool enabled = true;
-      fpga->SetOutputPulser(i, true, enabled);
+      fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear);
+      for (unsigned short i=0; i<32; i++) {
+        bool enabled = (i%2==0);
+        //bool enabled = true;
+        fpga->SetOutputPulser(i, enabled);
+      }
+      //exit(0);
     }
-    //exit(0);
+
     // TDC configuration
     const uint32_t tdc_address[] = { 0x00aa0000, 0x00bb0000 }; // V1290A (32 ch., CERN)
 
@@ -93,10 +97,10 @@ int main(int argc, char *argv[]) {
       tdc[i]->SetAcquisitionMode(acq_mode);
       tdc[i]->SetDetectionMode(det_mode);
       tdc[i]->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
-      //tdc[i]->SetETTT();
+      tdc[i]->SetETTT();
 
-      /*tdc[i]->SetWindowWidth(4095);
-      tdc[i]->SetWindowOffset(0);*/
+      tdc[i]->SetWindowWidth(1000);
+      tdc[i]->SetWindowOffset(0);
     
       std::ostringstream filename;
       filename << "events_board" << i << ".dat";
@@ -130,7 +134,7 @@ int main(int argc, char *argv[]) {
          << "Detection mode: " << detmode << endl 
          << "Local time: " << asctime(std::localtime(&t_beg));
 
-    fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
+    if (use_fpga) fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
 
     while (true) {
       for (unsigned int i=0; i<num_tdc; i++) {
@@ -139,7 +143,7 @@ int main(int argc, char *argv[]) {
         for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
           uint32_t word = e->GetWord();
           out_file[i].write((char*)&word, sizeof(uint32_t));
-          //cout << hex << e->GetType() << endl;
+          cout << hex << e->GetType() << endl;
           if (e->GetType()==VME::TDCEvent::TDCMeasurement) cout << e->GetChannelId() << endl;
         }
         num_events[i] += ec.size();

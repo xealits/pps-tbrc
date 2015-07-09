@@ -20,6 +20,15 @@ namespace VME
       
       inline void Dump() const {
         std::ostringstream os;
+        os << "System reset: " << GetSystemReset() << "\n\t"
+           << "System control: " << GetSystemControl() << "\n\t"
+           << "DTACK: " << GetDTACK() << "\n\t"
+           << "Bus error: " << GetBERR() << "\n\t"
+           << "Dip switches:\n\t\t";
+        for (unsigned int i=0; i<5; i++) {
+          os << "(" << i << ") -> " << GetDipSwitch(i);
+          if (i<4) os << "\n\t\t";
+        }
         PrintInfo(os.str());
       }
 
@@ -111,6 +120,10 @@ namespace VME
       inline int32_t GetHandle() const { return fHandle; }
       void CheckConfiguration() const;
       void TestOutputs() const;
+      /// Perform a system reset of the module
+      void Reset() const;
+
+      BridgeVx718Status GetStatus() const;
 
       void SetIRQ(unsigned int irq, bool enable=true);
       void WaitIRQ(unsigned int irq, unsigned long timeout=1000) const;

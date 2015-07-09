@@ -31,7 +31,7 @@ namespace VME
       o.str("");
       o << "Error opening the VME bridge!\n\t"
         << "CAEN error: " << CAENVME_DecodeError(ret);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
+      throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal, CAEN_ERROR(ret));
     }
 
     ret = CAENVME_BoardFWRelease(fHandle, rel);
@@ -39,7 +39,7 @@ namespace VME
       o.str("");
       o << "Failed to retrieve the board FW release!\n\t"
         << "CAEN error: " << CAENVME_DecodeError(ret);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal);
+      throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal, CAEN_ERROR(ret));
     }
     o.str("");
     o << "Bridge firmware version: " << rel;
@@ -47,7 +47,7 @@ namespace VME
     
     CheckConfiguration();
 
-    SetIRQ(IRQ1|IRQ2|IRQ3|IRQ4|IRQ5|IRQ6|IRQ7, true);
+    SetIRQ(IRQ1|IRQ2|IRQ3|IRQ4|IRQ5|IRQ6|IRQ7, false);
   }
 
   BridgeVx718::~BridgeVx718()
@@ -67,8 +67,35 @@ namespace VME
       os << "Failed to retrieve configuration displayed on\n\t"
          << "module's front panel\n\t"
          << "CAEN error: " << CAENVME_DecodeError(ret);
-      throw Exception(__PRETTY_FUNCTION__, os.str(), Fatal);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), Fatal, CAEN_ERROR(ret));
     }
+  }
+
+  void
+  BridgeVx718::Reset() const
+  {
+    CVErrorCodes out = CAENVME_SystemReset(fHandle);
+    if (out!=cvSuccess) {
+      std::ostringstream os;
+      os << "Failed to request status register" << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
+    }
+    PrintInfo("Resetting the bridge module!");
+  }
+
+  BridgeVx718Status
+  BridgeVx718::GetStatus() const
+  {
+    uint32_t data;
+    CVErrorCodes out = CAENVME_ReadRegister(fHandle, cvStatusReg, &data);
+    if (out!=cvSuccess) {
+      std::ostringstream os;
+      os << "Failed to request status register" << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
+    }
+    return BridgeVx718Status(data);
   }
 
   void
@@ -82,7 +109,7 @@ namespace VME
       std::ostringstream os;
       os << "Failed to set IRQ enable status to " << enable << "\n\t"
          << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
     }
     fHasIRQ = enable;
   }
@@ -96,7 +123,7 @@ namespace VME
       std::ostringstream os;
       os << "Failed to request IRQ" << "\n\t"
          << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
     }
   }
 
@@ -109,7 +136,7 @@ namespace VME
       std::ostringstream os;
       os << "Failed to retrieve IRQ status" << "\n\t"
          << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
     }
     return static_cast<unsigned int>(mask);
   }
@@ -123,7 +150,7 @@ namespace VME
       std::ostringstream os;
       os << "Failed to configure output register #" << static_cast<int>(output) << "\n\t"
          << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
     }
   }
 
@@ -136,7 +163,7 @@ namespace VME
       std::ostringstream os;
       os << "Failed to enable output register #" << static_cast<int>(output) << "\n\t"
          << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
     }
   }
 
@@ -148,7 +175,7 @@ namespace VME
       std::ostringstream os;
       os << "Failed to disable output register #" << static_cast<int>(output) << "\n\t"
          << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
     }
   }
 
@@ -161,7 +188,7 @@ namespace VME
       std::ostringstream os;
       os << "Failed to configure input register #" << static_cast<int>(input) << "\n\t"
          << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
     }
   }
 
@@ -174,7 +201,7 @@ namespace VME
       std::ostringstream os;
       os << "Failed to read data input register #" << static_cast<int>(input) << "\n\t"
          << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
     }
     // decoding with CVInputRegisterBits
     std::cout << "Input line 0 status: " << ((data&cvIn0Bit) >> 0) << std::endl;
@@ -230,7 +257,7 @@ namespace VME
       std::ostringstream os;
       os << "Failed to configure the pulser" << "\n\t"
          << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
     }
     
     out = CAENVME_GetPulserConf(fHandle, pulser, &per, &wid, &unit, &np, &start, &stop);
@@ -238,7 +265,7 @@ namespace VME
       std::ostringstream os;
       os << "Failed to retrieve the pulser configuration" << "\n\t"
          << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
     }
 
     std::ostringstream os;
@@ -267,8 +294,12 @@ namespace VME
   BridgeVx718::StopPulser() const
   {
     CVPulserSelect pulser = cvPulserA;
-    if (CAENVME_StopPulser(fHandle, pulser)!=cvSuccess) {
-      throw Exception(__PRETTY_FUNCTION__, "Failed to stop the pulser", JustWarning);
+    CVErrorCodes out =CAENVME_StopPulser(fHandle, pulser);
+    if (out!=cvSuccess) {
+      std::ostringstream os;
+      os << "Failed to stop the pulser" << "\n\t"
+         << "CAEN error: " << CAENVME_DecodeError(out);
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(out));
     }
   }
 
@@ -291,7 +322,7 @@ namespace VME
       std::ostringstream o;
       o << "Impossible to single-pulse output channel " << channel << "\n\t"
         << "CAEN error: " << CAENVME_DecodeError(out);
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning, CAEN_ERROR(out));
     }
   }
 

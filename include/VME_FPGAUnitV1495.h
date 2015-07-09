@@ -10,6 +10,7 @@ namespace VME
   enum FPGAUnitV1495Register {
     // User-defined registers
     kV1495UserFWRevision    = 0x100c,
+    kV1495ScalerCounter     = 0x1014,
     kV1495TDCBoardInterface = 0x1018,
     kV1495ClockSettings     = 0x101c,
     kV1495Control           = 0x1020,
@@ -54,29 +55,36 @@ namespace VME
       /**
        * \brief Get the clock source
        */
-      inline ClockSource GetClockSource() const { return static_cast<ClockSource>(fWord&0x1); }
+      inline ClockSource GetClockSource() const { return static_cast<ClockSource>(GetBit(0)); }
       /**
        * \brief Switch between internal and external clock source
        */
-      inline void SetClockSource(const ClockSource& cs) {
-        if (cs==GetClockSource()) return;
-        unsigned short sign = (cs==InternalClock) ? -1 : 1; fWord += sign*0x1;
-      }
+      inline void SetClockSource(const ClockSource& cs) { SetBit(0, cs); }
       
       enum TriggerSource { InternalTrigger=0x0, ExternalTrigger=0x1 };
       /**
        * \brief Get the trigger source
        */
-      inline TriggerSource GetTriggerSource() const { return static_cast<TriggerSource>((fWord>>1)&0x1); }
+      inline TriggerSource GetTriggerSource() const { return static_cast<TriggerSource>(GetBit(1)); }
       /**
        * \brief Switch between internal and external trigger source
        */
-      inline void SetTriggerSource(const TriggerSource& cs) {
-        if (cs==GetTriggerSource()) return;
-        unsigned short sign = (cs==InternalTrigger) ? -1 : 1; fWord += sign*0x2;
-      }
+      inline void SetTriggerSource(const TriggerSource& cs) { SetBit(1, cs); }
+
+      enum SignalSource { InternalSignal=0x0, ExternalSignal=0x1 };
+      inline SignalSource GetSignalSource() const { return static_cast<SignalSource>(GetBit(2)); }
+      inline void SetSignalSource(const SignalSource& s) { SetBit(2, s); }
+
+      inline bool GetScalerStatus() const { return GetBit(3); }
+      inline void SetScalerStatus(bool start=true) { SetBit(3, start); }
+      inline void SetScalerReset(bool reset=true) { SetBit(4, reset); }
 
     private:
+      inline bool GetBit(unsigned short id) const { return static_cast<bool>((fWord>>id)&0x1); }
+      inline void SetBit(unsigned short id, unsigned short value=0x1) {
+        if (value==GetBit(id)) return;
+        unsigned short sign = (value==0x1) ? -1 : 1; fWord += sign*(0x1<<id);
+      }
       uint32_t fWord;
   };
 
@@ -151,7 +159,15 @@ namespace VME
 
       uint32_t GetOutputPulser() const;
       void ClearOutputPulser() const;
-      void SetOutputPulser(unsigned short id, bool internal_trigger, bool enable=true) const;
+      void SetOutputPulser(unsigned short id, bool enable=true) const;
+
+      /// Start the inner triggers counter
+      void StartScaler() const;
+      /// Stop the inner triggers counter
+      void StopScaler() const;
+      //void PauseScaler() const;
+      /// Return the inner triggers counter value
+      uint32_t GetScalerValue() const;
 
   };
 }

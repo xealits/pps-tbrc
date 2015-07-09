@@ -195,11 +195,11 @@ namespace VME
         return static_cast<uint32_t>(fWord&0x3FFFFFF);
       }
       /**
-       * \brief Leading edge measurement in programmed time resolution
-       * \param[in] pair Are we dealing with a pair measurement?
+       * \brief Edge measurement in programmed time resolution
+       * \param[in] pair Are we dealing with a pair measurement? (only for leading time word)
        */
-      inline uint32_t GetLeadingTime(bool pair=false) const {
-        if (GetType()!=TDCMeasurement or IsTrailing()) return 0;
+      inline uint32_t GetTime(bool pair=false) const {
+        if (GetType()!=TDCMeasurement) return 0;
         if (pair) return static_cast<uint32_t>(fWord&0xFFF);
         else return static_cast<uint32_t>(fWord&0x7FFFF);
       }
@@ -207,11 +207,6 @@ namespace VME
       inline unsigned int GetWidth() const {
         if (GetType()!=TDCMeasurement) return 0;
         return static_cast<unsigned int>((fWord>>12)&0x7F);
-      }
-      /// Trailing edge measurement in programmed time resolution
-      inline uint32_t GetTrailingTime() const {
-        if (GetType()!=TDCMeasurement or !IsTrailing()) return 0;
-        return static_cast<uint32_t>(fWord&0x7FFFF);
       }
       inline unsigned int GetStatus() const {
         if (GetType()!=GlobalTrailer) return 0;

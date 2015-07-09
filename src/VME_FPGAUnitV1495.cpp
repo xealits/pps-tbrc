@@ -5,7 +5,7 @@ namespace VME
   FPGAUnitV1495::FPGAUnitV1495(int32_t bhandle, uint32_t baseaddr) :
     GenericBoard<FPGAUnitV1495Register,cvA32_U_DATA>(bhandle, baseaddr)
   {
-    /*uint32_t registers[] = {0x1018, 0x101c, 0x1020, 0x1024, 0x1028};
+    uint32_t registers[] = {0x1018, 0x101c, 0x1020, 0x1024, 0x1028};
     uint32_t word, word_in = 0x42;
     for (unsigned int i=0; i<sizeof(registers)/sizeof(registers[0]); i++) {
       try {
@@ -14,7 +14,7 @@ namespace VME
         std::cout << "word 0x" << std::hex << registers[i] << " = 0x" << word << std::endl;
       } catch (Exception& e) { e.Dump(); }
     }
-    exit(0);*/
+    exit(0);
     try {
       CheckBoardVersion();
       ClearOutputPulser();
@@ -40,7 +40,7 @@ namespace VME
       ReadRegister(kV1495Control, &word);
       std::cout << word << std::endl;
     } catch (Exception& e) { e.Dump(); }*/
-    GetControl();
+    //GetControl();
   }
  
   void
@@ -307,19 +307,46 @@ namespace VME
   }
 
   void
-  FPGAUnitV1495::SetOutputPulser(unsigned short id, bool internal_trigger, bool enable) const
+  FPGAUnitV1495::SetOutputPulser(unsigned short id, bool enable) const
   {
     uint32_t word = GetOutputPulser();
-    if (word>> id)     word -= (1<< id);
-    if (word>>(id+16)) word -= (1<<(id+16));
-    if (enable) {
-      if (internal_trigger) word += (1<< id);
-      else                  word += (1<<(id+16));
-    }
+    if (word>> id) word -= (1<< id);
+    if (enable)    word += (1<< id);
     std::cout << word << std::endl;
     try { WriteRegister(kV1495OutputSettings, word); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to set output pulser's word", JustWarning);
     }
   }
+
+  void
+  FPGAUnitV1495::StartScaler() const
+  {
+    try {
+      FPGAUnitV1495Control c = GetControl();
+      c.SetScalerStatus(true);
+      SetControl(c);
+    } catch (Exception& e) { e.Dump(); }
+  }
+
+  void
+  FPGAUnitV1495::StopScaler() const
+  {
+    try {
+      FPGAUnitV1495Control c = GetControl();
+      c.SetScalerStatus(false);
+      SetControl(c);
+    } catch (Exception& e) { e.Dump(); }
+  }
+
+  uint32_t
+  FPGAUnitV1495::GetScalerValue() const
+  {
+    uint32_t value = 0;
+    try { ReadRegister(kV1495ScalerCounter, &value); } catch (Exception& e) {
+      e.Dump();
+    }
+    return value;
+  }
+
 }

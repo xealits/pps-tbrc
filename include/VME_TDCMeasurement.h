@@ -60,11 +60,11 @@ namespace VME
 
       inline uint32_t GetLeadingTime(unsigned short event_id=0) {
         if (event_id>=fEvents.size()) { return 0; }
-        return fEvents[event_id].first.GetLeadingTime();
+        return fEvents[event_id].first.GetTime();
       }
       inline uint32_t GetTrailingTime(unsigned short event_id=0) {
         if (event_id>=fEvents.size()) { return 0; }
-        return fEvents[event_id].second.GetTrailingTime();
+        return fEvents[event_id].second.GetTime();
       }
       inline uint16_t GetToT(unsigned short event_id=0) {
         if (event_id>=fEvents.size()) { return 0; }
@@ -87,6 +87,10 @@ namespace VME
       inline uint16_t GetBunchId() {
         if (!fMap.count(TDCEvent::TDCHeader)) { return 0; }
         return fMap[TDCEvent::TDCHeader].GetBunchId();
+      }
+      inline uint32_t GetETTT() {
+        if (!fMap.count(TDCEvent::ETTT)) { return 0; }
+        return fMap[TDCEvent::ETTT].GetETTT();
       }
       inline size_t NumEvents() const { return fEvents.size(); }
 

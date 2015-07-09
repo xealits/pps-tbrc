@@ -10,6 +10,8 @@
 
 #include "Exception.h"
 
+#define CAEN_ERROR(x) 30000+abs(x)
+
 namespace VME
 {
   template<class Register, CVAddressModifier am>
@@ -36,7 +38,7 @@ namespace VME
             << "Addressing mode: 0x" << std::hex << am << "\n\t"
             << "Base address: 0x" << std::hex << fBaseAddr << "\n\t"
             << "CAEN error: " << CAENVME_DecodeError(out);
-          throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+          throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning, CAEN_ERROR(out));
         }
       }
       /**
@@ -55,7 +57,7 @@ namespace VME
             << "Addressing mode: 0x" << std::hex << am << "\n\t"
             << "Base address: 0x" << std::hex << fBaseAddr << "\n\t"
             << "CAEN error: " << CAENVME_DecodeError(out);
-          throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+          throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning, CAEN_ERROR(out));
         }
         //WaitIRQ(IRQ1|IRQ2|IRQ3|IRQ4|IRQ5|IRQ6|, 100);
       }
@@ -74,7 +76,7 @@ namespace VME
             << "Addressing mode: 0x" << std::hex << am << "\n\t"
             << "Base address: 0x" << std::hex << fBaseAddr << "\n\t"
             << "CAEN error: " << CAENVME_DecodeError(out);
-          throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+          throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning, CAEN_ERROR(out));
         }
       }
       /**
@@ -92,7 +94,7 @@ namespace VME
             << "Addressing mode: 0x" << std::hex << am << "\n\t"
             << "Base address: 0x" << std::hex << fBaseAddr << "\n\t"
             << "CAEN error: " << CAENVME_DecodeError(out);
-          throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+          throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning, CAEN_ERROR(out));
         }
       }
       int32_t fHandle;

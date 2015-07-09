@@ -7,7 +7,7 @@ VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
     if (fOnSocket) Client::Connect(DETECTOR);
     fBridge = new VME::BridgeVx718(device, type);
     //fBridge->TestOutputs();
-    StopPulser();
+    //StopPulser();
   } catch (Exception& e) {
     e.Dump();
     if (fOnSocket) Client::Send(e);
