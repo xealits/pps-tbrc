@@ -48,6 +48,7 @@ int main(int argc, char *argv[]) {
   
   std::time_t t_beg;
   for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
+  unsigned int num_triggers = 0;
 
   try {
     bool with_socket = false;
@@ -66,9 +67,9 @@ int main(int argc, char *argv[]) {
       //cout << ">>> " << fpga->GetUserFirmwareRevision() << endl;
 
       //fpga->SetInternalClockPeriod(1); // in units of 25 ns
-      //fpga->SetInternalTriggerPeriod(40000); // in units of 25 ns
+      fpga->SetInternalTriggerPeriod(400); // in units of 25 ns
       //sleep(2);
-      //fpga->DumpFWInformation();
+      fpga->DumpFWInformation();
       //exit(0);
 
       //VME::FPGAUnitV1495Control c = fpga->GetControl();
@@ -80,8 +81,8 @@ int main(int argc, char *argv[]) {
 
       fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear);
       for (unsigned short i=0; i<32; i++) {
-        bool enabled = (i%2==0);
-        //bool enabled = true;
+        //bool enabled = (i%2==0);
+        bool enabled = true;
         fpga->SetOutputPulser(i, enabled);
       }
       //exit(0);
@@ -127,14 +128,17 @@ int main(int argc, char *argv[]) {
       case VME::TRAILEAD: detmode = "Leading and trailing edges"; break;
     }
 
+    if (use_fpga) {
+      fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
+      fpga->StartScaler();
+    }
+
     t_beg = std::time(0);
 
     cerr << endl << "*** Ready for acquisition! ***" << endl
          << "Acquisition mode: " << acqmode << endl 
          << "Detection mode: " << detmode << endl 
          << "Local time: " << asctime(std::localtime(&t_beg));
-
-    if (use_fpga) fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
 
     while (true) {
       for (unsigned int i=0; i<num_tdc; i++) {
@@ -143,11 +147,13 @@ int main(int argc, char *argv[]) {
         for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
           uint32_t word = e->GetWord();
           out_file[i].write((char*)&word, sizeof(uint32_t));
-          cout << hex << e->GetType() << endl;
-          if (e->GetType()==VME::TDCEvent::TDCMeasurement) cout << e->GetChannelId() << endl;
+          /*cout << hex << e->GetType() << endl;
+          if (e->GetType()==VME::TDCEvent::TDCMeasurement) cout << e->GetChannelId() << endl;*/
         }
         num_events[i] += ec.size();
       }
+      if (use_fpga) num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
+      if (num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
     }
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
@@ -165,7 +171,7 @@ int main(int argc, char *argv[]) {
     
       cerr << endl << "Acquired ";
       for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << num_events[i]; }
-      cerr << " words in this run" << endl;
+      cerr << " words for " << num_triggers << " triggers in this run" << endl;
   
       delete vme;
       return 0;

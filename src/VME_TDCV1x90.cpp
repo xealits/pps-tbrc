@@ -858,7 +858,7 @@ namespace VME
     memset(fBuffer, 0, sizeof(uint32_t));
     
     int count=0;
-    const int blts = 2048;
+    const int blts = 4096;
     bool finished;
     //int value, channel, trailing, width; // for continuous storage mode
     std::ostringstream o;

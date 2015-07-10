@@ -40,6 +40,7 @@ namespace VME
             << "CAEN error: " << CAENVME_DecodeError(out);
           throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning, CAEN_ERROR(out));
         }
+        delete fdata;
       }
       /**
        * Write a 32-bit word in the register
@@ -60,6 +61,7 @@ namespace VME
           throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning, CAEN_ERROR(out));
         }
         //WaitIRQ(IRQ1|IRQ2|IRQ3|IRQ4|IRQ5|IRQ6|, 100);
+        delete fdata;
       }
       /**
        * Read a 16-bit word in the register

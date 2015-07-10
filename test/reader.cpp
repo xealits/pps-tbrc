@@ -32,20 +32,22 @@ main(int argc, char* argv[])
   FileReader f(argv[1]);
   //cout << f.GetNumTDCs() << " TDCs recorded" << endl;
   num_triggers = num_events = 0;
-  try {
-    while (f.GetNextMeasurement(channel_id, &m)) {
+  while (true) {
+    try {
+      if (!f.GetNextMeasurement(channel_id, &m)) break;
       //m.Dump();
       for (unsigned int i=0; i<m.NumEvents(); i++) {
         //std::cout << "--> " << (m.GetToT(i)*25./1024.) << std::endl;
         hist_lead->Fill(m.GetLeadingTime(i)*25./1024.);
         hist_trail->Fill(m.GetTrailingTime(i)*25./1024.);
         hist_tot->Fill(m.GetToT(i)*25./1024.);
+        //std::cout << "ettt=" << m.GetETTT() << std::endl;
       }
       num_events += m.NumEvents();
       hist_numevts->Fill(m.NumEvents()-.5);
       num_triggers += 1;
-    }
-  } catch (Exception& e) { e.Dump(); }
+    } catch (Exception& e) { e.Dump(); }
+  }
   cerr << "total number of triggers: " << num_triggers << endl;
   cerr << "mean number of events per trigger in channel " << channel_id << ": " << ((float)num_events/num_triggers) << endl;
  
@@ -60,14 +62,14 @@ main(int argc, char* argv[])
   hist_trail->SetLineColor(kRed+1);
   leg->AddEntry(hist_trail, "Trailing edge");
   hist_lead->GetXaxis()->SetTitle("Hit edge time (ns)");
-  hist_lead->GetYaxis()->SetTitle("Events");
+  hist_lead->GetYaxis()->SetTitle(Form("Events in channel %d",channel_id));
   leg->Draw();
   c_time->SaveAs("dist_edgetime.png");
 
   TCanvas* c_tot = new TCanvas;
   hist_tot->Draw();
   hist_tot->GetXaxis()->SetTitle("Time over threshold (ns)");
-  hist_tot->GetYaxis()->SetTitle("Events");
+  hist_tot->GetYaxis()->SetTitle(Form("Events in channel %d",channel_id));
   c_tot->SaveAs("dist_tot.png");
   c_tot->SetLogy();
   c_tot->SaveAs("dist_tot_logscale.png");
@@ -75,7 +77,7 @@ main(int argc, char* argv[])
 
   TCanvas* c_nevts = new TCanvas;
   hist_numevts->Draw();
-  hist_numevts->GetXaxis()->SetTitle("Hits multiplicity / trigger");
+  hist_numevts->GetXaxis()->SetTitle(Form("Hits multiplicity in channel %d / trigger",channel_id));
   hist_numevts->GetYaxis()->SetTitle("Triggers");
   c_nevts->SaveAs("dist_nevts.png");
 

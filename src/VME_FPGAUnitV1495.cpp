@@ -3,9 +3,9 @@
 namespace VME
 {
   FPGAUnitV1495::FPGAUnitV1495(int32_t bhandle, uint32_t baseaddr) :
-    GenericBoard<FPGAUnitV1495Register,cvA32_U_DATA>(bhandle, baseaddr)
+    GenericBoard<FPGAUnitV1495Register,cvA32_U_DATA>(bhandle, baseaddr), fScalerStarted(false)
   {
-    uint32_t registers[] = {0x1018, 0x101c, 0x1020, 0x1024, 0x1028};
+    /*uint32_t registers[] = {0x1018, 0x101c, 0x1020, 0x1024, 0x1028};
     uint32_t word, word_in = 0x42;
     for (unsigned int i=0; i<sizeof(registers)/sizeof(registers[0]); i++) {
       try {
@@ -14,7 +14,7 @@ namespace VME
         std::cout << "word 0x" << std::hex << registers[i] << " = 0x" << word << std::endl;
       } catch (Exception& e) { e.Dump(); }
     }
-    exit(0);
+    exit(0);*/
     try {
       CheckBoardVersion();
       ClearOutputPulser();
@@ -40,7 +40,12 @@ namespace VME
       ReadRegister(kV1495Control, &word);
       std::cout << word << std::endl;
     } catch (Exception& e) { e.Dump(); }*/
-    //GetControl();
+    GetControl();
+  }
+
+  FPGAUnitV1495::~FPGAUnitV1495()
+  {
+    if (fScalerStarted) StopScaler();
   }
  
   void
@@ -207,6 +212,7 @@ namespace VME
   FPGAUnitV1495::GetControl() const
   {
     uint32_t word;
+    sleep(1);
     try { ReadRegister(kV1495Control, &word); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve the control word from FW", JustWarning);
@@ -217,6 +223,7 @@ namespace VME
   void
   FPGAUnitV1495::SetControl(const FPGAUnitV1495Control& control) const
   {
+    sleep(1);
     try { WriteRegister(kV1495Control, control.GetWord()); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to set the control word to FW", JustWarning);
@@ -320,23 +327,33 @@ namespace VME
   }
 
   void
-  FPGAUnitV1495::StartScaler() const
+  FPGAUnitV1495::StartScaler()
   {
     try {
       FPGAUnitV1495Control c = GetControl();
-      c.SetScalerStatus(true);
+      // first we stop and reset the counter
+      c.SetScalerStatus(false);
+      c.SetScalerReset(true);
       SetControl(c);
+      usleep(1000);
+      // then we start the counter (removing the "reset" bit)
+      c.SetScalerStatus(true);
+      c.SetScalerReset(false);
+      SetControl(c);
+      usleep(1000);
     } catch (Exception& e) { e.Dump(); }
+    fScalerStarted = true;
   }
 
   void
-  FPGAUnitV1495::StopScaler() const
+  FPGAUnitV1495::StopScaler()
   {
     try {
       FPGAUnitV1495Control c = GetControl();
       c.SetScalerStatus(false);
       SetControl(c);
     } catch (Exception& e) { e.Dump(); }
+    fScalerStarted = false;
   }
 
   uint32_t

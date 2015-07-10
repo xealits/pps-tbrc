@@ -17,9 +17,6 @@ endif()
 # File reader
 add_library(reader_lib OBJECT ${PROJECT_SOURCE_DIR}/src/FileReader.cpp)
   
-add_executable(reader_oneedge ${PROJECT_SOURCE_DIR}/test/reader_oneedge.cpp $<TARGET_OBJECTS:reader_lib>)
-set_property(TARGET reader_oneedge PROPERTY EXCLUDE_FROM_ALL true)
-
 if (ROOT_FOUND)
 
   add_executable(reader ${PROJECT_SOURCE_DIR}/test/reader.cpp $<TARGET_OBJECTS:reader_lib>)
@@ -29,6 +26,10 @@ if (ROOT_FOUND)
   add_executable(reader_channelid ${PROJECT_SOURCE_DIR}/test/reader_channelid.cpp $<TARGET_OBJECTS:reader_lib>)
   target_link_libraries(reader_channelid ${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRARIES})
   set_property(TARGET reader_channelid PROPERTY EXCLUDE_FROM_ALL true)
+
+  add_executable(reader_oneedge ${PROJECT_SOURCE_DIR}/test/reader_oneedge.cpp $<TARGET_OBJECTS:reader_lib>)
+  target_link_libraries(reader_oneedge ${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRARIES})
+  set_property(TARGET reader_oneedge PROPERTY EXCLUDE_FROM_ALL true)
 
   #add_executable(reader_2boards ${PROJECT_SOURCE_DIR}/test/reader_2boards.cpp $<TARGET_OBJECTS:reader_lib>)
   #target_link_libraries(reader_2boards ${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRARIES})

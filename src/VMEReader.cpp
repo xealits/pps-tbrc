@@ -6,8 +6,6 @@ VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
   try {
     if (fOnSocket) Client::Connect(DETECTOR);
     fBridge = new VME::BridgeVx718(device, type);
-    //fBridge->TestOutputs();
-    //StopPulser();
   } catch (Exception& e) {
     e.Dump();
     if (fOnSocket) Client::Send(e);
@@ -76,7 +74,7 @@ VMEReader::AddFPGAUnit(uint32_t address)
     e.Dump();
     if (fOnSocket) Client::Send(e);
   }
-  sleep(5); // wait for FW to be ready...
+  sleep(4); // wait for FW to be ready...
 }
 
 void
