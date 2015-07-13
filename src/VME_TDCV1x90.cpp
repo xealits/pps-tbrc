@@ -16,6 +16,8 @@ namespace VME
   
     try {
       CheckConfiguration();
+      uint16_t fw = GetFirmwareRevision();
+      //std::cout << "Firmware revision = " << ((fw>>4)&0xf) << "." << (fw&0xf) << std::endl;
     } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Wrong configuration!", Fatal);
@@ -127,7 +129,7 @@ namespace VME
     return sn;
   }
 
-  void
+  uint16_t
   TDCV1x90::GetFirmwareRevision() const
   {
     //FIXME need to clean up
@@ -144,6 +146,7 @@ namespace VME
       o << "Debug: Firmware revision is " << std::dec << fr[1] << "." << fr[0];
       PrintInfo(o.str());
     }
+    return data;
   }
 
   void
@@ -943,6 +946,7 @@ namespace VME
     bool status = false;
     while (!status) {
       ReadRegister(kMicroHandshake, &data);
+      //usleep(1000000);
       switch(mode){
         case WRITE_OK: status = static_cast<bool>(data&0x1); break;
         case READ_OK:  status = static_cast<bool>((data>>1)&0x1); break;

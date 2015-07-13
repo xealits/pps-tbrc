@@ -244,7 +244,7 @@ namespace VME
       uint32_t GetModel() const;
       uint32_t GetOUI() const;
       uint32_t GetSerialNumber() const;
-      void GetFirmwareRevision() const;
+      uint16_t GetFirmwareRevision() const;
       
       void CheckConfiguration() const;
      

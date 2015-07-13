@@ -42,35 +42,49 @@ class VMEReader : public Client
     void AddIOModule(uint32_t address);
     inline VME::IOModuleV262* GetIOModule() { return fSG; }
 
+    /**
+     * \brief Add a multi-purposes FPGA board (CAEN V1495) to the crate controller
+     * \param[in] address 32-bit address of the TDC module on the VME bus
+     */
     void AddFPGAUnit(uint32_t address);
+    /// Return the pointer to the FPGA board connected to this controller (if any ; 0 otherwise)
     inline VME::FPGAUnitV1495* GetFPGAUnit() { return fFPGA; }
 
     /// Ask the socket master a run number
     unsigned int GetRunNumber();
     
+    /// Start the bridge's pulse generator [faulty]
     inline void StartPulser(double period, double width, unsigned int num_pulses=0) {
       try {
         fBridge->StartPulser(period, width, num_pulses);
         fIsPulserStarted = true;
       } catch (Exception& e) { throw e; }
     }
+    /// Stop the bridge's pulse generator [faulty]
     inline void StopPulser() {
       try {
         fBridge->StopPulser();
         fIsPulserStarted = false;
       } catch (Exception& e) { throw e; }
     }
+    /// Send a single pulse to the output register/plug connected to TDC boards
     inline void SendPulse(unsigned short output=0) const {
       try {
         fBridge->SinglePulse(output);
       } catch (Exception& e) { e.Dump(); }
     }
+    /// Send a clear signal to both the TDC boards
     inline void SendClear() const {
       if (!fFPGA) return;
       try {
         fFPGA->PulseTDCBits(VME::FPGAUnitV1495::kClear);
       } catch (Exception& e) { e.Dump(); }
     }
+
+    /// Set the path to the output file where the DAQ is to write
+    inline void SetOutputFile(std::string filename) { fOutputFile = filename; }
+    /// Return the path to the output file the DAQ is currently writing to
+    inline std::string GetOutputFile() const { return fOutputFile; }
 
     /// Abort data collection for all modules on the bus handled by the bridge
     void Abort();
@@ -88,7 +102,10 @@ class VMEReader : public Client
     VME::FPGAUnitV1495* fFPGA;
     /// Are we dealing with socket message passing?
     bool fOnSocket;
+    /// Is the bridge's pulser already started?
     bool fIsPulserStarted;
+    /// Path to the current output file the DAQ is writing to
+    std::string fOutputFile;
 };
 
 #endif

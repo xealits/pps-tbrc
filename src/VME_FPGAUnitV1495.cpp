@@ -319,7 +319,7 @@ namespace VME
     uint32_t word = GetOutputPulser();
     if (word>> id) word -= (1<< id);
     if (enable)    word += (1<< id);
-    std::cout << word << std::endl;
+    //std::cout << word << std::endl;
     try { WriteRegister(kV1495OutputSettings, word); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to set output pulser's word", JustWarning);

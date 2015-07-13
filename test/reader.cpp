@@ -26,7 +26,7 @@ main(int argc, char* argv[])
   unsigned int num_events, num_triggers;
   TH1D* hist_lead = new TH1D("lead", "", 700, 0., 14000.);
   TH1D* hist_trail = new TH1D("trail", "", 700, 0., 14000.);
-  TH1D* hist_tot = new TH1D("tot", "", 1000, 20., 30.);
+  TH1D* hist_tot = new TH1D("tot", "", 200, 20., 30.);
   TH1D* hist_numevts = new TH1D("nevts", "", 100, -.5, 99.5);
   
   FileReader f(argv[1]);

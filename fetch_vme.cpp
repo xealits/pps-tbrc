@@ -26,7 +26,7 @@ void CtrlC(int aSig) {
 int main(int argc, char *argv[]) {
   signal(SIGINT, CtrlC);
   
-  const unsigned int num_tdc = 1;
+  const unsigned int num_tdc = 2;
 
   fstream out_file[num_tdc];
   unsigned int num_events[num_tdc];
@@ -35,7 +35,6 @@ int main(int argc, char *argv[]) {
   VME::TDCV1x90* tdc[num_tdc];
   VME::FPGAUnitV1495* fpga;
 
-  //VME::AcquisitionMode acq_mode = VME::CONT_STORAGE;
   VME::AcquisitionMode acq_mode = VME::TRIG_MATCH;
   VME::DetectionMode det_mode = VME::TRAILEAD;
   
@@ -62,28 +61,27 @@ int main(int argc, char *argv[]) {
       fpga = vme->GetFPGAUnit();
       if (!fpga) throw Exception(__PRETTY_FUNCTION__, "FPGA not detected/reachable!", Fatal);
 
-      /*fpga->ResetFPGA();
-      exit(0);*/
+      //fpga->ResetFPGA();
+      //exit(0);
       //cout << ">>> " << fpga->GetUserFirmwareRevision() << endl;
 
       //fpga->SetInternalClockPeriod(1); // in units of 25 ns
-      fpga->SetInternalTriggerPeriod(400); // in units of 25 ns
+      fpga->SetInternalTriggerPeriod(4000); // in units of 25 ns
       //sleep(2);
       fpga->DumpFWInformation();
       //exit(0);
 
-      //VME::FPGAUnitV1495Control c = fpga->GetControl();
-      //c.SetClockSource(VME::FPGAUnitV1495Control::ExternalClock);
-      //c.SetClockSource(VME::FPGAUnitV1495Control::InternalClock);
-      //c.SetTriggerSource(VME::FPGAUnitV1495Control::ExternalTrigger);
-      //c.SetTriggerSource(VME::FPGAUnitV1495Control::InternalTrigger);
-      //fpga->SetControl(c);
-
+      bool poi[] = { // pattern of inhibit for the signal generator
+        true, true, true, true, false, false, false, false,
+        false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, false
+      };
       fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear);
       for (unsigned short i=0; i<32; i++) {
-        //bool enabled = (i%2==0);
-        bool enabled = true;
-        fpga->SetOutputPulser(i, enabled);
+        //poi[i] = (i%2==0);
+        poi[i] = true;
+        fpga->SetOutputPulser(i, poi[i]);
       }
       //exit(0);
     }
@@ -105,8 +103,9 @@ int main(int argc, char *argv[]) {
     
       std::ostringstream filename;
       filename << "events_board" << i << ".dat";
+      vme->SetOutputFile(filename.str());
       //filename << GenerateFileName(0);
-      out_file[i].open(filename.str().c_str(), fstream::out | ios::binary );	
+      out_file[i].open(vme->GetOutputFile().c_str(), fstream::out | ios::binary );	
       if (!out_file[i].is_open()) {
         throw Exception(__PRETTY_FUNCTION__, "Error opening file", Fatal);
       }
@@ -153,7 +152,7 @@ int main(int argc, char *argv[]) {
         num_events[i] += ec.size();
       }
       if (use_fpga) num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
-      if (num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
+      if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
     }
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {

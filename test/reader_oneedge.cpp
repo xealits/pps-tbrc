@@ -37,7 +37,7 @@ main(int argc, char* argv[])
       time1.push_back(m.GetLeadingTime()*25./1024);
       num_events1 += m.NumEvents();
     } catch (Exception& e) {
-      //e.Dump();
+      e.Dump();
     }
   }
     
@@ -48,7 +48,7 @@ main(int argc, char* argv[])
       time2.push_back(m.GetLeadingTime()*25./1024);
       num_events2 += m.NumEvents();
     } catch (Exception& e) {
-      //e.Dump();
+      e.Dump();
     }
   }
   
