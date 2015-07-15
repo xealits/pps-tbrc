@@ -29,7 +29,7 @@ namespace VME
        * \param[in] data word
        */
       inline void WriteRegister(const Register& reg, const uint16_t& data) const {
-        uint32_t address = fBaseAddr+reg;
+        const uint32_t address = fBaseAddr+reg;
         uint16_t* fdata = new uint16_t; *fdata = data;
         CVErrorCodes out = CAENVME_WriteCycle(fHandle, address, fdata, am, cvD16);
         if (out!=cvSuccess) {
@@ -49,7 +49,7 @@ namespace VME
        * \param[in] data word
        */
       inline void WriteRegister(const Register& reg, const uint32_t& data) const {
-        uint32_t address = fBaseAddr+reg;
+        const uint32_t address = fBaseAddr+reg;
         uint32_t* fdata = new uint32_t; *fdata = data;
         CVErrorCodes out = CAENVME_WriteCycle(fHandle, address, fdata, am, cvD32);
         if (out!=cvSuccess) {
@@ -70,7 +70,7 @@ namespace VME
        * \param[out] data word
        */
       inline void ReadRegister(const Register& reg, uint16_t* data) const {
-        uint32_t address = fBaseAddr+reg;
+        const uint32_t address = fBaseAddr+reg;
         CVErrorCodes out = CAENVME_ReadCycle(fHandle, address, data, am, cvD16);
         if (out!=cvSuccess) {
           std::ostringstream o;
@@ -88,7 +88,7 @@ namespace VME
        * \param[out] data word
        */
       inline void ReadRegister(const Register& reg, uint32_t* data) const {
-        uint32_t address = fBaseAddr+reg;
+        const uint32_t address = fBaseAddr+reg;
         CVErrorCodes out = CAENVME_ReadCycle(fHandle, address, data, am, cvD32);
         if (out!=cvSuccess) {
           std::ostringstream o;

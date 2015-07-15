@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
       //cout << ">>> " << fpga->GetUserFirmwareRevision() << endl;
 
       //fpga->SetInternalClockPeriod(1); // in units of 25 ns
-      fpga->SetInternalTriggerPeriod(4000); // in units of 25 ns
+      fpga->SetInternalTriggerPeriod(400000); // in units of 25 ns
       //sleep(2);
       fpga->DumpFWInformation();
       //exit(0);
@@ -98,8 +98,8 @@ int main(int argc, char *argv[]) {
       tdc[i]->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
       tdc[i]->SetETTT();
 
-      tdc[i]->SetWindowWidth(1000);
-      tdc[i]->SetWindowOffset(0);
+      tdc[i]->SetWindowWidth(4000);
+      tdc[i]->SetWindowOffset(-2000);
     
       std::ostringstream filename;
       filename << "events_board" << i << ".dat";
@@ -171,6 +171,7 @@ int main(int argc, char *argv[]) {
       cerr << endl << "Acquired ";
       for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << num_events[i]; }
       cerr << " words for " << num_triggers << " triggers in this run" << endl;
+      fpga->StopScaler();
   
       delete vme;
       return 0;

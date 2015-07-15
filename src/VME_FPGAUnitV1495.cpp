@@ -3,22 +3,13 @@
 namespace VME
 {
   FPGAUnitV1495::FPGAUnitV1495(int32_t bhandle, uint32_t baseaddr) :
-    GenericBoard<FPGAUnitV1495Register,cvA32_U_DATA>(bhandle, baseaddr), fScalerStarted(false)
+    GenericBoard<FPGAUnitV1495Register,cvA32_U_DATA>(bhandle, baseaddr),
+    fScalerStarted(false)
   {
-    /*uint32_t registers[] = {0x1018, 0x101c, 0x1020, 0x1024, 0x1028};
-    uint32_t word, word_in = 0x42;
-    for (unsigned int i=0; i<sizeof(registers)/sizeof(registers[0]); i++) {
-      try {
-        WriteRegister((FPGAUnitV1495Register)registers[i], word_in);
-        ReadRegister((FPGAUnitV1495Register)registers[i], &word);
-        std::cout << "word 0x" << std::hex << registers[i] << " = 0x" << word << std::endl;
-      } catch (Exception& e) { e.Dump(); }
-    }
-    exit(0);*/
     try {
       CheckBoardVersion();
       ClearOutputPulser();
-    } catch (Exception& e) { e.Dump(); }
+    } catch (Exception& e) { e.Dump(); throw e; }
 
     unsigned short cfwrev = GetCAENFirmwareRevision();
     unsigned int hwrev = GetHardwareRevision();
@@ -28,19 +19,11 @@ namespace VME
        << "Hardware revision: " << std::dec
                                 << ((hwrev>>24)&0xff) << "."
                                 << ((hwrev>>16)&0xff) << "."
-                                << ((hwrev>>8)&0xff) << "."
-                                << (hwrev&0xff) << "\n\t"
+                                << ((hwrev>>8) &0xff) << "."
+                                << ( hwrev     &0xff) << "\n\t"
        << "CAEN Firmware revision: " << std::dec << ((cfwrev>>8)&0xff) << "." << (cfwrev&0xff) << "\n\t"
        << "Geo address: 0x" << std::hex << GetGeoAddress();
     PrintInfo(os.str());
-
-    /*uint32_t word;
-    try {
-      //ReadRegister((FPGAUnitV1495Register)0x1020, &word);
-      ReadRegister(kV1495Control, &word);
-      std::cout << word << std::endl;
-    } catch (Exception& e) { e.Dump(); }*/
-    GetControl();
   }
 
   FPGAUnitV1495::~FPGAUnitV1495()
@@ -78,30 +61,30 @@ namespace VME
   unsigned short
   FPGAUnitV1495::GetCAENFirmwareRevision() const
   {
-    uint16_t word;
+    uint16_t word = 0x0;
     try {
       ReadRegister(kV1495FWRevision, &word);
       return static_cast<unsigned short>(word&0xffff);
     } catch (Exception& e) { e.Dump(); }
-    return 0;
+    return word;
   }
 
   unsigned short
   FPGAUnitV1495::GetUserFirmwareRevision() const
   {
-    uint16_t word;
+    uint16_t word = 0x0;
     try {
       ReadRegister(kV1495UserFWRevision, &word);
       return static_cast<unsigned short>(word&0xffff);
     } catch (Exception& e) { e.Dump(); }
-    return 0;
+    return word;
   }
 
   unsigned int
   FPGAUnitV1495::GetHardwareRevision() const
   {
-    uint16_t word;
-    uint32_t hwrev;
+    uint16_t word = 0x0;
+    uint32_t hwrev = 0x0;
     try {
       ReadRegister(kV1495HWRevision0, &word); hwrev  =  (word&0xff);
       ReadRegister(kV1495HWRevision1, &word); hwrev |= ((word&0xff)<<8);
@@ -109,13 +92,13 @@ namespace VME
       ReadRegister(kV1495HWRevision3, &word); hwrev |= ((word&0xff)<<24);
       return hwrev;
     } catch (Exception& e) { e.Dump(); }
-    return 0;
+    return hwrev;
   }
 
   unsigned short
   FPGAUnitV1495::GetSerialNumber() const
   {
-    uint16_t word;
+    uint16_t word = 0x0;
     uint16_t sernum;
     try {
       ReadRegister(kV1495SerNum1, &word); sernum  =  (word&0xff);
@@ -128,7 +111,7 @@ namespace VME
   unsigned short
   FPGAUnitV1495::GetGeoAddress() const
   {
-    uint16_t word;
+    uint16_t word = 0x0;
     try {
       ReadRegister(kV1495GeoAddress, &word);
       return (word);
@@ -139,9 +122,9 @@ namespace VME
   void
   FPGAUnitV1495::CheckBoardVersion() const
   {
-    uint16_t word;
-    uint16_t oui0, oui1, oui2;
-    uint16_t board0, board1, board2;
+    uint16_t word = 0x0;
+    uint16_t oui0 = 0x0, oui1 = 0x0, oui2 = 0x0;
+    uint16_t board0 = 0x0, board1 = 0x0, board2 = 0x0;
 
     // OUI
     try {
@@ -173,7 +156,7 @@ namespace VME
   unsigned short
   FPGAUnitV1495::GetTDCBits() const
   {
-    uint32_t word;
+    uint32_t word = 0x0;
     try {
       ReadRegister(kV1495TDCBoardInterface, &word);
       return static_cast<unsigned short>(word&0x7);
@@ -211,8 +194,8 @@ namespace VME
   FPGAUnitV1495Control
   FPGAUnitV1495::GetControl() const
   {
-    uint32_t word;
-    sleep(1);
+    uint32_t word = 0x0;
+    //sleep(1);
     try { ReadRegister(kV1495Control, &word); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve the control word from FW", JustWarning);
@@ -223,7 +206,6 @@ namespace VME
   void
   FPGAUnitV1495::SetControl(const FPGAUnitV1495Control& control) const
   {
-    sleep(1);
     try { WriteRegister(kV1495Control, control.GetWord()); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to set the control word to FW", JustWarning);

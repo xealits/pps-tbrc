@@ -53,7 +53,12 @@ FileReader::GetNextEvent(VME::TDCEvent* ev)
   uint32_t buffer;
   fFile.read((char*)&buffer, sizeof(uint32_t));
   ev->SetWord(buffer);
-  //std::cerr << "Event type: " << ev->GetType() << std::endl;
+#ifdef DEBUG
+  std::cerr << "Event type: " << ev->GetType();
+  if (ev->GetType()==VME::TDCEvent::TDCMeasurement)
+    std::cerr << "  channel " << std::setw(2) << ev->GetChannelId() << "  trail? " << ev->IsTrailing();
+  std::cerr << std::endl;
+#endif
   if (fFile.eof()) return false;
   return true;
 }

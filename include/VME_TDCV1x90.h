@@ -349,7 +349,7 @@ namespace VME
       void abort();
       
     private:
-      bool WaitMicro(micro_handshake mode) const;
+      bool WaitMicro(const micro_handshake& mode) const;
 
       void ReadAcquisitionMode();
       void ReadDetectionMode();

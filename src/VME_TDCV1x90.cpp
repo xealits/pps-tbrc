@@ -4,7 +4,7 @@ namespace VME
 {
   TDCV1x90::TDCV1x90(int32_t bhandle, uint32_t baseaddr) :
     GenericBoard<TDCV1x90Register,cvA32_U_DATA>(bhandle, baseaddr),
-    fVerb(2), fAcquisitionMode(TRIG_MATCH), fDetectionMode(TRAILEAD) 
+    fVerb(1), fAcquisitionMode(TRIG_MATCH), fDetectionMode(TRAILEAD) 
   {
     //event_nb = 0;
     //event_max = 1024;
@@ -16,7 +16,7 @@ namespace VME
   
     try {
       CheckConfiguration();
-      uint16_t fw = GetFirmwareRevision();
+      GetFirmwareRevision();
       //std::cout << "Firmware revision = " << ((fw>>4)&0xf) << "." << (fw&0xf) << std::endl;
     } catch (Exception& e) {
       e.Dump();
@@ -53,10 +53,8 @@ namespace VME
     
     gEnd = false;
     
-    if (fVerb>1) {
-      std::stringstream s; s << "TDC with base address 0x" << std::hex << baseaddr << " successfully built!";
-      PrintInfo(s.str());
-    }
+    std::stringstream s; s << "TDC with base address 0x" << std::hex << baseaddr << " successfully built!";
+    PrintInfo(s.str());
   }
 
   TDCV1x90::~TDCV1x90()
@@ -854,77 +852,38 @@ namespace VME
   {
     if (gEnd)
       throw Exception(__PRETTY_FUNCTION__, "Abort state detected... quitting", JustWarning, TDC_ACQ_STOP);
-    TDCEventCollection ec;
-    // Start Readout (check if BERR is set to 0)
-    // New words are transmitted until the global TRAILER
-    
+    TDCEventCollection ec; ec.clear();
+
     memset(fBuffer, 0, sizeof(uint32_t));
     
-    int count=0;
-    const int blts = 4096;
+    int count = 0;
+    const int blts = 4096; // size of the transfer in bytes
     bool finished;
-    //int value, channel, trailing, width; // for continuous storage mode
     std::ostringstream o;
 
-    CVErrorCodes ret;
-    ret = CAENVME_BLTReadCycle(fHandle, fBaseAddr+kOutputBuffer, (char*)fBuffer, blts, cvA32_U_BLT, cvD32, &count);
+    // Start Readout (check if BERR is set to 0)
+    CVErrorCodes ret = CAENVME_BLTReadCycle(fHandle, fBaseAddr+kOutputBuffer, (char*)fBuffer, blts, cvA32_U_BLT, cvD32, &count);
     finished = ((ret==cvSuccess)||(ret==cvBusError)||(ret==cvCommError)); //FIXME investigate...
     if (finished && gEnd) {
-      if (fVerb>1) {
-        PrintInfo("Debug: Exit requested!");
-      }
-      //exit(0);
+      if (fVerb>1) PrintInfo("Debug: Exit requested!");
       throw Exception(__PRETTY_FUNCTION__, "Abort state detected... quitting", JustWarning, TDC_ACQ_STOP);
     }
     switch (fAcquisitionMode) {
-    case TRIG_MATCH:
-      for (int i=0; i<count/4; i++) { // FIXME need to use the knowledge of the TDCEvent behaviour there...
-        //if (fBuffer[i]==0) continue;
-        TDCEvent ev(fBuffer[i]);
-        if (ev.GetType()==TDCEvent::Filler) continue; // Filter out filler data
-        ec.push_back(ev);
-      }
-      return ec;
-
-    case CONT_STORAGE:
-      for (int i=0; i<count; i++) {
-        TDCEvent ev(fBuffer[i]);
-        ec.push_back(ev);
-        //trailing = ev.IsTrailing();
-        //value = (trailing) ? ev.GetTrailingTime() : ev.GetLeadingTime();
-        //channel = ev.GetChannelId();
-        /*std::cout << std::dec
-                  << "event " << i << "\t"
-                  << "channel " << channel << "\t";
-        switch(fDetectionMode) {
-          case PAIR:
-            width = (fBuffer[i]&0x7F000)>>12;
-            value = fBuffer[i]&0xFFF;
-            std::cout << "width " << std::hex << width << "\t\t"
-                      << "value " << std::dec << value;
-          break;
-        case OTRAILING:
-        case OLEADING:
-          std::cout << std::dec
-                    << "value " << value << "\t"
-                    << "trailing? " << trailing;
-          break;
-        case TRAILEAD:
-          std::cout << std::dec 
-                    << "value " << value << "\t"
-                    << "trailing? " << trailing;
-          break;
-        default:
-          o.str(""); o << "Wrong detection mode: " << fDetectionMode;
-          throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+      case TRIG_MATCH:
+        for (int i=0; i<count/4; i++) { // FIXME need to use the knowledge of the TDCEvent behaviour there...
+          TDCEvent ev(fBuffer[i]);
+          if (ev.GetType()!=TDCEvent::Filler) ec.push_back(ev); // Filter out filler data
         }
-        //std::cout << std::endl;*/
-      }
-      return ec;
-      
-    default:
-      o.str(""); o << "Wrong acquisition mode: " << fAcquisitionMode;
-      throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
+        return ec;
+      case CONT_STORAGE:
+        for (int i=0; i<count; i++) {
+          TDCEvent ev(fBuffer[i]);
+          if (ev.GetType()!=TDCEvent::Filler) ec.push_back(ev); // Filter out filler data
+        }
+        return ec;
+      default:
+        o.str(""); o << "Wrong acquisition mode: " << fAcquisitionMode;
+        throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
     }
     
   }
@@ -940,18 +899,14 @@ namespace VME
   }
 
   bool
-  TDCV1x90::WaitMicro(micro_handshake mode) const
+  TDCV1x90::WaitMicro(const micro_handshake& mode) const
   {
-    uint16_t data;
+    uint16_t data = 0x0;
     bool status = false;
     while (!status) {
       ReadRegister(kMicroHandshake, &data);
-      //usleep(1000000);
-      switch(mode){
-        case WRITE_OK: status = static_cast<bool>(data&0x1); break;
-        case READ_OK:  status = static_cast<bool>((data>>1)&0x1); break;
-        default: return false;
-      }
+      if (mode==WRITE_OK) status = static_cast<bool>( data    &0x1);
+      else                status = static_cast<bool>((data>>1)&0x1);
     }
     return status;
   }

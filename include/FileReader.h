@@ -6,6 +6,7 @@
 #include <sstream>
 #include <vector>
 #include <sys/stat.h>
+#include <iomanip>
 
 #include "FileConstants.h"
 #include "Exception.h"
