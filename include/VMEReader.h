@@ -8,6 +8,8 @@
 #include "VME_TDCV1x90.h"
 #include "VME_TDCEvent.h"
 
+#include "tinyxml2.h"
+
 /**
  * VME reader object to fetch events on a HPTDC board
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
@@ -23,6 +25,11 @@ class VMEReader : public Client
      */
     VMEReader(const char *device, VME::BridgeType type, bool on_socket=true);
     virtual ~VMEReader();
+
+    /**
+     * \brief Load an XML configuration file
+     */
+    void ReadXML(const char* filename);
     
     /**
      * \brief Add a TDC to handle

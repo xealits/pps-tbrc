@@ -26,13 +26,16 @@ void CtrlC(int aSig) {
 int main(int argc, char *argv[]) {
   signal(SIGINT, CtrlC);
   
-  const unsigned int num_tdc = 2;
+  if (argc<2) {
+    cerr << "Usage:" << endl
+         << "\t" << argv[0] << " <xml configuration file>" << endl;
+    return -1;
+  }
 
-  fstream out_file[num_tdc];
-  unsigned int num_events[num_tdc];
+  fstream out_file[2];
 
   VME::TDCEventCollection ec;
-  VME::TDCV1x90* tdc[num_tdc];
+  VME::TDCV1x90* tdc[2];
   VME::FPGAUnitV1495* fpga;
 
   VME::AcquisitionMode acq_mode = VME::TRIG_MATCH;
@@ -46,73 +49,27 @@ int main(int argc, char *argv[]) {
   fh.det_mode = det_mode;
   
   std::time_t t_beg;
-  for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
   unsigned int num_triggers = 0;
 
   try {
     bool with_socket = false;
     bool use_fpga = true;
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
+    vme->ReadXML(argv[1]);
     
     fh.run_id = vme->GetRunNumber();
     
-    if (use_fpga) {
-      vme->AddFPGAUnit(0x00ee0000);
-      fpga = vme->GetFPGAUnit();
-      if (!fpga) throw Exception(__PRETTY_FUNCTION__, "FPGA not detected/reachable!", Fatal);
-
-      //fpga->ResetFPGA();
-      //exit(0);
-      //cout << ">>> " << fpga->GetUserFirmwareRevision() << endl;
-
-      //fpga->SetInternalClockPeriod(1); // in units of 25 ns
-      fpga->SetInternalTriggerPeriod(400000); // in units of 25 ns
-      //sleep(2);
-      fpga->DumpFWInformation();
-      //exit(0);
-
-      bool poi[] = { // pattern of inhibit for the signal generator
-        true, true, true, true, false, false, false, false,
-        false, false, false, false, false, false, false, false,
-        false, false, false, false, false, false, false, false,
-        false, false, false, false, false, false, false, false
-      };
-      fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear);
-      for (unsigned short i=0; i<32; i++) {
-        //poi[i] = (i%2==0);
-        poi[i] = true;
-        fpga->SetOutputPulser(i, poi[i]);
-      }
-      //exit(0);
-    }
-
-    // TDC configuration
-    const uint32_t tdc_address[] = { 0x00aa0000, 0x00bb0000 }; // V1290A (32 ch., CERN)
-
-    for (unsigned int i=0; i<num_tdc; i++) {
-      vme->AddTDC(tdc_address[i]);
-      tdc[i] = vme->GetTDC(tdc_address[i]);
-      tdc[i]->SetVerboseLevel(1);
-      tdc[i]->SetAcquisitionMode(acq_mode);
-      tdc[i]->SetDetectionMode(det_mode);
-      tdc[i]->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
-      tdc[i]->SetETTT();
-
-      tdc[i]->SetWindowWidth(4000);
-      tdc[i]->SetWindowOffset(-2000);
-    
       std::ostringstream filename;
-      filename << "events_board" << i << ".dat";
+      filename << "events_board" << 0 << ".dat";
       vme->SetOutputFile(filename.str());
       //filename << GenerateFileName(0);
-      out_file[i].open(vme->GetOutputFile().c_str(), fstream::out | ios::binary );	
-      if (!out_file[i].is_open()) {
+      out_file[0].open(vme->GetOutputFile().c_str(), fstream::out | ios::binary );	
+      if (!out_file[0].is_open()) {
         throw Exception(__PRETTY_FUNCTION__, "Error opening file", Fatal);
       }
-      out_file[i].write((char*)&fh, sizeof(file_header_t));
-   }
+      out_file[0].write((char*)&fh, sizeof(file_header_t));
  
-    std::string acqmode, detmode;
+    /*std::string acqmode, detmode;
     switch (tdc[0]->GetAcquisitionMode()) {
       case VME::CONT_STORAGE: acqmode = "Continuous storage"; break;
       case VME::TRIG_MATCH: acqmode = "Trigger matching"; break;
@@ -146,17 +103,15 @@ int main(int argc, char *argv[]) {
         for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
           uint32_t word = e->GetWord();
           out_file[i].write((char*)&word, sizeof(uint32_t));
-          /*cout << hex << e->GetType() << endl;
-          if (e->GetType()==VME::TDCEvent::TDCMeasurement) cout << e->GetChannelId() << endl;*/
         }
         num_events[i] += ec.size();
       }
       if (use_fpga) num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
       if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
-    }
+    }*/
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
-      for (unsigned int i=0; i<num_tdc; i++) {
+      for (unsigned int i=0; i<2; i++) {
         if (out_file[i].is_open()) out_file[i].close();
       }
 
@@ -168,9 +123,6 @@ int main(int argc, char *argv[]) {
            << " (" << nmin << " min " << nsec << " sec)"
            << endl;
     
-      cerr << endl << "Acquired ";
-      for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << num_events[i]; }
-      cerr << " words for " << num_triggers << " triggers in this run" << endl;
       fpga->StopScaler();
   
       delete vme;

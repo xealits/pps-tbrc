@@ -169,6 +169,7 @@ namespace VME
       uint32_t GetOutputPulser() const;
       void ClearOutputPulser() const;
       void SetOutputPulser(unsigned short id, bool enable=true) const;
+      void SetOutputPulserPOI(uint32_t poi) const;
 
       /// Start the inner triggers counter
       void StartScaler();

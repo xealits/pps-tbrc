@@ -307,6 +307,15 @@ namespace VME
       throw Exception(__PRETTY_FUNCTION__, "Failed to set output pulser's word", JustWarning);
     }
   }
+  
+  void
+  FPGAUnitV1495::SetOutputPulserPOI(uint32_t poi) const
+  {
+    try { WriteRegister(kV1495OutputSettings, poi); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to set output pulser's POI word", JustWarning);
+    }
+  }
 
   void
   FPGAUnitV1495::StartScaler()
