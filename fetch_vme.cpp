@@ -14,12 +14,8 @@ VMEReader* vme;
 int gEnd = 0;
 
 void CtrlC(int aSig) {
-  if (gEnd==0) { cerr << endl << "[C-c] Trying a clean exit!" << endl;
-    vme->Abort();
-  }
-  else if (gEnd>=5) { cerr << endl << "[C-c > 5 times] ... Forcing exit!" << endl;
-    exit(0);
-  }
+  if (gEnd==0) { cerr << endl << "[C-c] Trying a clean exit!" << endl; vme->Abort(); }
+  else if (gEnd>=5) { cerr << endl << "[C-c > 5 times] ... Forcing exit!" << endl; exit(0); }
   gEnd++;
 }
 
@@ -32,22 +28,10 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  fstream out_file[2];
 
   VME::TDCEventCollection ec;
-  VME::TDCV1x90* tdc[2];
   VME::FPGAUnitV1495* fpga;
 
-  VME::AcquisitionMode acq_mode = VME::TRIG_MATCH;
-  VME::DetectionMode det_mode = VME::TRAILEAD;
-  
-  file_header_t fh;
-  fh.magic = 0x30535050; // PPS0 in ASCII
-  fh.run_id = 0;
-  fh.spill_id = 0;
-  fh.acq_mode = acq_mode;
-  fh.det_mode = det_mode;
-  
   std::time_t t_beg;
   unsigned int num_triggers = 0;
 
@@ -56,19 +40,31 @@ int main(int argc, char *argv[]) {
     bool use_fpga = true;
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
     vme->ReadXML(argv[1]);
-    
-    fh.run_id = vme->GetRunNumber();
-    
+  
+    static const unsigned int num_tdc = vme->GetNumTDC();
+
+    fstream out_file[num_tdc];
+
+    for (unsigned int i=0; i<num_tdc; i++) {
+      VME::TDCV1x90* tdc = vme->GetTDC(i);
+      
+      file_header_t fh;
+      fh.magic = 0x30535050; // PPS0 in ASCII
+      fh.run_id = 0;
+      fh.spill_id = 0;
+      fh.acq_mode = tdc->GetAcquisitionMode();
+      fh.det_mode = tdc->GetDetectionMode();
+  
       std::ostringstream filename;
-      filename << "events_board" << 0 << ".dat";
+      filename << "events_board" << i << ".dat";
       vme->SetOutputFile(filename.str());
       //filename << GenerateFileName(0);
-      out_file[0].open(vme->GetOutputFile().c_str(), fstream::out | ios::binary );	
-      if (!out_file[0].is_open()) {
+      out_file[i].open(vme->GetOutputFile().c_str(), fstream::out | ios::binary );	
+      if (!out_file[i].is_open()) {
         throw Exception(__PRETTY_FUNCTION__, "Error opening file", Fatal);
       }
-      out_file[0].write((char*)&fh, sizeof(file_header_t));
- 
+      out_file[i].write((char*)&fh, sizeof(file_header_t));
+    } 
     /*std::string acqmode, detmode;
     switch (tdc[0]->GetAcquisitionMode()) {
       case VME::CONT_STORAGE: acqmode = "Continuous storage"; break;
@@ -111,9 +107,9 @@ int main(int argc, char *argv[]) {
     }*/
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
-      for (unsigned int i=0; i<2; i++) {
+      /*for (unsigned int i=0; i<2; i++) {
         if (out_file[i].is_open()) out_file[i].close();
-      }
+      }*/
 
       std::time_t t_end = std::time(0);
       double nsec_tot = difftime(t_end, t_beg), nsec = fmod(nsec_tot,60), nmin = (nsec_tot-nsec)/60.;

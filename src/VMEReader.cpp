@@ -39,38 +39,48 @@ VMEReader::ReadXML(const char* filename)
     if (const char* address=fpga->Attribute("address")) {
       unsigned int addr = static_cast<unsigned int>(strtol(address, NULL, 0));
       if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse FPGA's base address", Fatal);
-      AddFPGAUnit(addr);
+        std::cout << "--> 0x" << std::hex << addr << std::endl;
+      try {
+        AddFPGAUnit(addr);
+        VME::FPGAUnitV1495Control control = fFPGA->GetControl();
+        if (tinyxml2::XMLElement* clock=fpga->FirstChildElement("clock")) {
+          if (tinyxml2::XMLElement* source=clock->FirstChildElement("source")) {
+            if (!strcmp(source->GetText(),"internal")) control.SetClockSource(VME::FPGAUnitV1495Control::InternalClock);
+            if (!strcmp(source->GetText(),"external")) control.SetClockSource(VME::FPGAUnitV1495Control::ExternalClock);
+          }
+          if (tinyxml2::XMLElement* period=clock->FirstChildElement("period")) {
+            fFPGA->SetInternalClockPeriod(atoi(period->GetText()));
+          }
+        }
+        if (tinyxml2::XMLElement* trig=fpga->FirstChildElement("trigger")) {
+          if (tinyxml2::XMLElement* source=trig->FirstChildElement("source")) {
+            if (!strcmp(source->GetText(),"internal")) control.SetTriggerSource(VME::FPGAUnitV1495Control::InternalTrigger);
+            if (!strcmp(source->GetText(),"external")) control.SetTriggerSource(VME::FPGAUnitV1495Control::ExternalTrigger);
+          }
+          if (tinyxml2::XMLElement* period=trig->FirstChildElement("period")) {
+            fFPGA->SetInternalTriggerPeriod(atoi(period->GetText()));
+          }
+        }
+        if (tinyxml2::XMLElement* sig=fpga->FirstChildElement("signal")) {
+          if (tinyxml2::XMLElement* source=sig->FirstChildElement("source")) {
+            if (!strcmp(source->GetText(),"internal")) for (unsigned int i=0; i<4; i++) control.SetSignalSource(i, VME::FPGAUnitV1495Control::InternalSignal);
+            if (!strcmp(source->GetText(),"external")) for (unsigned int i=0; i<4; i++) control.SetSignalSource(i, VME::FPGAUnitV1495Control::ExternalSignal);
+          }
+          if (tinyxml2::XMLElement* poi=sig->FirstChildElement("poi")) {
+            fFPGA->SetOutputPulserPOI(atoi(poi->GetText()));
+          }
+        }
+      } catch (Exception& e) { throw e; }
     }
     else throw Exception(__PRETTY_FUNCTION__, "Failed to extract FPGA's base address", Fatal);
-    VME::FPGAUnitV1495Control control = fFPGA->GetControl();
-    if (tinyxml2::XMLElement* clock=fpga->FirstChildElement("clock")) {
-      if (tinyxml2::XMLElement* source=clock->FirstChildElement("source")) {
-        if (!strcmp(source->GetText(),"internal")) control.SetClockSource(VME::FPGAUnitV1495Control::InternalClock);
-        if (!strcmp(source->GetText(),"external")) control.SetClockSource(VME::FPGAUnitV1495Control::ExternalClock);
-      }
-      if (tinyxml2::XMLElement* period=clock->FirstChildElement("period")) {
-        fFPGA->SetInternalClockPeriod(atoi(period->GetText()));
-      }
+  }
+  if (tinyxml2::XMLElement* tdc=doc.FirstChildElement("tdc")) {
+    if (const char* address=tdc->Attribute("address")) {
+      unsigned int addr = static_cast<unsigned int>(strtol(address, NULL, 0));
+      if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse TDC's base address", Fatal);
+        std::cout << "--> 0x" << std::hex << addr << std::endl;
     }
-    if (tinyxml2::XMLElement* trig=fpga->FirstChildElement("trigger")) {
-      if (tinyxml2::XMLElement* source=trig->FirstChildElement("source")) {
-        if (!strcmp(source->GetText(),"internal")) control.SetTriggerSource(VME::FPGAUnitV1495Control::InternalTrigger);
-        if (!strcmp(source->GetText(),"external")) control.SetTriggerSource(VME::FPGAUnitV1495Control::ExternalTrigger);
-      }
-      if (tinyxml2::XMLElement* period=trig->FirstChildElement("period")) {
-        fFPGA->SetInternalTriggerPeriod(atoi(period->GetText()));
-      }
-    }
-    if (tinyxml2::XMLElement* sig=fpga->FirstChildElement("signal")) {
-      if (tinyxml2::XMLElement* source=sig->FirstChildElement("source")) {
-        if (!strcmp(source->GetText(),"internal")) for (unsigned int i=0; i<4; i++) control.SetSignalSource(i, VME::FPGAUnitV1495Control::InternalSignal);
-        if (!strcmp(source->GetText(),"external")) for (unsigned int i=0; i<4; i++) control.SetSignalSource(i, VME::FPGAUnitV1495Control::ExternalSignal);
-      }
-      if (tinyxml2::XMLElement* poi=sig->FirstChildElement("poi")) {
-        fFPGA->SetOutputPulserPOI(atoi(poi->GetText()));
-      }
-    }
-    PrintInfo("fpga");
+    PrintInfo("tdc");
   }
   //doc.Print();
 }
@@ -121,7 +131,7 @@ VMEReader::AddIOModule(uint32_t address)
 void
 VMEReader::AddFPGAUnit(uint32_t address)
 {
-  //if (!fBridge) throw Exception(__PRETTY_FUNCTION__, "No bridge detected! Aborting...", Fatal);
+  if (!fBridge) throw Exception(__PRETTY_FUNCTION__, "No bridge detected! Aborting...", Fatal);
   try {
     fFPGA = new VME::FPGAUnitV1495(fBridge->GetHandle(), address);
   } catch (Exception& e) {

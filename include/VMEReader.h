@@ -45,6 +45,7 @@ class VMEReader : public Client
       if (fTDCCollection.count(address)==0) return 0;
       return fTDCCollection[address];
     }
+    inline size_t GetNumTDC() const { return fTDCCollection.size(); }
 
     void AddIOModule(uint32_t address);
     inline VME::IOModuleV262* GetIOModule() { return fSG; }
