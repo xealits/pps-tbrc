@@ -30,18 +30,19 @@ int main(int argc, char *argv[]) {
 
 
   VME::TDCEventCollection ec;
-  VME::FPGAUnitV1495* fpga;
 
   std::time_t t_beg;
   unsigned int num_triggers = 0;
 
   try {
     bool with_socket = false;
-    bool use_fpga = true;
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
     vme->ReadXML(argv[1]);
   
     static const unsigned int num_tdc = vme->GetNumTDC();
+
+    VME::FPGAUnitV1495* fpga = vme->GetFPGAUnit();
+    const bool use_fpga = (fpga!=0);
 
     fstream out_file[num_tdc];
 
@@ -119,7 +120,7 @@ int main(int argc, char *argv[]) {
            << " (" << nmin << " min " << nsec << " sec)"
            << endl;
     
-      fpga->StopScaler();
+      //fpga->StopScaler();
   
       delete vme;
       return 0;

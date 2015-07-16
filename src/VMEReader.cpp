@@ -37,7 +37,7 @@ VMEReader::ReadXML(const char* filename)
   }
   if (tinyxml2::XMLElement* fpga=doc.FirstChildElement("fpga")) {
     if (const char* address=fpga->Attribute("address")) {
-      unsigned int addr = static_cast<unsigned int>(strtol(address, NULL, 0));
+      unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
       if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse FPGA's base address", Fatal);
         std::cout << "--> 0x" << std::hex << addr << std::endl;
       try {
@@ -74,11 +74,39 @@ VMEReader::ReadXML(const char* filename)
     }
     else throw Exception(__PRETTY_FUNCTION__, "Failed to extract FPGA's base address", Fatal);
   }
-  if (tinyxml2::XMLElement* tdc=doc.FirstChildElement("tdc")) {
-    if (const char* address=tdc->Attribute("address")) {
-      unsigned int addr = static_cast<unsigned int>(strtol(address, NULL, 0));
+  if (tinyxml2::XMLElement* atdc=doc.FirstChildElement("tdc")) {
+    if (const char* address=atdc->Attribute("address")) {
+      unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
       if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse TDC's base address", Fatal);
         std::cout << "--> 0x" << std::hex << addr << std::endl;
+      try {
+        AddTDC(addr);
+        VME::TDCV1x90* tdc = GetTDC(addr);
+        if (tinyxml2::XMLElement* verb=atdc->FirstChildElement("verbosity")) {
+          tdc->SetVerboseLevel(atoi(verb->GetText()));
+        }
+        if (tinyxml2::XMLElement* acq=atdc->FirstChildElement("acq_mode")) {
+          if (!strcmp(acq->GetText(),"trigger")) tdc->SetAcquisitionMode(VME::TRIG_MATCH);
+          if (!strcmp(acq->GetText(),"continuous")) tdc->SetAcquisitionMode(VME::CONT_STORAGE);
+	}
+	if (tinyxml2::XMLElement* det=atdc->FirstChildElement("det_mode")) {
+	  if (!strcmp(det->GetText(),"trailead")) tdc->SetDetectionMode(VME::TRAILEAD);
+	  if (!strcmp(det->GetText(),"leading")) tdc->SetDetectionMode(VME::OLEADING);
+	  if (!strcmp(det->GetText(),"trailing")) tdc->SetDetectionMode(VME::OTRAILING);
+	  if (!strcmp(det->GetText(),"pair")) tdc->SetDetectionMode(VME::PAIR);
+        }
+	if (tinyxml2::XMLElement* dll=atdc->FirstChildElement("dll")) {
+	  if (!strcmp(dll->GetText(),"Direct_Low_Resolution")) tdc->SetDLLClock(VME::TDCV1x90::DLL_Direct_LowRes);
+	  if (!strcmp(dll->GetText(),"PLL_Low_Resolution")) tdc->SetDLLClock(VME::TDCV1x90::DLL_PLL_LowRes);
+	  if (!strcmp(dll->GetText(),"PLL_Medium_Resolution")) tdc->SetDLLClock(VME::TDCV1x90::DLL_PLL_MedRes);
+	  if (!strcmp(dll->GetText(),"PLL_High_Resolution")) tdc->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
+        }
+	if (atdc->FirstChildElement("ettt")) { tdc->SetETTT(); }
+	if (tinyxml2::XMLElement* wind=atdc->FirstChildElement("trigger_window")) {
+          if (tinyxml2::XMLElement* width=wind->FirstChildElement("width")) { tdc->SetWindowWidth(atoi(width->GetText())); }
+          if (tinyxml2::XMLElement* offset=wind->FirstChildElement("offset")) { tdc->SetWindowOffset(atoi(offset->GetText())); }
+        }
+      } catch (Exception& e) { throw e; }
     }
     PrintInfo("tdc");
   }
