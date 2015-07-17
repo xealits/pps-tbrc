@@ -39,7 +39,6 @@ VMEReader::ReadXML(const char* filename)
     if (const char* address=fpga->Attribute("address")) {
       unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
       if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse FPGA's base address", Fatal);
-        std::cout << "--> 0x" << std::hex << addr << std::endl;
       try {
         AddFPGAUnit(addr);
         VME::FPGAUnitV1495Control control = fFPGA->GetControl();
@@ -78,7 +77,6 @@ VMEReader::ReadXML(const char* filename)
     if (const char* address=atdc->Attribute("address")) {
       unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
       if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse TDC's base address", Fatal);
-        std::cout << "--> 0x" << std::hex << addr << std::endl;
       try {
         AddTDC(addr);
         VME::TDCV1x90* tdc = GetTDC(addr);
@@ -108,7 +106,6 @@ VMEReader::ReadXML(const char* filename)
         }
       } catch (Exception& e) { throw e; }
     }
-    PrintInfo("tdc");
   }
   //doc.Print();
 }
@@ -174,7 +171,7 @@ VMEReader::Abort()
 {
   if (!fBridge) throw Exception(__PRETTY_FUNCTION__, "No bridge detected! Aborting...", Fatal);
   try {
-    for (TDCCollection::iterator t=fTDCCollection.begin(); t!=fTDCCollection.end(); t++) {
+    for (VME::TDCCollection::iterator t=fTDCCollection.begin(); t!=fTDCCollection.end(); t++) {
       t->second->abort();
     }
   } catch (Exception& e) {

@@ -41,14 +41,16 @@ int main(int argc, char *argv[]) {
     vme->ReadXML(argv[1]);
   
     static const unsigned int num_tdc = vme->GetNumTDC();
-
+    
     VME::FPGAUnitV1495* fpga = vme->GetFPGAUnit();
     const bool use_fpga = (fpga!=0);
-
     fstream out_file[num_tdc];
+    string acqmode[num_tdc], detmode[num_tdc];
+    unsigned int num_events[num_tdc];
 
-    for (unsigned int i=0; i<num_tdc; i++) {
-      VME::TDCV1x90* tdc = vme->GetTDC(i);
+    VME::TDCCollection tdcs = vme->GetTDCCollection(); unsigned int i=0;
+    for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
+      VME::TDCV1x90* tdc = atdc->second;
       
       file_header_t fh;
       fh.magic = 0x30535050; // PPS0 in ASCII
@@ -66,21 +68,21 @@ int main(int argc, char *argv[]) {
         throw Exception(__PRETTY_FUNCTION__, "Error opening file", Fatal);
       }
       out_file[i].write((char*)&fh, sizeof(file_header_t));
+
+      switch (fh.acq_mode) {
+        case VME::CONT_STORAGE: acqmode[i] = "Continuous storage"; break;
+        case VME::TRIG_MATCH: acqmode[i] = "Trigger matching"; break;
+        default:
+          acqmode[i] = "[Invalid mode]";
+          throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
+      }
+      switch (fh.det_mode) {
+        case VME::PAIR: detmode[i] = "Pair measurement"; break;
+        case VME::OLEADING: detmode[i] = "Leading edge only"; break;
+        case VME::OTRAILING: detmode[i] = "Trailing edge only"; break;
+        case VME::TRAILEAD: detmode[i] = "Leading and trailing edges"; break;
+      }
     } 
-    /*std::string acqmode, detmode;
-    switch (tdc[0]->GetAcquisitionMode()) {
-      case VME::CONT_STORAGE: acqmode = "Continuous storage"; break;
-      case VME::TRIG_MATCH: acqmode = "Trigger matching"; break;
-      default:
-        acqmode = "[Invalid mode]";
-        throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
-    }
-    switch (tdc[0]->GetDetectionMode()) {
-      case VME::PAIR: detmode = "Pair measurement"; break;
-      case VME::OLEADING: detmode = "Leading edge only"; break;
-      case VME::OTRAILING: detmode = "Trailing edge only"; break;
-      case VME::TRAILEAD: detmode = "Leading and trailing edges"; break;
-    }
 
     if (use_fpga) {
       fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
@@ -90,13 +92,18 @@ int main(int argc, char *argv[]) {
     t_beg = std::time(0);
 
     cerr << endl << "*** Ready for acquisition! ***" << endl
-         << "Acquisition mode: " << acqmode << endl 
-         << "Detection mode: " << detmode << endl 
+         << "Acquisition mode: ";
+    for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << acqmode[i]; }
+    cerr << endl 
+         << "Detection mode: ";
+    for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << detmode[i]; }
+    cerr << endl 
          << "Local time: " << asctime(std::localtime(&t_beg));
 
+    for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
     while (true) {
-      for (unsigned int i=0; i<num_tdc; i++) {
-        ec = tdc[i]->FetchEvents();
+      for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++) {
+        ec = atdc->second->FetchEvents();
         if (ec.size()==0) continue; // no events were fetched
         for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
           uint32_t word = e->GetWord();
@@ -108,7 +115,7 @@ int main(int argc, char *argv[]) {
         num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
         if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
       }
-    }*/
+    }
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
       /*for (unsigned int i=0; i<2; i++) {

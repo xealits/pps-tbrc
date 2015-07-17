@@ -370,6 +370,9 @@ namespace VME
       std::string pair_width_res[16];
 
   };
+
+  /// Mapper from physical VME addresses to pointers to TDC objects
+  typedef std::map<uint32_t,VME::TDCV1x90*> TDCCollection;
 }
 
 #endif

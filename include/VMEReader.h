@@ -46,6 +46,7 @@ class VMEReader : public Client
       return fTDCCollection[address];
     }
     inline size_t GetNumTDC() const { return fTDCCollection.size(); }
+    inline VME::TDCCollection GetTDCCollection() { return fTDCCollection; }
 
     void AddIOModule(uint32_t address);
     inline VME::IOModuleV262* GetIOModule() { return fSG; }
@@ -98,12 +99,10 @@ class VMEReader : public Client
     void Abort();
 
   private:
-    /// Mapper from physical VME addresses to pointers to TDC objects
-    typedef std::map<uint32_t,VME::TDCV1x90*> TDCCollection;
     /// The VME bridge object to handle
     VME::BridgeVx718* fBridge;
     /// A set of pointers to TDC objects indexed by their physical VME address
-    TDCCollection fTDCCollection;
+    VME::TDCCollection fTDCCollection;
     /// Pointer to the VME input/output module object
     VME::IOModuleV262* fSG;
     /// Pointer to the VME general purpose FPGA unit object
