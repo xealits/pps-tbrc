@@ -22,6 +22,97 @@ VMEReader::~VMEReader()
   if (fBridge) delete fBridge;
 }
 
+void
+VMEReader::ReadXML(const char* filename)
+{
+  tinyxml2::XMLDocument doc;
+  doc.LoadFile(filename);
+  if (doc.Error()) {
+    std::ostringstream os;
+    os << "Error while trying to parse the configuration file" << "\n\t"
+       << "Code: " << doc.ErrorID() << "\n\t"
+       << "Dump of error:" << "\n"
+       << doc.GetErrorStr1();
+    throw Exception(__PRETTY_FUNCTION__, os.str(), Fatal);
+  }
+  if (tinyxml2::XMLElement* fpga=doc.FirstChildElement("fpga")) {
+    if (const char* address=fpga->Attribute("address")) {
+      unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
+      if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse FPGA's base address", Fatal);
+        std::cout << "--> 0x" << std::hex << addr << std::endl;
+      try {
+        AddFPGAUnit(addr);
+        VME::FPGAUnitV1495Control control = fFPGA->GetControl();
+        if (tinyxml2::XMLElement* clock=fpga->FirstChildElement("clock")) {
+          if (tinyxml2::XMLElement* source=clock->FirstChildElement("source")) {
+            if (!strcmp(source->GetText(),"internal")) control.SetClockSource(VME::FPGAUnitV1495Control::InternalClock);
+            if (!strcmp(source->GetText(),"external")) control.SetClockSource(VME::FPGAUnitV1495Control::ExternalClock);
+          }
+          if (tinyxml2::XMLElement* period=clock->FirstChildElement("period")) {
+            fFPGA->SetInternalClockPeriod(atoi(period->GetText()));
+          }
+        }
+        if (tinyxml2::XMLElement* trig=fpga->FirstChildElement("trigger")) {
+          if (tinyxml2::XMLElement* source=trig->FirstChildElement("source")) {
+            if (!strcmp(source->GetText(),"internal")) control.SetTriggerSource(VME::FPGAUnitV1495Control::InternalTrigger);
+            if (!strcmp(source->GetText(),"external")) control.SetTriggerSource(VME::FPGAUnitV1495Control::ExternalTrigger);
+          }
+          if (tinyxml2::XMLElement* period=trig->FirstChildElement("period")) {
+            fFPGA->SetInternalTriggerPeriod(atoi(period->GetText()));
+          }
+        }
+        if (tinyxml2::XMLElement* sig=fpga->FirstChildElement("signal")) {
+          if (tinyxml2::XMLElement* source=sig->FirstChildElement("source")) {
+            if (!strcmp(source->GetText(),"internal")) for (unsigned int i=0; i<4; i++) control.SetSignalSource(i, VME::FPGAUnitV1495Control::InternalSignal);
+            if (!strcmp(source->GetText(),"external")) for (unsigned int i=0; i<4; i++) control.SetSignalSource(i, VME::FPGAUnitV1495Control::ExternalSignal);
+          }
+          if (tinyxml2::XMLElement* poi=sig->FirstChildElement("poi")) {
+            fFPGA->SetOutputPulserPOI(atoi(poi->GetText()));
+          }
+        }
+      } catch (Exception& e) { e.Dump();throw e; }
+    }
+    else throw Exception(__PRETTY_FUNCTION__, "Failed to extract FPGA's base address", Fatal);
+  }
+  for (tinyxml2::XMLElement* atdc=doc.FirstChildElement("tdc"); atdc!=NULL; atdc=atdc->NextSiblingElement("tdc")) {
+    if (const char* address=atdc->Attribute("address")) {
+      unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
+      if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse TDC's base address", Fatal);
+        std::cout << "--> 0x" << std::hex << addr << std::endl;
+      try {
+        AddTDC(addr);
+        VME::TDCV1x90* tdc = GetTDC(addr);
+        if (tinyxml2::XMLElement* verb=atdc->FirstChildElement("verbosity")) {
+          tdc->SetVerboseLevel(atoi(verb->GetText()));
+        }
+        if (tinyxml2::XMLElement* acq=atdc->FirstChildElement("acq_mode")) {
+          if (!strcmp(acq->GetText(),"trigger")) tdc->SetAcquisitionMode(VME::TRIG_MATCH);
+          if (!strcmp(acq->GetText(),"continuous")) tdc->SetAcquisitionMode(VME::CONT_STORAGE);
+	}
+	if (tinyxml2::XMLElement* det=atdc->FirstChildElement("det_mode")) {
+	  if (!strcmp(det->GetText(),"trailead")) tdc->SetDetectionMode(VME::TRAILEAD);
+	  if (!strcmp(det->GetText(),"leading")) tdc->SetDetectionMode(VME::OLEADING);
+	  if (!strcmp(det->GetText(),"trailing")) tdc->SetDetectionMode(VME::OTRAILING);
+	  if (!strcmp(det->GetText(),"pair")) tdc->SetDetectionMode(VME::PAIR);
+        }
+	if (tinyxml2::XMLElement* dll=atdc->FirstChildElement("dll")) {
+	  if (!strcmp(dll->GetText(),"Direct_Low_Resolution")) tdc->SetDLLClock(VME::TDCV1x90::DLL_Direct_LowRes);
+	  if (!strcmp(dll->GetText(),"PLL_Low_Resolution")) tdc->SetDLLClock(VME::TDCV1x90::DLL_PLL_LowRes);
+	  if (!strcmp(dll->GetText(),"PLL_Medium_Resolution")) tdc->SetDLLClock(VME::TDCV1x90::DLL_PLL_MedRes);
+	  if (!strcmp(dll->GetText(),"PLL_High_Resolution")) tdc->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
+        }
+	if (atdc->FirstChildElement("ettt")) { tdc->SetETTT(); }
+	if (tinyxml2::XMLElement* wind=atdc->FirstChildElement("trigger_window")) {
+          if (tinyxml2::XMLElement* width=wind->FirstChildElement("width")) { tdc->SetWindowWidth(atoi(width->GetText())); }
+          if (tinyxml2::XMLElement* offset=wind->FirstChildElement("offset")) { tdc->SetWindowOffset(atoi(offset->GetText())); }
+        }
+      } catch (Exception& e) { throw e; }
+    }
+    PrintInfo("tdc");
+  }
+  //doc.Print();
+}
+
 unsigned int
 VMEReader::GetRunNumber()
 {

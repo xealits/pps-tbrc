@@ -24,7 +24,7 @@ add_library(caen SHARED IMPORTED)
 set_property(TARGET caen PROPERTY IMPORTED_LOCATION "${CAEN_LOCATION}/libCAENVME.so")
 set(CMAKE_CXX_FLAGS "-DLINUX")
 #set(CMAKE_CXX_LINK_FLAGS "-lCAENVME -Wl")
-set(CMAKE_CXX_LINK_FLAGS "-lCAENVME")
+set(CMAKE_CXX_LINK_FLAGS "-lCAENVME -ltinyxml2")
 
 add_executable(ppsFetch fetch_vme.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
 target_link_libraries(ppsFetch caen)
