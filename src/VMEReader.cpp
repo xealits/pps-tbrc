@@ -74,7 +74,7 @@ VMEReader::ReadXML(const char* filename)
     }
     else throw Exception(__PRETTY_FUNCTION__, "Failed to extract FPGA's base address", Fatal);
   }
-  if (tinyxml2::XMLElement* atdc=doc.FirstChildElement("tdc")) {
+  for (tinyxml2::XMLElement* atdc=doc.FirstChildElement("tdc"); atdc; atdc=doc.NextSiblingElement("tdc")) {
     if (const char* address=atdc->Attribute("address")) {
       unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
       if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse TDC's base address", Fatal);
