@@ -14,12 +14,8 @@ VMEReader* vme;
 int gEnd = 0;
 
 void CtrlC(int aSig) {
-  if (gEnd==0) { cerr << endl << "[C-c] Trying a clean exit!" << endl;
-    vme->Abort();
-  }
-  else if (gEnd>=5) { cerr << endl << "[C-c > 5 times] ... Forcing exit!" << endl;
-    exit(0);
-  }
+  if (gEnd==0) { cerr << endl << "[C-c] Trying a clean exit!" << endl; vme->Abort(); }
+  else if (gEnd>=5) { cerr << endl << "[C-c > 5 times] ... Forcing exit!" << endl; exit(0); }
   gEnd++;
 }
 
