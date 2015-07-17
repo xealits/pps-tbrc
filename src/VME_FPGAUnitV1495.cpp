@@ -3,12 +3,12 @@
 namespace VME
 {
   FPGAUnitV1495::FPGAUnitV1495(int32_t bhandle, uint32_t baseaddr) :
-    GenericBoard<FPGAUnitV1495Register,cvA32_U_DATA>(bhandle, baseaddr),
-    fScalerStarted(false)
+    GenericBoard<FPGAUnitV1495Register,cvA32_U_DATA>(bhandle, baseaddr)
   {
     try {
       CheckBoardVersion();
       ClearOutputPulser();
+      StopScaler();
     } catch (Exception& e) { e.Dump(); throw e; }
 
     unsigned short cfwrev = GetCAENFirmwareRevision();
@@ -27,9 +27,7 @@ namespace VME
   }
 
   FPGAUnitV1495::~FPGAUnitV1495()
-  {
-    if (fScalerStarted) StopScaler();
-  }
+  { ; }
  
   void
   FPGAUnitV1495::DumpFWInformation() const
@@ -44,7 +42,7 @@ namespace VME
     switch (control.GetClockSource()) {
       case FPGAUnitV1495Control::ExternalClock: os << "external"; break;
       case FPGAUnitV1495Control::InternalClock:
-        os << "internal (period: " << (GetInternalClockPeriod()*25) << " ns)"; break;
+        os << "internal (period: " << (std::max(GetInternalClockPeriod(),(uint32_t)1)*25) << " ns)"; break;
       default: os << "invalid (" << control.GetClockSource() << ")"; break;
     }
     os << "\n\t"
@@ -52,7 +50,7 @@ namespace VME
     switch (control.GetTriggerSource()) {
       case FPGAUnitV1495Control::ExternalTrigger: os << "external"; break;
       case FPGAUnitV1495Control::InternalTrigger:
-        os << "internal (period: " << (GetInternalTriggerPeriod()*25/1e6) << " ms)"; break;
+        os << "internal (period: " << (std::max(GetInternalTriggerPeriod(),(uint32_t)1)*25/1e6) << " ms)"; break;
       default: os << "invalid (" << control.GetTriggerSource() << ")"; break;
     }
     PrintInfo(os.str());
@@ -195,7 +193,6 @@ namespace VME
   FPGAUnitV1495::GetControl() const
   {
     uint32_t word = 0x0;
-    //sleep(1);
     try { ReadRegister(kV1495Control, &word); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve the control word from FW", JustWarning);
@@ -307,6 +304,26 @@ namespace VME
       throw Exception(__PRETTY_FUNCTION__, "Failed to set output pulser's word", JustWarning);
     }
   }
+  
+  uint32_t
+  FPGAUnitV1495::GetOutputDelay() const
+  {
+    uint32_t word = 0x0;
+    try { ReadRegister(kV1495DelaySettings, &word); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve output delay word", JustWarning);
+    }
+    return word;
+  }
+
+  void
+  FPGAUnitV1495::SetOutputDelay(uint32_t delay) const
+  {
+    try { WriteRegister(kV1495DelaySettings, delay); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to set output delay word", JustWarning);
+    }
+  }
 
   void
   FPGAUnitV1495::StartScaler()
@@ -324,7 +341,6 @@ namespace VME
       SetControl(c);
       usleep(1000);
     } catch (Exception& e) { e.Dump(); }
-    fScalerStarted = true;
   }
 
   void
@@ -335,7 +351,6 @@ namespace VME
       c.SetScalerStatus(false);
       SetControl(c);
     } catch (Exception& e) { e.Dump(); }
-    fScalerStarted = false;
   }
 
   uint32_t

@@ -1,7 +1,7 @@
 #include "VMEReader.h"
 
 VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
-  Client(1987), fSG(0), fFPGA(0), fOnSocket(on_socket), fIsPulserStarted(false),
+  Client(1987), fBridge(0), fSG(0), fFPGA(0), fOnSocket(on_socket), fIsPulserStarted(false),
   fOutputFile("")
 {
   try {
@@ -19,7 +19,7 @@ VMEReader::~VMEReader()
   if (fSG) delete fSG;
   if (fFPGA) delete fFPGA;
   if (fIsPulserStarted) fBridge->StopPulser();
-  delete fBridge;
+  if (fBridge) delete fBridge;
 }
 
 unsigned int

@@ -166,7 +166,7 @@ namespace VME
         return static_cast<uint16_t>(fWord&0xFFF);
       }
       inline unsigned int GetGeo() const {
-        if (GetType()!=TDCTrailer) return 0;
+        if (GetType()!=GlobalTrailer) return 0;
         return static_cast<unsigned int>(fWord&0x1F);
       }
       /// Channel number for

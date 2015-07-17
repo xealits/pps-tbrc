@@ -28,7 +28,8 @@ class FileReader
      */
     FileReader(std::string name);
     ~FileReader();
-    
+
+    void Dump() const;    
     inline unsigned int GetNumTDCs() const { return fHeader.num_hptdc; }
     
     unsigned long GetNumEvents() const { return fNumEvents; }
@@ -45,6 +46,7 @@ class FileReader
     std::ifstream fFile;
     file_header_t fHeader;
     VME::AcquisitionMode fReadoutMode;
+    time_t fWriteTime;
     unsigned long fNumEvents;
 };
 

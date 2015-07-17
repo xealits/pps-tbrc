@@ -10,6 +10,7 @@ namespace VME
   enum FPGAUnitV1495Register {
     // User-defined registers
     kV1495ScalerCounter     = 0x100c,
+    kV1495DelaySettings     = 0x1010,
     kV1495UserFWRevision    = 0x1014,
     kV1495TDCBoardInterface = 0x1018,
     kV1495ClockSettings     = 0x101c,
@@ -169,6 +170,9 @@ namespace VME
       uint32_t GetOutputPulser() const;
       void ClearOutputPulser() const;
       void SetOutputPulser(unsigned short id, bool enable=true) const;
+
+      uint32_t GetOutputDelay() const;
+      void SetOutputDelay(uint32_t delay) const;
 
       /// Start the inner triggers counter
       void StartScaler();

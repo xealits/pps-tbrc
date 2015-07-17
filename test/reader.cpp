@@ -4,6 +4,7 @@
 
 #include "TCanvas.h"
 #include "TH1.h"
+#include "TF1.h"
 #include "TLegend.h"
 #include "TStyle.h"
 
@@ -24,9 +25,11 @@ main(int argc, char* argv[])
 
   TDCMeasurement m;
   unsigned int num_events, num_triggers;
-  TH1D* hist_lead = new TH1D("lead", "", 700, 0., 14000.);
-  TH1D* hist_trail = new TH1D("trail", "", 700, 0., 14000.);
-  TH1D* hist_tot = new TH1D("tot", "", 200, 20., 30.);
+  TH1D* hist_lead = new TH1D("lead", "", 700, -14000., 14000.);
+  TH1D* hist_trail = new TH1D("trail", "", 700, -14000., 14000.);
+  TH1D* hist_lead_zoom = new TH1D("lead_zoom", "", 600, 255., 325.);
+  TH1D* hist_trail_zoom = new TH1D("trail_zoom", "", 600, 255., 325.);
+  TH1D* hist_tot = new TH1D("tot", "", 100, 24., 26.);
   TH1D* hist_numevts = new TH1D("nevts", "", 100, -.5, 99.5);
   
   FileReader f(argv[1]);
@@ -38,9 +41,11 @@ main(int argc, char* argv[])
       //m.Dump();
       for (unsigned int i=0; i<m.NumEvents(); i++) {
         //std::cout << "--> " << (m.GetToT(i)*25./1024.) << std::endl;
-        hist_lead->Fill(m.GetLeadingTime(i)*25./1024.);
-        hist_trail->Fill(m.GetTrailingTime(i)*25./1024.);
-        hist_tot->Fill(m.GetToT(i)*25./1024.);
+        hist_lead->Fill(m.GetLeadingTime(i)*25./1000.);
+        hist_trail->Fill(m.GetTrailingTime(i)*25./1000.);
+        hist_lead_zoom->Fill(m.GetLeadingTime(i)*25./1000.);
+        hist_trail_zoom->Fill(m.GetTrailingTime(i)*25./1000.);
+        hist_tot->Fill(m.GetToT(i)*25./1000.);
         //std::cout << "ettt=" << m.GetETTT() << std::endl;
       }
       num_events += m.NumEvents();
@@ -66,14 +71,35 @@ main(int argc, char* argv[])
   leg->Draw();
   c_time->SaveAs("dist_edgetime.png");
 
+  gStyle->SetOptStat(0);
+  TCanvas* c_time_zoom = new TCanvas;
+  TLegend* leg2 = new TLegend(0.45, 0.75, 0.85, 0.85);
+  hist_lead_zoom->Draw();
+  hist_trail_zoom->Draw("same");
+  hist_trail_zoom->SetLineColor(kRed+1);
+  hist_lead_zoom->GetXaxis()->SetTitle("Hit edge time (ns)");
+  hist_lead_zoom->GetYaxis()->SetTitle(Form("Events in channel %d",channel_id));
+  /*hist_lead_zoom->Fit("gaus", "0");
+  hist_trail_zoom->Fit("gaus", "0");
+  TF1* f1 = (TF1*)hist_lead_zoom->GetFunction("gaus");
+  TF1* f2 = (TF1*)hist_trail_zoom->GetFunction("gaus");
+  leg2->AddEntry(hist_lead_zoom, Form("Leading edge  #mu=%.3g, #sigma=%.3g",f1->GetParameter(1),f1->GetParameter(2)), "l");
+  leg2->AddEntry(hist_trail_zoom, Form("Trailing edge    #mu=%.3g, #sigma=%.3g",f2->GetParameter(1),f2->GetParameter(2)), "l");
+  leg2->Draw();*/
+  c_time_zoom->SaveAs("dist_edgetime_zoom.png");
+  c_time_zoom->SaveAs("dist_edgetime_zoom.pdf");
+  cout << "integral: " << hist_lead_zoom->Integral() << " / " << hist_trail_zoom->Integral() << endl;
+
+  gStyle->SetOptStat(1111);
   TCanvas* c_tot = new TCanvas;
   hist_tot->Draw();
   hist_tot->GetXaxis()->SetTitle("Time over threshold (ns)");
   hist_tot->GetYaxis()->SetTitle(Form("Events in channel %d",channel_id));
+  hist_tot->GetYaxis()->SetTitleOffset(1.45);
   c_tot->SaveAs("dist_tot.png");
+  c_tot->SaveAs("dist_tot.pdf");
   c_tot->SetLogy();
   c_tot->SaveAs("dist_tot_logscale.png");
-  c_tot->SaveAs("test.root");
 
   TCanvas* c_nevts = new TCanvas;
   hist_numevts->Draw();

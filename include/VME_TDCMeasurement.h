@@ -8,6 +8,10 @@
 
 namespace VME
 {
+  /**
+   * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+   * \date Jun 2015
+   */
   class TDCMeasurement
   {
     public:
@@ -27,7 +31,8 @@ namespace VME
              << "Leading time:   " << GetLeadingTime() << "\n\t"
              << "Trailing time:  " << GetTrailingTime() << "\n\t";
         }
-        os << NumEvents() << " hits recorded";
+        os << NumEvents() << " hits recorded" << "\n\t"
+           << NumErrors() << " error words";
         PrintInfo(os.str());
       }
 
@@ -42,6 +47,7 @@ namespace VME
             case TDCEvent::TDCHeader:     fMap.insert(std::pair<TDCEvent::EventType,TDCEvent>(TDCEvent::TDCHeader, *e)); break;
             case TDCEvent::TDCTrailer:    fMap.insert(std::pair<TDCEvent::EventType,TDCEvent>(TDCEvent::TDCTrailer, *e)); break;
             case TDCEvent::ETTT:          fMap.insert(std::pair<TDCEvent::EventType,TDCEvent>(TDCEvent::ETTT, *e)); break;
+            case TDCEvent::TDCError:      fMap.insert(std::pair<TDCEvent::EventType,TDCEvent>(TDCEvent::TDCError, *e)); break;
             case TDCEvent::TDCMeasurement:
               if (!e->IsTrailing()) { leading = *e; has_leading = true; }
               else {
@@ -50,7 +56,6 @@ namespace VME
                 num_measurements++;
               }
               break;
-            case TDCEvent::TDCError:
             case TDCEvent::Filler:
             default:
               break;
@@ -89,10 +94,11 @@ namespace VME
         return fMap[TDCEvent::TDCHeader].GetBunchId();
       }
       inline uint32_t GetETTT() {
-        if (!fMap.count(TDCEvent::ETTT)) { return 0; }
-        return fMap[TDCEvent::ETTT].GetETTT();
+        if (!fMap.count(TDCEvent::ETTT) or !fMap.count(TDCEvent::GlobalTrailer)) { return 0; }
+        return (fMap[TDCEvent::ETTT].GetETTT()&0x07ffffff)*32+fMap[TDCEvent::GlobalTrailer].GetGeo();
       }
       inline size_t NumEvents() const { return fEvents.size(); }
+      inline size_t NumErrors() const { return fMap.count(TDCEvent::TDCError); }
 
     private:
       std::map<TDCEvent::EventType,TDCEvent> fMap;

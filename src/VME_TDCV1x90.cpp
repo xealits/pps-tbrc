@@ -348,11 +348,10 @@ namespace VME
       WriteRegister(kMicro, word);
     } catch (Exception& e) { e.Dump(); }
     
-    /*opcode = TDCV1x90Opcodes::SAVE_RC_ADJ;
+    /*WaitMicro(WRITE_OK);
+    WriteRegister(kMicro, TDCV1x90Opcodes::SAVE_RC_ADJ);
     WaitMicro(WRITE_OK);
-    WriteRegister(kMicro, opcode);
-    WaitMicro(WRITE_OK);
-    WriteRegister(kMicro, word); */
+    WriteRegister(kMicro, word);*/
     if (fVerb>1) {
       std::ostringstream o; o << "Debug: TDC " << tdc << ", value " << value;
       PrintInfo(o.str());
@@ -551,9 +550,7 @@ namespace VME
 
     } catch (Exception& e) { e.Dump(); }
     
-    if (fVerb>1) {
-      PrintInfo("Debug: trigger matching mode");
-    }
+    if (fVerb>1) PrintInfo("Debug: trigger matching mode");
   }
 
   void
@@ -568,9 +565,7 @@ namespace VME
 
     } catch (Exception& e) { e.Dump(); }
     
-    if (fVerb>1) {
-      PrintInfo("Debug: continuous storage mode");
-    }
+    if (fVerb>1) PrintInfo("Debug: continuous storage mode");
   }
 
   void

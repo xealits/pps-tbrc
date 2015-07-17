@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 project(PPS_TB_RC)
 
 set(CAEN_LOCATION "/usr/lib")
-set(GCC_COMPILE_FLAGS "-Wall -fPIC -O2")
+set(GCC_COMPILE_FLAGS "-Wall -fPIC -O2 -g")
 add_definitions(${GCC_COMPILE_FLAGS})
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cpp)

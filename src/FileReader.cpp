@@ -30,21 +30,26 @@ FileReader::FileReader(std::string file)
     fFile.close();
     throw Exception(__PRETTY_FUNCTION__, "Wrong magic number!", Fatal);
   }
+  fWriteTime = st.st_mtime;
   fReadoutMode = fHeader.acq_mode;
-
-  std::stringstream s;
-  char buff[80];
-  strftime(buff, 80, "%c", localtime(&(st.st_mtime)));
-  s << "File written on: " << buff << "\n\t"
-    << "Run number: " << fHeader.run_id << "\n\t"
-    << "Readout mode: " << fHeader.acq_mode << "\n\t"
-    << "Number of events: " << (st.st_size-sizeof(file_header_t))/sizeof(uint32_t);
-  PrintInfo(s.str());
 }
 
 FileReader::~FileReader()
 {
   if (fFile.is_open()) fFile.close();
+}
+
+void
+FileReader::Dump() const
+{
+  std::stringstream s;
+  char buff[80];
+  strftime(buff, 80, "%c", localtime(&fWriteTime));
+  s << "File written on: " << buff << "\n\t"
+    << "Run number: " << fHeader.run_id << "\n\t"
+    << "Readout mode: " << fHeader.acq_mode << "\n\t"
+    << "Number of events: " << fNumEvents;
+  PrintInfo(s.str());
 }
 
 bool
@@ -115,22 +120,21 @@ FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* mc)
     bool has_error = false;
     while (true) {
       if (!GetNextEvent(&ev)) return false;
-      if (ev.GetType()==VME::TDCEvent::TDCMeasurement) {
-        if (ev.GetChannelId()!=channel_id) { continue; }
-      }
-      ec.push_back(ev);
-
-      switch (ev.GetType()) {
-        case VME::TDCEvent::TDCError: has_error = true; break;
-        default: break;
-      }
-
+      
       //ev.Dump();
       /*std::cout << "0x" << std::hex << ev.GetType();
       if (ev.GetType()==VME::TDCEvent::TDCMeasurement) {
         std::cout << "\t" << ev.IsTrailing() << "\t" << ev.GetChannelId();
       }
       std::cout << std::endl;*/
+
+      if (ev.GetType()==VME::TDCEvent::TDCMeasurement) {
+        if (ev.GetChannelId()!=channel_id) continue;
+      }
+      else if (ev.GetType()==VME::TDCEvent::TDCError) {
+        has_error = true;
+      }
+      ec.push_back(ev);
 
       if (ev.GetType()==VME::TDCEvent::GlobalTrailer) break;
     }

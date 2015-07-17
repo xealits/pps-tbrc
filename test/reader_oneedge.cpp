@@ -5,6 +5,7 @@
 
 #include "TH1.h"
 #include "TCanvas.h"
+#include "TLegend.h"
 #include "TStyle.h"
 
 using namespace std;
@@ -25,8 +26,9 @@ main(int argc, char* argv[])
 
   TDCMeasurement m;
   int num_events1, num_events2;
-  vector<double> time1, time2;
+  vector<double> time1, time1_ettt, time2, time2_ettt;
   TH1D* h_diff = new TH1D("diff", "", 200, -2., 2.);
+  TH1D* h_diff_ettt = new TH1D("diff_ettt", "", 200, -2., 2.);
   
   num_events1 = num_events2 = 0;
 
@@ -35,6 +37,7 @@ main(int argc, char* argv[])
     try {
       if (!f1.GetNextMeasurement(channel1_id, &m)) break;
       time1.push_back(m.GetLeadingTime()*25./1024);
+      time1_ettt.push_back(m.GetLeadingTime()*25./1024-m.GetETTT());
       num_events1 += m.NumEvents();
     } catch (Exception& e) {
       e.Dump();
@@ -46,6 +49,7 @@ main(int argc, char* argv[])
     try {
       if (!f2.GetNextMeasurement(channel2_id, &m)) break;
       time2.push_back(m.GetLeadingTime()*25./1024);
+      time2_ettt.push_back(m.GetLeadingTime()*25./1024-m.GetETTT());
       num_events2 += m.NumEvents();
     } catch (Exception& e) {
       e.Dump();
@@ -59,6 +63,7 @@ main(int argc, char* argv[])
 
   for (unsigned int i=0; i<time1.size(); i++) {
     h_diff->Fill(time1[i]-time2[i]);
+    h_diff_ettt->Fill(time1_ettt[i]-time2_ettt[i]);
   }
 
   cerr << "number of events:" << endl
@@ -69,9 +74,15 @@ main(int argc, char* argv[])
   gStyle->SetPadTickX(true); gStyle->SetPadTickY(true);
   
   TCanvas* c = new TCanvas;
+  TLegend* leg = new TLegend(.15, .75, .4, .85);
   h_diff->Draw();
+  leg->AddEntry(h_diff, "No correction");
+  h_diff_ettt->Draw("same");
+  h_diff_ettt->SetLineColor(kRed+1);
+  leg->AddEntry(h_diff_ettt, "ETTT correction");
   h_diff->GetXaxis()->SetTitle(Form("Leading time ch %d - leading time ch %d (ns)",channel1_id,channel2_id));
   h_diff->GetYaxis()->SetTitle("Triggers");
+  leg->Draw();
   c->SaveAs("timediff_leading.png");
 
   return 0;

@@ -26,7 +26,7 @@ main(int argc, char* argv[])
   TH1D* h[num_channels];
 
   for (unsigned int i=0; i<num_channels; i++) {
-    h[i] = new TH1D(Form("tot_%i",i), "", 150, 22., 25.);
+    h[i] = new TH1D(Form("tot_%i",i), "", 100, 24., 26.);
     FileReader f(argv[1]);
     num_events = 0;
     while (true) {
@@ -34,8 +34,7 @@ main(int argc, char* argv[])
         if (!f.GetNextMeasurement(i, &m)) break;
         //cout << m.GetLeadingTime()-m.GetTrailingTime() << endl;
         for (unsigned int j=0; j<m.NumEvents(); j++) {
-          //std::cout << "--> " << (m.GetToT(i)*25./1024.) << std::endl;
-          h[i]->Fill(m.GetToT(j)*25./1024.);
+          h[i]->Fill(m.GetToT(j)*25./1000.);
         }
         num_events += m.NumEvents();
       } catch (Exception& e) { e.Dump(); }
@@ -50,9 +49,9 @@ main(int argc, char* argv[])
   TCanvas* c = new TCanvas("canv_multichannels", "", 1200, 800);
   c->Divide(2);
   TLegend *leg1, *leg2;
-  leg1 = new TLegend(0.15, 0.6, 0.5, 0.88);
-  leg2 = new TLegend(0.15, 0.6, 0.5, 0.88);
-  double mx = -1.;
+  leg1 = new TLegend(0.12, 0.65, 0.6, 0.88);
+  leg2 = new TLegend(0.12, 0.65, 0.6, 0.88);
+  double mx1 = -1., mx2 = -1;
   c->cd(1);
   for (unsigned int i=0; i<num_channels; i++) {
     if (i==num_channels/2) {
@@ -61,18 +60,19 @@ main(int argc, char* argv[])
     }
     if (i==0 or i==num_channels/2) h[i]->Draw();
     else                           h[i]->Draw("same");
-    mx = max(mx, h[i]->GetMaximum());
     if (i<num_channels/2) {
       h[i]->SetLineColor(i+2);// h[i]->SetLineStyle(1);
+      mx1 = max(mx1, h[i]->GetMaximum());
     }
     else {
       h[i]->SetLineColor(i+2-num_channels/2);// h[i]->SetLineStyle(2);
+      mx2 = max(mx2, h[i]->GetMaximum());
     }
     if (h[i]->Integral()!=0) {
       h[i]->Fit("gaus", "0");
       TF1* f = (TF1*)h[i]->GetFunction("gaus");
-      if (i<num_channels/2) leg1->AddEntry(h[i], Form("Channel %i  #mu=%.3g, #sigma=%.3g",i,f->GetParameter(1),f->GetParameter(2)), "l");
-      else                  leg2->AddEntry(h[i], Form("Channel %i  #mu=%.3g, #sigma=%.3g",i,f->GetParameter(1),f->GetParameter(2)), "l");
+      if (i<num_channels/2) leg1->AddEntry(h[i], Form("Channel %i  #mu=%.4g, #sigma=%.3g",i,f->GetParameter(1),f->GetParameter(2)), "l");
+      else                  leg2->AddEntry(h[i], Form("Channel %i  #mu=%.4g, #sigma=%.3g",i,f->GetParameter(1),f->GetParameter(2)), "l");
     }
     else {
       if (i<num_channels/2) leg1->AddEntry(h[i], Form("Channel %i",i), "l");
@@ -80,13 +80,16 @@ main(int argc, char* argv[])
     }
   }
   leg2->Draw();
-  h[0]->GetYaxis()->SetRangeUser(.1, mx*1.3);
   h[0]->GetXaxis()->SetTitle("Time over threshold (ns)");
   h[0]->GetYaxis()->SetTitle("Events");
-  h[num_channels/2]->GetYaxis()->SetRangeUser(.1, mx*1.2);
+  h[0]->GetYaxis()->SetRangeUser(.1, mx1*1.3);
   h[num_channels/2]->GetXaxis()->SetTitle("Time over threshold (ns)");
   h[num_channels/2]->GetYaxis()->SetTitle("Events");
-  c->SaveAs("tot_multichannels.png");
+  h[num_channels/2]->GetYaxis()->SetRangeUser(.1, mx2*1.3);
+  leg1->SetTextFont(43); leg1->SetTextSize(14);
+  leg2->SetTextFont(43); leg2->SetTextSize(14);
+  c->SaveAs("dist_tot_multichannels.png");
+  c->SaveAs("dist_tot_multichannels.pdf");
   
   return 0;
 }

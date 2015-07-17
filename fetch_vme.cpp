@@ -26,7 +26,7 @@ void CtrlC(int aSig) {
 int main(int argc, char *argv[]) {
   signal(SIGINT, CtrlC);
   
-  const unsigned int num_tdc = 2;
+  const unsigned int num_tdc = 1;
 
   fstream out_file[num_tdc];
   unsigned int num_events[num_tdc];
@@ -48,10 +48,10 @@ int main(int argc, char *argv[]) {
   std::time_t t_beg;
   for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
   unsigned int num_triggers = 0;
+  bool use_fpga = true;
 
   try {
     bool with_socket = false;
-    bool use_fpga = true;
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
     
     fh.run_id = vme->GetRunNumber();
@@ -66,7 +66,12 @@ int main(int argc, char *argv[]) {
       //cout << ">>> " << fpga->GetUserFirmwareRevision() << endl;
 
       //fpga->SetInternalClockPeriod(1); // in units of 25 ns
-      fpga->SetInternalTriggerPeriod(400000); // in units of 25 ns
+      fpga->SetInternalTriggerPeriod(4000); // in units of 25 ns
+      /*for (int i=0; i<4; i++) {
+        fpga->SetOutputDelay(i);
+        cout << "--> " << fpga->GetOutputDelay() << endl;
+      }*/
+      fpga->SetOutputDelay(0);
       //sleep(2);
       fpga->DumpFWInformation();
       //exit(0);
@@ -151,8 +156,10 @@ int main(int argc, char *argv[]) {
         }
         num_events[i] += ec.size();
       }
-      if (use_fpga) num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
-      if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
+      if (use_fpga) {
+        num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
+        if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
+      }
     }
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
@@ -171,7 +178,7 @@ int main(int argc, char *argv[]) {
       cerr << endl << "Acquired ";
       for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << num_events[i]; }
       cerr << " words for " << num_triggers << " triggers in this run" << endl;
-      fpga->StopScaler();
+      //if (use_fpga) fpga->StopScaler();
   
       delete vme;
       return 0;
