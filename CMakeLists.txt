@@ -10,7 +10,6 @@ add_library(det_lib OBJECT ${det_sources})
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
 list(REMOVE_ITEM sources ${det_sources})
-message(STATUS "Sources for src_lib: "${sources})
 add_library(src_lib OBJECT ${sources})
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
