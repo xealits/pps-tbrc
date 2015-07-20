@@ -1,0 +1,208 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#connection {
+  float: top;
+  width: 92vw;
+  height: 20vw;
+  margin: 4vw;
+  /*margin-left: 34vw;*/
+}
+
+#output {
+  float: top;
+  width: 92vw;
+  height: 96vw;
+  /*height: 32vw;*/
+  /*height: auto;*/
+  margin: 4vw;
+}
+
+
+body {
+  background-color: #ffeda0;
+}
+
+#output, #connection {
+  background-color: white;
+  border-radius: 10px;
+}
+
+
+#connection div.interface {
+  height: 16vw;
+  /*width: 100%;*/
+  width: 60vw;
+  /*padding: 1vw;*/
+  float: left;
+}
+
+
+.help {
+  width: 30vw;
+  padding: 1vw;
+  /*margin-left: 58vw;*/
+  float: right;
+  text-align: right;
+  height: 2vw;
+  position: relative;
+}
+
+.help_text {
+  display: none;
+  position: absolute;
+  left: 1vw;
+  top: 3vw;
+  width: 30vw;
+  background-color: grey;
+}
+
+
+
+#output div.interface {
+  /*height: 30vw;*/
+  height: 92vw;
+  /*height: auto;*/
+  width: 92vw; /*100%*/
+  /*padding: 1vw;*/
+  float: top;
+}
+
+
+
+
+
+.controls, .status {
+  padding: 1vw;
+  height: 14vw;
+}
+
+.status {
+  float: right;
+  width: 38vw;
+  /*width: 70%;*/
+  /*height: 100%;*/
+  font-family: monospace;
+}
+
+input {
+  display: block;
+  float: left;
+  /*width:20%;*/
+  height: 1vw;
+  padding: 0.5vw;
+  /*font-size: 5pt;*/
+  font-size: 1vw;
+  width: 16vw;
+  font-family: monospace;
+}
+
+input#socket_id { width: 5vw;}
+
+
+#console_log {
+  padding: 0;
+  width: 100%;
+  float: bottom;
+  /*height: auto;*/
+  height: 12vw;
+  overflow-y:scroll;
+}
+
+p.incoming {
+  text-align: right;
+  margin-right: 1vw;
+}
+
+.controls {
+  float: left;
+  /*width: 20%;*/
+  width: 18vw;
+  /*height: 100%;*/
+}
+
+button {
+  float: right;
+  /*height: 23%;  4 buttons */
+  height: 2vw;
+  /*width: 70%;*/
+  /*width: 8vw;   */
+  /*margin-left: 4vw;*/
+  /*width: 100%;*/
+  width: 16vw;
+  font-size: 10pt;
+  font-size: 1vw;
+  font-family: helvetica;
+cursor:pointer; /*forces the cursor to change to a hand when the button is hovered*/
+padding:1px 25px; /*add some padding to the inside of the button*/
+margin: 0.5vw;
+background:#35b128; /*the colour of the button*/
+border:1px solid #33842a; /*required or the default border for the browser will appear*/
+/*give the button curved corners, alter the size as required*/
+-moz-border-radius: 10px;
+-webkit-border-radius: 10px;
+border-radius: 10px;
+/*give the button a drop shadow*/
+-webkit-box-shadow: 0 0 4px rgba(0,0,0, .75);
+-moz-box-shadow: 0 0 4px rgba(0,0,0, .75);
+box-shadow: 0 0 4px rgba(0,0,0, .75);
+/*style the text*/
+color:#f3f3f3;
+/*font-size: 1.1em;*/
+font-size: 1vw;
+}
+
+/* These buttons start dissabled */
+#unbind_button, #refresh_button, #acquisition_button {
+background-color : #399630; /* make the background a little darker*/
+/*reduce the drop shadow size to give a pushed button effect*/
+/*-webkit-box-shadow: 0 0 1px rgba(0,0,0, .75);*/
+/*-moz-box-shadow: 0 0 1px rgba(0,0,0, .75);*/
+/*box-shadow: 0 0 1px rgba(0,0,0, .75);*/
+}
+
+
+/***NOW STYLE THE BUTTON'S HOVER AND FOCUS STATES***/
+button:hover /*, button:focus*/{
+background-color : #399630; /* make the background a little darker*/
+/*background-color :#222630; make the background a little darker*/
+/*reduce the drop shadow size to give a pushed button effect*/
+/*-webkit-box-shadow: 0 0 1px rgba(0,0,0, .75);*/
+/*-moz-box-shadow: 0 0 1px rgba(0,0,0, .75);*/
+/*box-shadow: 0 0 1px rgba(0,0,0, .75);*/
+}
+
+button:active {
+  -webkit-box-shadow: 0 0 1px rgba(0,0,0, .75);
+  -moz-box-shadow: 0 0 1px rgba(0,0,0, .75);
+  box-shadow: 0 0 1px rgba(0,0,0, .75);  
+}
+
+
+
+
+#output .output {
+  /*width: 48%;*/
+  /*height: 48%;*/
+  /*margin: 1%;*/
+  width: 44vw;
+  height: 44vw;
+  margin: 1vw;
+  float: left;
+}
+img {
+  /*width: 100%;*/
+  max-height:100%;
+  max-width:100%;
+  display: block;
+  /*margin-left: auto;*/
+  /*margin-right: auto;*/
+  margin-top: auto;
+  margin-bottom: auto;
+  /*margin: auto;*/
+}
+
+
+
