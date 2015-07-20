@@ -22,17 +22,28 @@ body {
 
 
 body {
-  background-color: #ffeda0;
+  /*background-color: #addd8e ;*/ /*#f7fcb9;*/ /*#ffeda0;*/
+  /*background: repeating-linear-gradient(
+    135deg,
+    white,
+    white 3px,
+    lightgrey 3px,
+    lightgrey 4px
+  );*/
+  background: rgba(0, 0, 0, 0) url("aiga-bg.png") repeat scroll 0 0;
 }
 
 #output, #connection {
+  /*background-color: #f7fcb9;*/
   background-color: white;
-  border-radius: 10px;
+  /*border-radius: 10px;*/
+  /*box-shadow: 0 0 4px rgba(0,0,0, .75);*/
+  box-shadow: 2px 2px 8px 6px rgba(0,0,0,0.3);
 }
 
 
 #connection div.interface {
-  height: 16vw;
+  height: 20vw;
   /*width: 100%;*/
   width: 60vw;
   /*padding: 1vw;*/
@@ -76,7 +87,7 @@ body {
 
 .controls, .status {
   padding: 1vw;
-  height: 14vw;
+  height: 18vw;
 }
 
 .status {
@@ -102,13 +113,23 @@ input {
 input#socket_id { width: 5vw;}
 
 
+#bind_time {
+  height: 2vw;
+  width: 12vw;
+  /*padding: 0.5vw;*/
+  float: right;
+}
+
+
 #console_log {
-  padding: 0;
-  width: 100%;
-  float: bottom;
+  margin: 1vw;
+  width: 36vw;
+  float: left;
   /*height: auto;*/
-  height: 12vw;
+  height: 14vw;
   overflow-y:scroll;
+  /*border-radius: 10px;*/
+  /*border: 1px solid #33842a;*/
 }
 
 p.incoming {
@@ -138,7 +159,7 @@ button {
 cursor:pointer; /*forces the cursor to change to a hand when the button is hovered*/
 padding:1px 25px; /*add some padding to the inside of the button*/
 margin: 0.5vw;
-background:#35b128; /*the colour of the button*/
+background: #399630; /*#35b128;*/ /*the colour of the button*/
 border:1px solid #33842a; /*required or the default border for the browser will appear*/
 /*give the button curved corners, alter the size as required*/
 -moz-border-radius: 10px;
@@ -154,9 +175,8 @@ color:#f3f3f3;
 font-size: 1vw;
 }
 
-/* These buttons start dissabled */
-#unbind_button, #refresh_button, #acquisition_button {
-background-color : #399630; /* make the background a little darker*/
+button.enabled {
+background-color : #35b128; /*#399630;*/ /* make the background a little darker*/
 /*reduce the drop shadow size to give a pushed button effect*/
 /*-webkit-box-shadow: 0 0 1px rgba(0,0,0, .75);*/
 /*-moz-box-shadow: 0 0 1px rgba(0,0,0, .75);*/
@@ -165,8 +185,9 @@ background-color : #399630; /* make the background a little darker*/
 
 
 /***NOW STYLE THE BUTTON'S HOVER AND FOCUS STATES***/
-button:hover /*, button:focus*/{
-background-color : #399630; /* make the background a little darker*/
+button.enabled:hover /*, button:focus*/{
+background-color : #fec44f; /*#399630;*/ /* make the background a little darker*/
+color: black;
 /*background-color :#222630; make the background a little darker*/
 /*reduce the drop shadow size to give a pushed button effect*/
 /*-webkit-box-shadow: 0 0 1px rgba(0,0,0, .75);*/

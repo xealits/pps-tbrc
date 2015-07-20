@@ -136,7 +136,8 @@ function unbind_socket() {
   send_message(connection, "REMOVE_CLIENT:", listener_id);
   // connection.send("REMOVE_CLIENT:"+listener_id);
   connection.close();
-  interface_off();
+  // connection = undefined;
+  // interface_off();
   // connection.onmessage = function(event) { parse_message(event); }
 }
 
@@ -170,7 +171,7 @@ function bind_socket() {
   connection_uri = $("#connection_uri").val();
   // hostname = $("#hostname").val();
 
-  alert( connection );
+  // alert( connection );
   // alert( hostname + ":" + port );
   // if (connection==0) { alert("no connection") };
 
@@ -185,7 +186,7 @@ function bind_socket() {
   //hostname = '137.138.105.83';
   connection = new WebSocket(connection_uri);
 
-  alert( connection );
+  // alert( connection );
   // alert( connection );
 
   // bind_button.disabled = true;
@@ -193,35 +194,42 @@ function bind_socket() {
 
     connection.onopen = function () {
       // what a hell
+      append_to_console( '<p class="incoming">GOT: Connection opened<\p>' );
+      interface_on();
+      // alert("socket onopen");
     };
     connection.onerror = function (event) {
-      if (event.originalTarget===undefined || event.originalTarget.readyState!==1) {
-        // $( "#console_log" ).append( "<p>Server not ready for connection!<\p>");
-        append_to_console( "<p>Server not ready for connection!<\p>" );
-        $( "#socket_id" ).css("backgroundColor", "red");
-        $( "#socket_id" ).val( -1 );
-        // connection = undefined;
-        interface_off();
-        return;
-      }
-      unbind_socket();
-      alert("connection error");
+      // if (event.originalTarget===undefined || event.originalTarget.readyState!==1) {
+      //   // $( "#console_log" ).append( "<p>Server not ready for connection!<\p>");
+      //   append_to_console( "<p>Server not ready for connection!<\p>" );
+      //   $( "#socket_id" ).css("backgroundColor", "red");
+      //   $( "#socket_id" ).val( -1 );
+      //   // connection = undefined;
+      //   interface_off();
+      //   return;
+      // }
+      // unbind_socket();
+      alert("socket onerror");
   };
   connection.onmessage = function(event) {
     // parse_message(event);
     // $( "#console_log" ).append( "<p>GOT: " + event.data + "<\p>" );
+    // alert( "socket onmessage" );
     append_to_console( '<p class="incoming">GOT: ' + event.data + "<\p>" );
   }; // TODO
   connection.onclose = function() {
       // bind_socket();
       // Disable interface and remove connection object
-      connection.close();
+      // connection.close();
       connection = undefined;
-      alert( "connection closed" );
-      alert( connection );
+      append_to_console( '<p> Removed connection <\p>' );
+      // alert( "connection closed" );
+      // alert( connection );
       interface_off();
+      // alert( "socket onclose" );
   };
 
+  /*
   if (connection.readyState == 1 ) {
     interface_on();
     bind_time.style.color = "black";
@@ -235,29 +243,28 @@ function bind_socket() {
       alert( connection );
       interface_off();
   }
+  */
 }
 
 
 function interface_on() {
       // disable bind button
       $( "#bind_button" ).unbind();
-      $( "#bind_button" ).css( "background-color", "#399630" );
       // enable interface to the ppsFetch process
-      $( "#unbind_button, #refresh_button, #acquisition_button" ).css("background-color", "#35b128");
       $( "#unbind_button" ).click( unbind_socket );
       $( "#refresh_button" ).click( socket_refresh );
       $( "#acquisition_button" ).click( start_acquisition );
       $( "input" ).prop("disabled", true);
+      $( "#bind_button, #unbind_button, #refresh_button, #acquisition_button" ).toggleClass( "enabled" );
 }
 
 function interface_off() {
       // enable bind button
       $( "#bind_button" ).click( bind_socket );
-      $( "#bind_button" ).css( "background-color", "#35b128" );
       // disable interface to ppsFetch process
-      $( "#unbind_button, #refresh_button, #acquisition_button" ).css("background-color", "#399630");
       $( "#unbind_button, #refresh_button, #acquisition_button" ).unbind();
       $( "input" ).prop("disabled", false);
+      $( "#bind_button, #unbind_button, #refresh_button, #acquisition_button" ).toggleClass( "enabled" );
 }
 
 
@@ -276,6 +283,7 @@ $( document ).ready( function(){
 
     // buttons
     $( "#bind_button" ).click( bind_socket );
+    $( "#bind_button" ).toggleClass( "enabled" );
     if (connection!==undefined) {
       // alert( connection );
       interface_on();
