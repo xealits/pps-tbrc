@@ -32,8 +32,10 @@ def main(argv):
     ETTT = 0x11
     Filler = 0x18
 
+    # Define counters and arrays for DQM plots
     occupancy = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     toverthreshold = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    nerrors = [0]
     ntriggers = [0]
     nchannels = 16
     verbose = 0
@@ -73,6 +75,7 @@ def main(argv):
             if(type == GlobalHeader):
                 if(verbose == 1):
                     print "Global Header"
+                # Reset lookup dictionary for each new event
                 channeltimemeasurements={}
 
             if(type == GlobalTrailer):
@@ -122,13 +125,19 @@ def main(argv):
                     print "\tTDCMeasurement (trailing = " + str(istrailing) + ", time = " + str(time) + ", width = " + str(width) + ", (channel ID = " + str(channelid) + ")"
                 
             if(type == TDCError):
+                errorflag = (decode[0])&(0x7FFF)
+                nerrors[0] = nerrors[0]+1
                 if(verbose == 1):
-                    print "Error!!! We really should do something about this..."
+                    print "Error detected: " + str(errorflag)
 
+
+    ####################
+    # Generate DQM plots
+    ####################
     i = 0
     while i < nchannels:
+        toverthreshold[i] = toverthreshold[i]/occupancy[i] # Before normalizing counts
         occupancy[i] = occupancy[i]/ntriggers[0]
-        toverthreshold[i] = toverthreshold[i]/ntriggers[0]
         i = i + 1
 
     plt.subplot(2, 2, 1)
@@ -136,6 +145,8 @@ def main(argv):
     plt.ylabel('Number of triggered events')
     plt.title(r'$\mathrm{Number\ of\ triggered\ events}$')
     plt.axis([0, 1, 0, max(ntriggers)*2])
+    frame1 = plt.gca()
+    frame1.axes.get_xaxis().set_visible(False)
     plt.grid(True)
 
     plt.subplot(2, 2, 2)
@@ -154,6 +165,18 @@ def main(argv):
     plt.axis([0, nchannels, 0, max(toverthreshold)*2])
     plt.grid(True)
 
+    plt.subplot(2, 2, 4)
+    plt.bar(range(0,1),nerrors,width=1.0)
+    plt.ylabel('Number of errors')
+    plt.title(r'$\mathrm{Number\ of\ errors}$')
+    plt.axis([0, 1, 0, 2])
+    if(nerrors[0]>0):
+        plt.axis([0, 1, 0, max(nerrors)*2])
+    frame2 = plt.gca()
+    frame2.axes.get_xaxis().set_visible(False)
+    plt.grid(True)
+
+    plt.tight_layout() # Or equivalently,  "plt.tight_layout()"                                        
 #    plt.show()
     plt.savefig('testfig1.png')
 
