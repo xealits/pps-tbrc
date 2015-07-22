@@ -11,6 +11,8 @@ import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
 
 def main(argv):
+    inputbinaryfile = 'events_board0.dat'
+
     # AcquisitionMode
     CONT_STORAGE=0
     TRIG_MATCH=1
@@ -32,21 +34,34 @@ def main(argv):
     Filler = 0x18
 
     # Define counters and arrays for DQM plots
-    occupancy = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    toverthreshold = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    nchannels = 16
+    ntriggers = [0]
+    occupancy = []
+    toverthreshold = []
+    k=0
+    while k < nchannels:
+        occupancy.append(0)
+        toverthreshold.append(0)
+        k=k+1
+
+    ngroups = 4
     nerrors = [0]
-    grouperrors = [0,0,0,0]
-    readoutfifooverflowerrors = [0,0,0,0]
-    l1bufferoverflowerrors = [0,0,0,0]
+    grouperrors = []
+    readoutfifooverflowerrors = []
+    l1bufferoverflowerrors = []
+    k=0
+    while k < ngroups:
+        grouperrors.append(0)
+        readoutfifooverflowerrors.append(0)
+        l1bufferoverflowerrors.append(0)
+        k=k+1
     eventsizelimiterrors = [0]
     triggerfifooverflowerrors = [0]
     internalchiperrors = [0]
-    ntriggers = [0]
-    nchannels = 16
     verbose = 0
 
     # Open as a readable binary file - hardcoded for testing 
-    with open('events_board0.dat', 'rb') as f:
+    with open(inputbinaryfile, 'rb') as f:
         #######################################
         # First read and unpack the file header
         #######################################
@@ -70,6 +85,11 @@ def main(argv):
 
         # Lookup dictionary of time measurements: time = {Channel ID, Leading/Trailing edge}
         channeltimemeasurements={}
+        k = 0
+        while k < 64:
+            channeltimemeasurements[k,1]=0
+            channeltimemeasurements[k,2]=0
+            k=k+1
 
         ###########################                                                                                                                                              
         # Main loop to read in data
@@ -86,6 +106,11 @@ def main(argv):
                     print "Global Header"
                 # Reset lookup dictionary for each new event
                 channeltimemeasurements={}
+                k = 0
+                while k < 64:
+                    channeltimemeasurements[k,1]=0
+                    channeltimemeasurements[k,2]=0
+                    k=k+1
 
             # This word is a global trailer - calculate summary timing information for all channels in this event
             if(type == GlobalTrailer):
@@ -162,8 +187,10 @@ def main(argv):
     ####################
     i = 0
     while i < nchannels:
-        toverthreshold[i] = toverthreshold[i]/occupancy[i] # Before normalizing counts
-        occupancy[i] = occupancy[i]/ntriggers[0]
+        if(occupancy[i]>0):
+            toverthreshold[i] = toverthreshold[i]/occupancy[i] # Before normalizing counts
+        if(ntriggers[0]>0):
+            occupancy[i] = occupancy[i]/ntriggers[0]
         i = i + 1
 
     mpl.rcParams['xtick.labelsize'] = 6
@@ -196,7 +223,7 @@ def main(argv):
     plt.grid(True)
 
     plt.subplot(3, 3, 4)
-    plt.bar(range(0,1),nerrors,width=1.0)
+    plt.bar(range(0,1),nerrors,width=1.0,color='r')
     plt.ylabel('Total errors',fontsize=6)
 #    plt.title(r'$\mathrm{Total\ errors}$',fontsize=6)
     plt.axis([0, 1, 0, 2])
@@ -206,11 +233,8 @@ def main(argv):
     frame2.axes.get_xaxis().set_visible(False)
     plt.grid(True)
 
-#    plt.show()
-#    plt.savefig('testfig1.png')
-
     plt.subplot(3, 3, 5)
-    plt.bar(range(0,1),eventsizelimiterrors,width=1.0)
+    plt.bar(range(0,1),eventsizelimiterrors,width=1.0,color='r')
     plt.ylabel('Event size errors',fontsize=6)
 #    plt.title(r'$\mathrm{Event\ size\ errors}$',fontsize=6)
     plt.axis([0, 1, 0, 2])
@@ -221,7 +245,7 @@ def main(argv):
     plt.grid(True)
 
     plt.subplot(3, 3, 6)
-    plt.bar(range(0,1),triggerfifooverflowerrors,width=1.0)
+    plt.bar(range(0,1),triggerfifooverflowerrors,width=1.0,color='r')
     plt.ylabel('Trigger FIFO overflow errors',fontsize=6)
 #    plt.title(r'$\mathrm{Trigger\ FIFO\ overflow\ errors}$',fontsize=6)
     plt.axis([0, 1, 0, 2])
@@ -232,7 +256,7 @@ def main(argv):
     plt.grid(True)
 
     plt.subplot(3, 3, 7)
-    plt.bar(range(0,1),internalchiperrors,width=1.0)
+    plt.bar(range(0,1),internalchiperrors,width=1.0,color='r')
     plt.ylabel('Internal chip errors',fontsize=6)
 #    plt.title(r'$\mathrm{Internal\ chip\ errors}$',fontsize=6)
     plt.axis([0, 1, 0, 2])
@@ -243,28 +267,28 @@ def main(argv):
     plt.grid(True)
 
     plt.subplot(3, 3, 8)
-    plt.bar(range(0,4),readoutfifooverflowerrors)
+    plt.bar(range(0,4),readoutfifooverflowerrors,color='r')
     plt.ylabel('Readout FIFO overflow errors',fontsize=6)
     plt.xlabel('Group',fontsize=6)
 #   plt.title(r'$\mathrm{Readout\ FIFO\ overflow\ errors}$',fontsize=6)
-    plt.axis([0, 4, 0, 2])
+    plt.axis([0, ngroups, 0, 2])
     if(readoutfifooverflowerrors[0]>0):
         plt.axis([0, 4, 0, max(readoutfifooverflowerrors)*2])
     frame2 = plt.gca()
     plt.grid(True)
 
     plt.subplot(3, 3, 9)
-    plt.bar(range(0,4),l1bufferoverflowerrors)
+    plt.bar(range(0,4),l1bufferoverflowerrors,color='r')
     plt.ylabel('L1 buffer overflow errors',fontsize=6)
     plt.xlabel('Group',fontsize=6)
 #    plt.title(r'$\mathrm{L1\ buffer\ overflow\ errors}$',fontsize=6)
-    plt.axis([0, 4, 0, 2])
+    plt.axis([0, ngroups, 0, 2])
     if(l1bufferoverflowerrors[0]>0):
         plt.axis([0, 4, 0, max(l1bufferoverflowerrors)*2])
     frame2 = plt.gca()
     plt.grid(True)
 
-    plt.savefig('testfig2.pdf')
+    plt.savefig('testfig1.png')
     
 if __name__ == "__main__":
     main(sys.argv[1:])
