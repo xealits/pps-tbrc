@@ -4,6 +4,8 @@
 #include "VME_GenericBoard.h"
 #include <map>
 
+#define num_cfd_channels 16
+
 namespace VME
 {
   enum CFDV812Register
@@ -35,10 +37,11 @@ namespace VME
       unsigned short GetSerialNumber() const;
 
       void SetOutputWidth(unsigned short group_id, unsigned short value) const;
-      unsigned short GetOutputWidth(unsigned short group_id) const;
+      /// Set the threshold for one single channel, in units of 1 mV
+      void SetThreshold(unsigned short channel_id, unsigned short value) const;
 
     private:
-     float OutputWidthCalculator(unsigned short value) const;
+      float OutputWidthCalculator(unsigned short value) const;
   };
 }
 

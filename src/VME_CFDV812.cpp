@@ -103,7 +103,7 @@ namespace VME
     CFDV812Register reg;
     if (group_id==0)      reg = kV812OutputWidthGroup0;
     else if (group_id==1) reg = kV812OutputWidthGroup1;
-    else throw Exception(__PRETTY_FUNCTION__, "Requested to change the output width to an unrecognized group identifier", JustWarning);
+    else throw Exception(__PRETTY_FUNCTION__, "Requested to change the output width of an unrecognized group identifier", JustWarning);
     try {
       WriteRegister(reg, word);
     } catch (Exception& e) {
@@ -118,23 +118,19 @@ namespace VME
     PrintInfo(os.str());
   }
   
-  unsigned short
-  CFDV812::GetOutputWidth(unsigned short group_id) const
+  void
+  CFDV812::SetThreshold(unsigned short channel_id, unsigned short value) const
   {
-    uint16_t word = 0x0;
-    CFDV812Register reg;
-    if (group_id==0)      reg = kV812OutputWidthGroup0;
-    else if (group_id==1) reg = kV812OutputWidthGroup1;
-    else throw Exception(__PRETTY_FUNCTION__, "Requested to read the output width to an unrecognized group identifier", JustWarning);
+    if (channel_id<0 or channel_id>num_cfd_channels) return;
     try {
-      ReadRegister(reg, &word);
+      CFDV812Register reg = static_cast<CFDV812Register>(kV812ThresholdChannel0+channel_id*0x2);
+      WriteRegister(reg, value);
     } catch (Exception& e) {
       e.Dump();
       std::ostringstream os;
-      os << "Failed to read output width for group " << group_id;
+      os << "Failed to set the threshold for channel " << channel_id;
       throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
     }
-    return word;
   }
 
   float
@@ -153,7 +149,7 @@ namespace VME
       unsigned short last_id = 0; float last_value = -1;
       for (it=lookup_table.begin(); it!=lookup_table.end(); it++) {
         if (value>it->first) { last_id = it->first; last_value = it->second; }
-        else return (it->second-last_value)/(it->second-last_id);
+        else return (last_value+(it->second-last_value)/(value-last_id));
       }
     }
     return -1.;
