@@ -5,8 +5,13 @@ set(CAEN_LOCATION "/usr/lib")
 set(GCC_COMPILE_FLAGS "-Wall -fPIC -O2 -g")
 add_definitions(${GCC_COMPILE_FLAGS})
 
+file(GLOB det_sources ${PROJECT_SOURCE_DIR}/src/VME*.cpp)
+add_library(det_lib OBJECT ${det_sources})
+
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
+list(REMOVE_ITEM sources ${det_sources})
 add_library(src_lib OBJECT ${sources})
+
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 # WebSocket
@@ -22,9 +27,9 @@ add_subdirectory(test EXCLUDE_FROM_ALL)
 # CAEN stuff
 add_library(caen SHARED IMPORTED)
 set_property(TARGET caen PROPERTY IMPORTED_LOCATION "${CAEN_LOCATION}/libCAENVME.so")
-set(CMAKE_CXX_FLAGS "-DLINUX")
-#set(CMAKE_CXX_LINK_FLAGS "-lCAENVME -Wl")
-set(CMAKE_CXX_LINK_FLAGS "-lCAENVME -ltinyxml2")
 
-add_executable(ppsFetch fetch_vme.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
+set(CMAKE_CXX_FLAGS "-DLINUX")
+
+add_executable(ppsFetch fetch_vme.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:det_lib> $<TARGET_OBJECTS:ws_lib>)
 target_link_libraries(ppsFetch caen)
+set_property(TARGET ppsFetch PROPERTY LINK_FLAGS "-lCAENVME -ltinyxml2")
