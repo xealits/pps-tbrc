@@ -2,6 +2,7 @@
 #define VME_CFDV812_h
 
 #include "VME_GenericBoard.h"
+#include <map>
 
 namespace VME
 {
@@ -25,13 +26,19 @@ namespace VME
       CFDV812(int32_t bhandle, uint32_t baseaddr);
       inline ~CFDV812() {;}
 
+      void CheckConfiguration() const;
+
       unsigned short GetFixedCode() const;
       unsigned short GetManufacturerId() const;
       unsigned short GetModuleType() const;
       unsigned short GetModuleVersion() const;
       unsigned short GetSerialNumber() const;
 
+      void SetOutputWidth(unsigned short group_id, unsigned short value) const;
+      unsigned short GetOutputWidth(unsigned short group_id) const;
+
     private:
+     float OutputWidthCalculator(unsigned short value) const;
   };
 }
 
