@@ -91,3 +91,10 @@ VMEReader::Abort()
     if (fOnSocket) Client::Send(e);
   }
 }
+
+void
+VMEReader::SetOutputFile(std::string filename)
+{
+  if (fOnSocket) Client::Send(SocketMessage(SET_NEW_FILENAME, filename.c_str()));
+  fOutputFile = filename;
+}
