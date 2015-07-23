@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 def main(argv):
     inputbinaryfile = 'events_board0.dat'
+    outputplotfile = 'testfig1.png'
 
     # AcquisitionMode
     CONT_STORAGE=0
@@ -34,7 +35,7 @@ def main(argv):
     Filler = 0x18
 
     # Define counters and arrays for DQM plots
-    nchannels = 16
+    nchannels = 64
     ntriggers = [0]
     occupancy = []
     toverthreshold = []
@@ -44,7 +45,7 @@ def main(argv):
         toverthreshold.append(0)
         k=k+1
 
-    ngroups = 4
+    ngroups = 16
     nerrors = [0]
     grouperrors = []
     readoutfifooverflowerrors = []
@@ -86,7 +87,7 @@ def main(argv):
         # Lookup dictionary of time measurements: time = {Channel ID, Leading/Trailing edge}
         channeltimemeasurements={}
         k = 0
-        while k < 64:
+        while k < nchannels:
             channeltimemeasurements[k,1]=0
             channeltimemeasurements[k,2]=0
             k=k+1
@@ -107,7 +108,7 @@ def main(argv):
                 # Reset lookup dictionary for each new event
                 channeltimemeasurements={}
                 k = 0
-                while k < 64:
+                while k < nchannels:
                     channeltimemeasurements[k,1]=0
                     channeltimemeasurements[k,2]=0
                     k=k+1
@@ -267,28 +268,28 @@ def main(argv):
     plt.grid(True)
 
     plt.subplot(3, 3, 8)
-    plt.bar(range(0,4),readoutfifooverflowerrors,color='r')
+    plt.bar(range(0,ngroups),readoutfifooverflowerrors,color='r')
     plt.ylabel('Readout FIFO overflow errors',fontsize=6)
     plt.xlabel('Group',fontsize=6)
 #   plt.title(r'$\mathrm{Readout\ FIFO\ overflow\ errors}$',fontsize=6)
     plt.axis([0, ngroups, 0, 2])
     if(readoutfifooverflowerrors[0]>0):
-        plt.axis([0, 4, 0, max(readoutfifooverflowerrors)*2])
+        plt.axis([0, ngroups, 0, max(readoutfifooverflowerrors)*2])
     frame2 = plt.gca()
     plt.grid(True)
 
     plt.subplot(3, 3, 9)
-    plt.bar(range(0,4),l1bufferoverflowerrors,color='r')
+    plt.bar(range(0,ngroups),l1bufferoverflowerrors,color='r')
     plt.ylabel('L1 buffer overflow errors',fontsize=6)
     plt.xlabel('Group',fontsize=6)
 #    plt.title(r'$\mathrm{L1\ buffer\ overflow\ errors}$',fontsize=6)
     plt.axis([0, ngroups, 0, 2])
     if(l1bufferoverflowerrors[0]>0):
-        plt.axis([0, 4, 0, max(l1bufferoverflowerrors)*2])
+        plt.axis([0, ngroups, 0, max(l1bufferoverflowerrors)*2])
     frame2 = plt.gca()
     plt.grid(True)
 
-    plt.savefig('testfig1.png')
+    plt.savefig(outputplotfile)
     
 if __name__ == "__main__":
     main(sys.argv[1:])
