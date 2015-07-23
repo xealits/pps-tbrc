@@ -93,7 +93,7 @@ class VMEReader : public Client
     }
 
     /// Set the path to the output file where the DAQ is to write
-    inline void SetOutputFile(std::string filename) { fOutputFile = filename; }
+    void SetOutputFile(std::string filename);
     /// Return the path to the output file the DAQ is currently writing to
     inline std::string GetOutputFile() const { return fOutputFile; }
 
