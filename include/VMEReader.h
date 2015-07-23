@@ -5,6 +5,7 @@
 #include "VME_BridgeVx718.h"
 #include "VME_FPGAUnitV1495.h"
 #include "VME_IOModuleV262.h"
+#include "VME_CFDV812.h"
 #include "VME_TDCV1x90.h"
 #include "VME_TDCEvent.h"
 
@@ -30,7 +31,7 @@ class VMEReader : public Client
      * \brief Load an XML configuration file
      */
     void ReadXML(const char* filename);
-    
+
     /**
      * \brief Add a TDC to handle
      * \param[in] address 32-bit address of the TDC module on the VME bus
@@ -45,6 +46,7 @@ class VMEReader : public Client
       if (fTDCCollection.count(address)==0) return 0;
       return fTDCCollection[address];
     }
+
     inline size_t GetNumTDC() const { return fTDCCollection.size(); }
     inline VME::TDCCollection GetTDCCollection() { return fTDCCollection; }
 

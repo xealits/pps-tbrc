@@ -22,16 +22,27 @@ void CtrlC(int aSig) {
 int main(int argc, char *argv[]) {
   signal(SIGINT, CtrlC);
   
-  if (argc<2) {
-    cerr << "Usage:" << endl
-         << "\t" << argv[0] << " <xml configuration file>" << endl;
-    return -1;
-  }
+  const unsigned int num_tdc = 1;
 
+  fstream out_file[num_tdc];
+  unsigned int num_events[num_tdc];
 
   VME::TDCEventCollection ec;
+  VME::TDCV1x90* tdc[num_tdc];
+  VME::FPGAUnitV1495* fpga;
 
+  VME::AcquisitionMode acq_mode = VME::TRIG_MATCH;
+  VME::DetectionMode det_mode = VME::TRAILEAD;
+  
+  file_header_t fh;
+  fh.magic = 0x30535050; // PPS0 in ASCII
+  fh.run_id = 0;
+  fh.spill_id = 0;
+  fh.acq_mode = acq_mode;
+  fh.det_mode = det_mode;
+  
   std::time_t t_beg;
+  for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
   unsigned int num_triggers = 0;
   bool use_fpga = true;
 
@@ -108,6 +119,8 @@ int main(int argc, char *argv[]) {
         for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
           uint32_t word = e->GetWord();
           out_file[i].write((char*)&word, sizeof(uint32_t));
+          /*cout << hex << e->GetType() << endl;
+          if (e->GetType()==VME::TDCEvent::TDCMeasurement) cout << e->GetChannelId() << endl;*/
         }
         num_events[i] += ec.size();
       }
@@ -118,9 +131,9 @@ int main(int argc, char *argv[]) {
     }
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
-      /*for (unsigned int i=0; i<2; i++) {
+      for (unsigned int i=0; i<num_tdc; i++) {
         if (out_file[i].is_open()) out_file[i].close();
-      }*/
+      }
 
       std::time_t t_end = std::time(0);
       double nsec_tot = difftime(t_end, t_beg), nsec = fmod(nsec_tot,60), nmin = (nsec_tot-nsec)/60.;
@@ -130,6 +143,11 @@ int main(int argc, char *argv[]) {
            << " (" << nmin << " min " << nsec << " sec)"
            << endl;
     
+      cerr << endl << "Acquired ";
+      for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << num_events[i]; }
+      cerr << " words for " << num_triggers << " triggers in this run" << endl;
+      //if (use_fpga) fpga->StopScaler();
+  
       delete vme;
       return 0;
     }
