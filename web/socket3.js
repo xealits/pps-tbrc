@@ -7,25 +7,12 @@ var built_clients;
 var acquisition_started;
 
 
-/*
-connection = new WebSocket('ws://'+hostname+':'+port);
 
-connection.onerror = function (event) {
-  if (event.originalTarget===undefined || event.originalTarget.readyState!==1) {
-    console_log.value = "Server not ready for connection!";
-    socket_id.style.backgroundColor = "red";
-    socket_id.value = -1;
-    disable_connected_buttons();
-    return;
-  }
-  // unbind_socket();
-  if (connection===0) return;
-  connection.send("REMOVE_CLIENT:"+listener_id);
-}
 
 function parse_message(event) {
   var d = event.data.slice(0,-1);
-  console_log.value = d;
+  // console_log.value = d;
+  // append_to_console( "<p>" + d + "</p>" );
   
   if (d.indexOf("SET_CLIENT_ID")>-1) {
     listener_id = parseInt(d.substr(d.indexOf(":")+1));
@@ -108,12 +95,10 @@ function parse_message(event) {
     restore_init_state();
     return;
   }  
-}
+};
 
-connection.onmessage = function(event) {
-  parse_message(event);
-}
-*/
+
+
 
 
 function append_to_console( html ) {
@@ -124,18 +109,19 @@ function append_to_console( html ) {
 }
 
 
-function send_message( con, text, listener_id ){
-  message = text + listener_id;
+function send_message( con, message ){
   con.send( message );
   append_to_console( "<p>Sent: " + message +"<\p>" );
 }
 
 
 function unbind_socket() {
-  if (connection===0) return;
-  send_message(connection, "REMOVE_CLIENT:", listener_id);
+  window.clearInterval( image_changer );
+  if (connection==undefined) return;
+  send_message(connection, "REMOVE_CLIENT:" + listener_id);
   // connection.send("REMOVE_CLIENT:"+listener_id);
   connection.close();
+  connection = undefined;
   // connection = undefined;
   // interface_off();
   // connection.onmessage = function(event) { parse_message(event); }
@@ -147,7 +133,7 @@ function socket_refresh() {
   if (listener_id<0) return;
   
   // connection.send("WEB_GET_CLIENTS:"+listener_id);
-  send_message(connection, "WEB_GET_CLIENTS:", listener_id);
+  send_message(connection, "WEB_GET_CLIENTS:" + listener_id);
   // connection.onmessage = function(event) {
     // parse_message(event);
   // };
@@ -158,7 +144,7 @@ function socket_refresh() {
 
 function start_acquisition() {
   if (connection===0) alert("no connection initiated");
-  send_message(connection, "START_ACQUISITION:", listener_id );
+  send_message(connection, "START_ACQUISITION:" + listener_id );
   // connection.send("START_ACQUISITION:"+listener_id);
   // connection.onmessage = function(event) { parse_message(event); } // CHECK: why use it? we set the handler on creation of the connection
 }
@@ -210,12 +196,16 @@ function bind_socket() {
       // }
       // unbind_socket();
       alert("socket onerror");
+      // connection.close();
+      connection = undefined;
+      alert( connection );
+      interface_off();
   };
   connection.onmessage = function(event) {
-    // parse_message(event);
+    append_to_console( '<p class="incoming">GOT: ' + event.data + "<\p>" );
+    parse_message(event);
     // $( "#console_log" ).append( "<p>GOT: " + event.data + "<\p>" );
     // alert( "socket onmessage" );
-    append_to_console( '<p class="incoming">GOT: ' + event.data + "<\p>" );
   }; // TODO
   connection.onclose = function() {
       // bind_socket();
@@ -228,22 +218,7 @@ function bind_socket() {
       interface_off();
       // alert( "socket onclose" );
   };
-
-  /*
-  if (connection.readyState == 1 ) {
-    interface_on();
-    bind_time.style.color = "black";
-    bind_time.innerHTML = new Date();
-    alert("connection opened");
-  }
-  else {
-      connection.close();
-      connection = undefined;
-      alert( "connection closed" );
-      alert( connection );
-      interface_off();
-  }
-  */
+  image_changer = setInterval(change_image, 5000);
 }
 
 
@@ -268,12 +243,35 @@ function interface_off() {
 }
 
 
+
+
+var images = [];
+images[0] = "dialup-final.png";
+images[1] = "testfig1.png";
+images[2] = "PopSci-journal-history-diagram.png";
+images[3] = "tot_multichannels.png";
+images[4] = "intergalactic-light.png";
+images[5] = "dist_edgetime.png";
+images[6] = "dencity-for-web.jpg";
+
+var x = 0;
+function change_image() {
+  x = (x <= 0) ? images.length - 1 : x - 1;
+  d = new Date();
+  // $("img").src = "intergalactic-light.png";
+  $( "img" ).attr( "src", images[x] + "?" + d.getTime() );
+  // alert( x + images[x]);
+}
+
+var image_changer;
+
 // Bind stuff:
 
 $( document ).ready( function(){
     // alert( $("#port").value );
     // $( ".help" ).css( "border", "3px solid red" );
     // alert( "sjkdhask" );
+
     $( ".help" ).click(function() {
       $( this ).children().toggle();
     });
@@ -290,5 +288,9 @@ $( document ).ready( function(){
     }
 } );
 
-
+$( window ).unload( function() {
+  if (connection!==undefined) {
+    connection.close();
+  }
+});
 

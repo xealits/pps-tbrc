@@ -187,7 +187,7 @@ background-color : #35b128; /*#399630;*/ /* make the background a little darker*
 /***NOW STYLE THE BUTTON'S HOVER AND FOCUS STATES***/
 button.enabled:hover /*, button:focus*/{
 background-color : #fec44f; /*#399630;*/ /* make the background a little darker*/
-color: black;
+color: grey;
 /*background-color :#222630; make the background a little darker*/
 /*reduce the drop shadow size to give a pushed button effect*/
 /*-webkit-box-shadow: 0 0 1px rgba(0,0,0, .75);*/
@@ -208,9 +208,9 @@ button:active {
   /*width: 48%;*/
   /*height: 48%;*/
   /*margin: 1%;*/
-  width: 44vw;
-  height: 44vw;
-  margin: 1vw;
+  width: 82vw;
+  height: 82vw;
+  margin: 5vw;
   float: left;
 }
 img {
@@ -218,8 +218,8 @@ img {
   max-height:100%;
   max-width:100%;
   display: block;
-  /*margin-left: auto;*/
-  /*margin-right: auto;*/
+  margin-left: auto;
+  margin-right: auto;
   margin-top: auto;
   margin-bottom: auto;
   /*margin: auto;*/
