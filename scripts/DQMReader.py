@@ -11,8 +11,19 @@ import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
 
 def main(argv):
+    #########################
+    # General script settings
+    #########################
+
     inputbinaryfile = 'events_board0.dat'
     outputplotfile = 'testfig1.png'
+    nchannels = 64
+    ngroups = 16
+    verbose = 0
+
+    ###################                                                                                                                                            
+    # HPTDC definitions                                                                                                                                           
+    ###################                                                                                                                                           
 
     # AcquisitionMode
     CONT_STORAGE=0
@@ -35,7 +46,6 @@ def main(argv):
     Filler = 0x18
 
     # Define counters and arrays for DQM plots
-    nchannels = 64
     ntriggers = [0]
     occupancy = []
     toverthreshold = []
@@ -45,7 +55,6 @@ def main(argv):
         toverthreshold.append(0)
         k=k+1
 
-    ngroups = 16
     nerrors = [0]
     grouperrors = []
     readoutfifooverflowerrors = []
@@ -59,7 +68,6 @@ def main(argv):
     eventsizelimiterrors = [0]
     triggerfifooverflowerrors = [0]
     internalchiperrors = [0]
-    verbose = 0
 
     # Open as a readable binary file - hardcoded for testing 
     with open(inputbinaryfile, 'rb') as f:
@@ -92,7 +100,7 @@ def main(argv):
             channeltimemeasurements[k,2]=0
             k=k+1
 
-        ###########################                                                                                                                                              
+        ###########################                                                                                                                               
         # Main loop to read in data
         ###########################
         while(f.read(1)):
@@ -116,6 +124,7 @@ def main(argv):
             # This word is a global trailer - calculate summary timing information for all channels in this event
             if(type == GlobalTrailer):
                 status = ((decode[0]) >> 24) & (0x7)
+                geo = (decode[0]) & (0x1F)
                 if(verbose == 1):
                     print "\tTiming measurements for this trigger:"
                     print"\t\tChannel\tLeading\t\tTrailing\tDifference"
@@ -127,16 +136,26 @@ def main(argv):
                     toverthreshold[channelflag] = toverthreshold[channelflag] + tdifference
                     if(verbose == 1):
                         print "\t\t" + str(channelflag) + ":\t" + str(tleading) + ",\t" + str(ttrailing) + ",\t" + str(tdifference)
-                        print "Global Trailer (status = " + str(status) +")"
                     channelflag = channelflag+1
+                if(verbose == 1):
+                    print "Global Trailer (status = " + str(status) + ", Geo = " + str(geo) + ")"
 
             if(type == TDCHeader):
-                if(verbose == 1):
-                    print "HEY!!!!!!!!!!! TDCHeader!!!!!!!!!!"
+                tdcid = ((decode[0]) >> 24) & (0x3)
+                eventid = ((decode[0]) >> 12) & (0xFFF)
+                bunchid = (decode[0]) & (0xFFF)
 
+                if(verbose == 1):
+                    print "\tTDC ID = " + str(tdcid)
+                    print "\tEvent ID = " + str(eventid)
+                    
             if(type == TDCTrailer):
                 if(verbose == 1):
-                    print "HEY!!!!!!!!!!! TDCTrailer!!!!!!!!!!"
+                    wordcount = (decode[0]) & (0xFFF)
+                    eventcount = ((decode[0]) >> 5) & (0x3FFFF)
+                    if(verbose == 1):
+                        print "\tWord count = " + str(wordcount)
+                        print "\tEvent count = " + str(eventcount)
 
             if(type == ETTT):
                 GetETT = (decode[0]) & (0x3FFFFFF)
@@ -161,7 +180,7 @@ def main(argv):
                 if(verbose == 1):
                     print "\tTDCMeasurement (trailing = " + str(istrailing) + ", time = " + str(time) + ", width = " + str(width) + ", (channel ID = " + str(channelid) + ")"
                 
-            # This word is and Error - decode and count each type of error
+            # This word is an Error - decode it and count each type of error
             if(type == TDCError):
                 errorflag = (decode[0]) & (0x7FFF)
                 nerrors[0] = nerrors[0] + 1
@@ -219,14 +238,12 @@ def main(argv):
     plt.bar(range(0,nchannels),toverthreshold)
     plt.xlabel('HPTDC Channel',fontsize=6)
     plt.ylabel('Mean time over threshold [ns]',fontsize=6)
-#    plt.title(r'$\mathrm{Mean\ time\ over\ threshold}$',fontsize=6)
     plt.axis([0, nchannels, 0, max(toverthreshold)*2])
     plt.grid(True)
 
     plt.subplot(3, 3, 4)
     plt.bar(range(0,1),nerrors,width=1.0,color='r')
     plt.ylabel('Total errors',fontsize=6)
-#    plt.title(r'$\mathrm{Total\ errors}$',fontsize=6)
     plt.axis([0, 1, 0, 2])
     if(nerrors[0]>0):
         plt.axis([0, 1, 0, max(nerrors)*2])
@@ -237,7 +254,6 @@ def main(argv):
     plt.subplot(3, 3, 5)
     plt.bar(range(0,1),eventsizelimiterrors,width=1.0,color='r')
     plt.ylabel('Event size errors',fontsize=6)
-#    plt.title(r'$\mathrm{Event\ size\ errors}$',fontsize=6)
     plt.axis([0, 1, 0, 2])
     if(eventsizelimiterrors[0]>0):
         plt.axis([0, 1, 0, max(eventsizelimiterrors)*2])
@@ -248,7 +264,6 @@ def main(argv):
     plt.subplot(3, 3, 6)
     plt.bar(range(0,1),triggerfifooverflowerrors,width=1.0,color='r')
     plt.ylabel('Trigger FIFO overflow errors',fontsize=6)
-#    plt.title(r'$\mathrm{Trigger\ FIFO\ overflow\ errors}$',fontsize=6)
     plt.axis([0, 1, 0, 2])
     if(triggerfifooverflowerrors[0]>0):
         plt.axis([0, 1, 0, max(triggerfifooverflowerrors)*2])
@@ -259,7 +274,6 @@ def main(argv):
     plt.subplot(3, 3, 7)
     plt.bar(range(0,1),internalchiperrors,width=1.0,color='r')
     plt.ylabel('Internal chip errors',fontsize=6)
-#    plt.title(r'$\mathrm{Internal\ chip\ errors}$',fontsize=6)
     plt.axis([0, 1, 0, 2])
     if(internalchiperrors[0]>0):
         plt.axis([0, 1, 0, max(internalchiperrors)*2])
@@ -271,7 +285,6 @@ def main(argv):
     plt.bar(range(0,ngroups),readoutfifooverflowerrors,color='r')
     plt.ylabel('Readout FIFO overflow errors',fontsize=6)
     plt.xlabel('Group',fontsize=6)
-#   plt.title(r'$\mathrm{Readout\ FIFO\ overflow\ errors}$',fontsize=6)
     plt.axis([0, ngroups, 0, 2])
     if(readoutfifooverflowerrors[0]>0):
         plt.axis([0, ngroups, 0, max(readoutfifooverflowerrors)*2])
@@ -282,7 +295,6 @@ def main(argv):
     plt.bar(range(0,ngroups),l1bufferoverflowerrors,color='r')
     plt.ylabel('L1 buffer overflow errors',fontsize=6)
     plt.xlabel('Group',fontsize=6)
-#    plt.title(r'$\mathrm{L1\ buffer\ overflow\ errors}$',fontsize=6)
     plt.axis([0, ngroups, 0, 2])
     if(l1bufferoverflowerrors[0]>0):
         plt.axis([0, ngroups, 0, max(l1bufferoverflowerrors)*2])
