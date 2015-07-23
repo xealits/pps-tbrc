@@ -35,9 +35,7 @@ namespace VME
   CFDV812::GetFixedCode() const
   {
     uint16_t word = 0x0;
-    try {
-      ReadRegister(kV812FixedCode, &word);
-    } catch (Exception& e) {
+    try { ReadRegister(kV812FixedCode, &word); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve the fixed code", JustWarning);
     }
@@ -48,9 +46,7 @@ namespace VME
   CFDV812::GetManufacturerId() const
   {
     uint16_t word = 0x0;
-    try {
-      ReadRegister(kV812Info0, &word);
-    } catch (Exception& e) {
+    try { ReadRegister(kV812Info0, &word); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve the manufacturer identifier", JustWarning);
     }
@@ -61,9 +57,7 @@ namespace VME
   CFDV812::GetModuleType() const
   {
     uint16_t word = 0x0;
-    try {
-      ReadRegister(kV812Info0, &word);
-    } catch (Exception& e) {
+    try { ReadRegister(kV812Info0, &word); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve the module type", JustWarning);
     }
@@ -74,9 +68,7 @@ namespace VME
   CFDV812::GetModuleVersion() const
   {
     uint16_t word = 0x0;
-    try {
-      ReadRegister(kV812Info1, &word);
-    } catch (Exception& e) {
+    try { ReadRegister(kV812Info1, &word); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve the module version", JustWarning);
     }
@@ -87,13 +79,35 @@ namespace VME
   CFDV812::GetSerialNumber() const
   {
     uint16_t word = 0x0;
-    try {
-      ReadRegister(kV812Info1, &word);
-    } catch (Exception& e) {
+    try { ReadRegister(kV812Info1, &word); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve the serial number", JustWarning);
     }
     return static_cast<unsigned int>(word&0xfff);
+  }
+
+  void
+  CFDV812::SetPOI(unsigned short poi) const
+  {
+    try { WriteRegister(kV812PatternOfInhibit, poi); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to set the pattern of inhibit", JustWarning);
+    }
+  }
+
+  void
+  CFDV812::SetThreshold(unsigned short channel_id, unsigned short value) const
+  {
+    if (channel_id<0 or channel_id>num_cfd_channels) return;
+    try {
+      CFDV812Register reg = static_cast<CFDV812Register>(kV812ThresholdChannel0+channel_id*0x2);
+      WriteRegister(reg, value);
+    } catch (Exception& e) {
+      e.Dump();
+      std::ostringstream os;
+      os << "Failed to set the threshold for channel " << channel_id;
+      throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+    }
   }
 
   void
@@ -117,22 +131,30 @@ namespace VME
     os << "Output width from group " << group_id << " changed to ~" << OutputWidthCalculator(value) << " ns";
     PrintInfo(os.str());
   }
-  
+ 
   void
-  CFDV812::SetThreshold(unsigned short channel_id, unsigned short value) const
+  CFDV812::SetDeadTime(unsigned short group_id, unsigned short value) const
   {
-    if (channel_id<0 or channel_id>num_cfd_channels) return;
+    uint16_t word = static_cast<uint16_t>(value&0xffff);
+    CFDV812Register reg;
+    if (group_id==0)      reg = kV812DeadTimeGroup0;
+    else if (group_id==1) reg = kV812DeadTimeGroup1;
+    else throw Exception(__PRETTY_FUNCTION__, "Requested to change the dead time of an unrecognized group identifier", JustWarning);
     try {
-      CFDV812Register reg = static_cast<CFDV812Register>(kV812ThresholdChannel0+channel_id*0x2);
-      WriteRegister(reg, value);
+      WriteRegister(reg, word);
     } catch (Exception& e) {
       e.Dump();
       std::ostringstream os;
-      os << "Failed to set the threshold for channel " << channel_id;
+      os << "Failed to set dead time for group " << group_id
+         << " to value " << value << " (~" << DeadTimeCalculator(value) << " ns)";
       throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
     }
-  }
+    std::ostringstream os;
+    os << "Dead time from group " << group_id << " changed to ~" << DeadTimeCalculator(value) << " ns";
+    PrintInfo(os.str());
 
+  }
+ 
   float
   CFDV812::OutputWidthCalculator(unsigned short value) const
   {
@@ -155,4 +177,10 @@ namespace VME
     return -1.;
   }
 
+  float
+  CFDV812::DeadTimeCalculator(unsigned short value) const
+  {
+    if (value>255 or value<0) return -1.;
+    return (150.+(2000.-150.)/255*value);
+  }
 }

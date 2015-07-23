@@ -36,12 +36,28 @@ namespace VME
       unsigned short GetModuleVersion() const;
       unsigned short GetSerialNumber() const;
 
-      void SetOutputWidth(unsigned short group_id, unsigned short value) const;
-      /// Set the threshold for one single channel, in units of 1 mV
+      /**
+       * \brief Set the pattern of inhibit (list of enabled channels)
+       */
+      void SetPOI(unsigned short poi) const;
+      /**
+       * \brief Set the threshold for one single channel, in units of 1 mV
+       */
       void SetThreshold(unsigned short channel_id, unsigned short value) const;
+      /**
+       * \brief Set the discriminated pulse output width for one group of 8 channels
+       * \param[in] group_id Group of 8 channels (either 0 for 0-7, or 1 for 8-15)
+       */
+      void SetOutputWidth(unsigned short group_id, unsigned short value) const;
+      /**
+       * \brief Set the discrimination dead time for one group of 8 channels
+       * \param[in] group_id Group of 8 channels (either 0 for 0-7, or 1 for 8-15)
+       */
+      void SetDeadTime(unsigned short group_id, unsigned short value) const;
 
     private:
       float OutputWidthCalculator(unsigned short value) const;
+      float DeadTimeCalculator(unsigned short value) const;
   };
 }
 
