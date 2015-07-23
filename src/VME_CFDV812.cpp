@@ -160,15 +160,16 @@ namespace VME
   {
     if (value>255 or value<0) return -1.;
     std::map<unsigned short,float> lookup_table;
-    lookup_table[  0] = 11.32; lookup_table[ 15] = 12.34; lookup_table[ 30] = 13.47; lookup_table[ 45] = 14.75;
-    lookup_table[ 60] = 16.07; lookup_table[ 75] = 17.51; lookup_table[ 90] = 19.03; lookup_table[105] = 21.29;
-    lookup_table[120] = 23.69; lookup_table[135] = 26.71; lookup_table[150] = 30.61; lookup_table[165] = 35.20;
-    lookup_table[180] = 41.83; lookup_table[195] = 51.02; lookup_table[210] = 64.53; lookup_table[225] = 87.47;
-    lookup_table[240] =130.70; lookup_table[255] =240.70;
+    lookup_table[  0] = 11.32; lookup_table[ 15] = 12.34; lookup_table[ 30] = 13.47;
+    lookup_table[ 45] = 14.75; lookup_table[ 60] = 16.07; lookup_table[ 75] = 17.51;
+    lookup_table[ 90] = 19.03; lookup_table[105] = 21.29; lookup_table[120] = 23.69;
+    lookup_table[135] = 26.71; lookup_table[150] = 30.61; lookup_table[165] = 35.20;
+    lookup_table[180] = 41.83; lookup_table[195] = 51.02; lookup_table[210] = 64.53;
+    lookup_table[225] = 87.47; lookup_table[240] =130.70; lookup_table[255] =240.70;
     std::map<unsigned short,float>::iterator it;
     if ((it=lookup_table.find(value))!=lookup_table.end()) return it->second;
     else {
-      unsigned short last_id = 0; float last_value = -1;
+      unsigned short last_id = 0; float last_value = -1.;
       for (it=lookup_table.begin(); it!=lookup_table.end(); it++) {
         if (value>it->first) { last_id = it->first; last_value = it->second; }
         else return (last_value+(it->second-last_value)/(value-last_id));
