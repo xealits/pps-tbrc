@@ -6,6 +6,7 @@
 #include "VME_FPGAUnitV1495.h"
 #include "VME_IOModuleV262.h"
 #include "VME_CFDV812.h"
+#include "VME_CAENETControllerV288.h"
 #include "VME_TDCV1x90.h"
 #include "VME_TDCEvent.h"
 

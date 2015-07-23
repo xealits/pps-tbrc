@@ -22,6 +22,12 @@ namespace VME
     kV812Info0             = 0xfc,
     kV812Info1             = 0xfe
   };
+
+  /**
+   * \brief Controller for a CAEN V812 constant fraction discriminator
+   * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+   * \date 22 Jul 2015
+   */
   class CFDV812 : public GenericBoard<CFDV812Register,cvA24_U_DATA>
   {
     public:
