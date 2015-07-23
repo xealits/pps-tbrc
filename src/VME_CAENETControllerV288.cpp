@@ -3,35 +3,47 @@
 namespace VME
 {
   CAENETControllerV288::CAENETControllerV288(int32_t bhandle, uint32_t baseaddr) :
-    GenericBoard<CAENETControllerV288Register,cvA24_U_DATA>(bhandle, baseaddr)
+    GenericBoard<CAENETControllerV288Register,cvA24_U_DATA>(bhandle, baseaddr),
+    fNumWordsInBuffer(0)
   {;}
 
   void
-  operator<<(uint16_t& word, const CAENETControllerV288& cnt)
+  CAENETControllerV288::Send()
   {
-    try { cnt.WriteRegister(kV288DataBuffer, word); } catch (Exception& e) {
-      e.Dump();
-      throw Exception(__PRETTY_FUNCTION__, "Failed to fill the buffer with an additional word", JustWarning);
-    }
-  }
-
-  uint16_t&
-  operator>>(uint16_t& word, const CAENETControllerV288& cnt)
-  {
-    try { cnt.ReadRegister(kV288DataBuffer, &word); } catch (Exception& e) {
-      e.Dump();
-      throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve an additional word from the buffer", JustWarning);
-    }
-    return word;
-  }
-
-  void
-  CAENETControllerV288::Send() const
-  {
+    
+    fNumWordsInBuffer = 0;
   }
 
   std::vector<uint16_t>
   CAENETControllerV288::Receive() const
   {
+    std::vector<uint16_t> out;
+    return out;
+  }
+
+  CAENETControllerV288Status
+  CAENETControllerV288::GetStatus() const
+  {
+    uint16_t word = 0x0;
+    try { ReadRegister(kV288Status, &word); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve the status word", JustWarning);
+    }
+    return CAENETControllerV288Status(word);
+  }
+
+  bool
+  CAENETControllerV288::WaitForResponse(uint16_t* response, unsigned int max_trials) const
+  {
+    uint16_t word = 0x0;
+    unsigned int i = 0;
+    do {
+      ReadRegister(kV288DataBuffer, &word);
+      if (GetStatus().GetOperationStatus()==CAENETControllerV288Status::Valid) {
+        *response = word;
+        return true;
+      }
+    } while (i<max_trials or max_trials<0);
+    return false;
   }
 }

@@ -13,7 +13,7 @@ namespace VME
     kV288ModuleReset  = 0x06, // W
     kV288IRQVector    = 0x08  // W
   };
-  
+
   class CAENETControllerV288Status
   {
     public:
@@ -39,16 +39,34 @@ namespace VME
       inline ~CAENETControllerV288() {;}
 
       /// Fill the buffer with an additional 16-bit word
-      friend void operator<<(uint16_t& word, const CAENETControllerV288& cnt);
+      friend void operator<<(uint16_t& word, CAENETControllerV288& cnt) {
+        try {
+          cnt.WriteRegister(kV288DataBuffer, word);
+          cnt.fNumWordsInBuffer++;
+        } catch (Exception& e) {
+          e.Dump();
+          throw Exception(__PRETTY_FUNCTION__, "Failed to fill the buffer with an additional word", JustWarning);
+        }
+      }
       /// Read back a 16-bit word from the buffer
-      friend uint16_t& operator>>(uint16_t& word, const CAENETControllerV288& cnt);
+      friend uint16_t& operator>>(uint16_t& word, const CAENETControllerV288& cnt) {
+        try { cnt.ReadRegister(kV288DataBuffer, &word); } catch (Exception& e) {
+          e.Dump();
+          throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve an additional word from the buffer", JustWarning);
+        }
+        return word;
+      }
 
       /// Send the whole buffer through the network
-      void Send() const;
+      void Send();
       /// Retrieve the network buffer
       std::vector<uint16_t> Receive() const;
+      bool WaitForResponse(uint16_t* response, unsigned int max_trials=-1) const;
 
       CAENETControllerV288Status GetStatus() const;
+
+    private:
+      unsigned int fNumWordsInBuffer;
   };
 }
 
