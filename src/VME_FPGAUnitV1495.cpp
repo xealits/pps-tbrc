@@ -24,6 +24,7 @@ namespace VME
        << "CAEN Firmware revision: " << std::dec << ((cfwrev>>8)&0xff) << "." << (cfwrev&0xff) << "\n\t"
        << "Geo address: 0x" << std::hex << GetGeoAddress();
     PrintInfo(os.str());
+    GetControl();
   }
 
   FPGAUnitV1495::~FPGAUnitV1495()
@@ -193,6 +194,7 @@ namespace VME
   FPGAUnitV1495::GetControl() const
   {
     uint32_t word = 0x0;
+    sleep(1);
     try { ReadRegister(kV1495Control, &word); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve the control word from FW", JustWarning);
@@ -203,6 +205,7 @@ namespace VME
   void
   FPGAUnitV1495::SetControl(const FPGAUnitV1495Control& control) const
   {
+    sleep(1);
     try { WriteRegister(kV1495Control, control.GetWord()); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to set the control word to FW", JustWarning);
@@ -322,6 +325,15 @@ namespace VME
     try { WriteRegister(kV1495DelaySettings, delay); } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to set output delay word", JustWarning);
+    }
+  }
+
+  void
+  FPGAUnitV1495::SetOutputPulserPOI(uint32_t poi) const
+  {
+    try { WriteRegister(kV1495OutputSettings, poi); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to set output pulser's POI word", JustWarning);
     }
   }
 

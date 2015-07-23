@@ -54,6 +54,21 @@ VMEReader::AddTDC(uint32_t address)
 }
 
 void
+VMEReader::AddCFD(uint32_t address)
+{
+  if (!fBridge) throw Exception(__PRETTY_FUNCTION__, "No bridge detected! Aborting...", Fatal);
+  try {
+    fCFDCollection.insert(std::pair<uint32_t,VME::CFDV812*>(
+      address,
+      new VME::CFDV812(fBridge->GetHandle(), address)
+    ));
+  } catch (Exception& e) {
+    e.Dump();
+    if (fOnSocket) Client::Send(e);
+  }
+}
+
+void
 VMEReader::AddIOModule(uint32_t address)
 {
   if (!fBridge) throw Exception(__PRETTY_FUNCTION__, "No bridge detected! Aborting...", Fatal);
@@ -83,7 +98,7 @@ VMEReader::Abort()
 {
   if (!fBridge) throw Exception(__PRETTY_FUNCTION__, "No bridge detected! Aborting...", Fatal);
   try {
-    for (TDCCollection::iterator t=fTDCCollection.begin(); t!=fTDCCollection.end(); t++) {
+    for (VME::TDCCollection::iterator t=fTDCCollection.begin(); t!=fTDCCollection.end(); t++) {
       t->second->abort();
     }
   } catch (Exception& e) {
