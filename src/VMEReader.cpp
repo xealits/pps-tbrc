@@ -107,6 +107,30 @@ VMEReader::ReadXML(const char* filename)
       } catch (Exception& e) { throw e; }
     }
   }
+  for (tinyxml2::XMLElement* acfd=doc.FirstChildElement("cfd"); acfd!=NULL; acfd=acfd->NextSiblingElement("cfd")) {
+    if (const char* address=acfd->Attribute("address")) {
+      unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
+      if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse CFD's base address", Fatal);
+      try {
+        AddCFD(addr);
+        VME::CFDV812* cfd = GetCFD(addr);
+        if (tinyxml2::XMLElement* poi=acfd->FirstChildElement("poi")) { cfd->SetPOI(atoi(poi->GetText())); }
+        if (tinyxml2::XMLElement* ow=acfd->FirstChildElement("output_width")) {
+          if (tinyxml2::XMLElement* g0=ow->FirstChildElement("group0")) { cfd->SetOutputWidth(0, atoi(g0->GetText())); }
+          if (tinyxml2::XMLElement* g1=ow->FirstChildElement("group1")) { cfd->SetOutputWidth(1, atoi(g1->GetText())); }
+        }
+        if (tinyxml2::XMLElement* dt=acfd->FirstChildElement("dead_time")) {
+          if (tinyxml2::XMLElement* g0=dt->FirstChildElement("group0")) { cfd->SetDeadTime(0, atoi(g0->GetText())); }
+          if (tinyxml2::XMLElement* g1=dt->FirstChildElement("group1")) { cfd->SetDeadTime(1, atoi(g1->GetText())); }
+        }
+        if (tinyxml2::XMLElement* thr=acfd->FirstChildElement("threshold")) {
+          for (tinyxml2::XMLElement* ch=thr->FirstChildElement("channel"); ch!=NULL; ch=ch->NextSiblingElement("channel")) {
+            cfd->SetThreshold(atoi(ch->Attribute("id")), atoi(ch->GetText()));
+          }
+        }
+      } catch (Exception& e) { throw e; }
+    }
+  }  
   //doc.Print();
 }
 
@@ -134,6 +158,21 @@ VMEReader::AddTDC(uint32_t address)
     fTDCCollection.insert(std::pair<uint32_t,VME::TDCV1x90*>(
       address,
       new VME::TDCV1x90(fBridge->GetHandle(), address)
+    ));
+  } catch (Exception& e) {
+    e.Dump();
+    if (fOnSocket) Client::Send(e);
+  }
+}
+
+void
+VMEReader::AddCFD(uint32_t address)
+{
+  if (!fBridge) throw Exception(__PRETTY_FUNCTION__, "No bridge detected! Aborting...", Fatal);
+  try {
+    fCFDCollection.insert(std::pair<uint32_t,VME::CFDV812*>(
+      address,
+      new VME::CFDV812(fBridge->GetHandle(), address)
     ));
   } catch (Exception& e) {
     e.Dump();

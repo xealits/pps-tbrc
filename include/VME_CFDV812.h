@@ -59,6 +59,9 @@ namespace VME
       float OutputWidthCalculator(unsigned short value) const;
       float DeadTimeCalculator(unsigned short value) const;
   };
+
+  /// Mapper from physical VME addresses to pointers to CFD objects
+  typedef std::map<uint32_t,VME::CFDV812*> CFDCollection;
 }
 
 #endif

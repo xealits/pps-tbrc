@@ -46,12 +46,28 @@ class VMEReader : public Client
       if (fTDCCollection.count(address)==0) return 0;
       return fTDCCollection[address];
     }
-
     inline size_t GetNumTDC() const { return fTDCCollection.size(); }
     inline VME::TDCCollection GetTDCCollection() { return fTDCCollection; }
 
     void AddIOModule(uint32_t address);
     inline VME::IOModuleV262* GetIOModule() { return fSG; }
+
+    /**
+     * \brief Add a CFD to handle
+     * \param[in] address 32-bit address of the CFD module on the VME bus
+     * Create a new CFD handler for the VME bus
+     */
+    void AddCFD(uint32_t address);
+    /**
+     * \brief Get a CFD on the VME bus
+     * Return a pointer to the CFD object, given its physical address on the VME bus
+     */
+    inline VME::CFDV812* GetCFD(uint32_t address) {
+      if (fCFDCollection.count(address)==0) return 0;
+      return fCFDCollection[address];
+    }
+    inline size_t GetNumCFD() const { return fCFDCollection.size(); }
+    inline VME::CFDCollection GetCFDCollection() { return fCFDCollection; }
 
     /**
      * \brief Add a multi-purposes FPGA board (CAEN V1495) to the crate controller
@@ -105,6 +121,8 @@ class VMEReader : public Client
     VME::BridgeVx718* fBridge;
     /// A set of pointers to TDC objects indexed by their physical VME address
     VME::TDCCollection fTDCCollection;
+    /// A set of pointers to CFD objects indexed by their physical VME address
+    VME::CFDCollection fCFDCollection;
     /// Pointer to the VME input/output module object
     VME::IOModuleV262* fSG;
     /// Pointer to the VME general purpose FPGA unit object
