@@ -53,7 +53,7 @@ namespace VME
     
     CheckConfiguration();
 
-    SetIRQ(IRQ1|IRQ2|IRQ3|IRQ4|IRQ5|IRQ6|IRQ7, false);
+    //SetIRQ(IRQ1|IRQ2|IRQ3|IRQ4|IRQ5|IRQ6|IRQ7, false);
   }
 
   BridgeVx718::~BridgeVx718()

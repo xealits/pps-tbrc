@@ -43,19 +43,23 @@ namespace VME
       CAENETControllerV288Status GetStatus() const;
 
       /// Fill the buffer with an additional 16-bit word
-      //friend void operator<<(uint16_t& word, CAENETControllerV288& cnt) {
       friend void operator<<(const CAENETControllerV288& cnt, uint16_t word) {
         try {
           cnt.WriteRegister(kV288DataBuffer, word);
+          if (cnt.GetStatus().GetOperationStatus()!=CAENETControllerV288Status::Valid)
+            throw Exception(__PRETTY_FUNCTION__, "Wrong status retrieved", JustWarning);
         } catch (Exception& e) {
           e.Dump();
           throw Exception(__PRETTY_FUNCTION__, "Failed to fill the buffer with an additional word", JustWarning);
         }
       }
       /// Read back a 16-bit word from the buffer
-      //friend uint16_t operator>>(uint16_t word, const CAENETControllerV288& cnt) {
       friend uint16_t operator>>(const CAENETControllerV288& cnt, uint16_t word) {
-        try { cnt.ReadRegister(kV288DataBuffer, &word); } catch (Exception& e) {
+        try {
+          cnt.ReadRegister(kV288DataBuffer, &word);
+          if (cnt.GetStatus().GetOperationStatus()!=CAENETControllerV288Status::Valid)
+            throw Exception(__PRETTY_FUNCTION__, "Wrong status retrieved", JustWarning);
+        } catch (Exception& e) {
           e.Dump();
           throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve an additional word from the buffer", JustWarning);
         }

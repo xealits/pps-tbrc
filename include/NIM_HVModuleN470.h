@@ -31,8 +31,8 @@ namespace NIM
       HVModuleN470(uint16_t addr, VME::CAENETControllerV288& cont);
       inline ~HVModuleN470() {;}
 
-      unsigned short GetModuleId();
-      unsigned short GetFWRevision();
+      unsigned short GetModuleId() const;
+      unsigned short GetFWRevision() const;
 
     private:
       /**
@@ -41,14 +41,14 @@ namespace NIM
        * \param[in] addr register
        * \param[out] vector of data words
        */
-      void ReadRegister(const HVModuleN470Opcodes& reg, std::vector<uint16_t>* data, unsigned int num_words=1);
+      void ReadRegister(const HVModuleN470Opcodes& reg, std::vector<uint16_t>* data, unsigned int num_words=1) const;
       /**
        * Write a 16-bit word in the register
        * \brief Write on register
        * \param[in] addr register
        * \param[out] data word
        */
-      void WriteRegister(const HVModuleN470Opcodes& reg, const uint16_t& data);
+      void WriteRegister(const HVModuleN470Opcodes& reg, const std::vector<uint16_t>& data) const;
 
       VME::CAENETControllerV288 fController;
       uint16_t fAddress;

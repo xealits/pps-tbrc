@@ -22,6 +22,9 @@ namespace VME
   std::vector<uint16_t>
   CAENETControllerV288::FetchBuffer(unsigned int num_words=1) const
   {
+    unsigned short resp;
+    if (!WaitForResponse(&resp))
+      throw Exception(__PRETTY_FUNCTION__, "Wrong response retrieved", JustWarning);
     std::vector<uint16_t> out;
     for (unsigned int i=0; i<num_words; i++) {
       uint16_t buf;
