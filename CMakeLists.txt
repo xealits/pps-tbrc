@@ -5,11 +5,13 @@ set(CAEN_LOCATION "/usr/lib")
 set(GCC_COMPILE_FLAGS "-Wall -fPIC -O2 -g")
 add_definitions(${GCC_COMPILE_FLAGS})
 
-file(GLOB det_sources ${PROJECT_SOURCE_DIR}/src/VME*.cpp)
-add_library(det_lib OBJECT ${det_sources})
+file(GLOB vme_sources ${PROJECT_SOURCE_DIR}/src/VME*.cpp)
+file(GLOB nim_sources ${PROJECT_SOURCE_DIR}/src/NIM*.cpp)
+add_library(det_lib OBJECT ${vme_sources} ${nim_sources})
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
-list(REMOVE_ITEM sources ${det_sources})
+list(REMOVE_ITEM sources ${vme_sources})
+list(REMOVE_ITEM sources ${nim_sources})
 add_library(src_lib OBJECT ${sources})
 
 include_directories("${PROJECT_SOURCE_DIR}/include")

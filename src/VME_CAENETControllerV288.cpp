@@ -3,24 +3,31 @@
 namespace VME
 {
   CAENETControllerV288::CAENETControllerV288(int32_t bhandle, uint32_t baseaddr) :
-    GenericBoard<CAENETControllerV288Register,cvA24_U_DATA>(bhandle, baseaddr),
-    fNumWordsInBuffer(0)
+    GenericBoard<CAENETControllerV288Register,cvA24_U_DATA>(bhandle, baseaddr)
   {;}
 
   CAENETControllerV288::~CAENETControllerV288()
   {;}
 
   void
-  CAENETControllerV288::Send()
+  CAENETControllerV288::SendBuffer() const
   {
-    
-    fNumWordsInBuffer = 0;
+    uint16_t word = MSTIDENT;
+    try { WriteRegister(kV288Transmission, word); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to send buffer through the CAENET interface", JustWarning);
+    }
   }
 
   std::vector<uint16_t>
-  CAENETControllerV288::Receive() const
+  CAENETControllerV288::FetchBuffer(unsigned int num_words=1) const
   {
     std::vector<uint16_t> out;
+    for (unsigned int i=0; i<num_words; i++) {
+      uint16_t buf;
+      *this >> buf;
+      out.push_back(buf);
+    }
     return out;
   }
 
