@@ -1,5 +1,6 @@
 var port = 1987;
-var listener_id, connection = undefined;
+var listener_id;
+var connection = undefined;
 var upper_fields;
 var bind_button, unbind_button, refresh_button, acquisition_button, time_field;
 var socket_id, console_log;
@@ -9,7 +10,59 @@ var acquisition_started;
 
 
 
+
 function parse_message(event) {
+  var d = event.data.slice(0,-1);
+  m = d.split(":");
+  switch (m[0]) {
+    case "SET_CLIENT_ID":
+      listener_id = parseInt(m[1]);
+      $( "#socket_id" ).val( listener_id );
+      socket_refresh();
+      break;
+    case "CLIENTS_LIST":
+      var listeners = m[1].split(';');
+      // TODO: do something
+      break;
+    case "THIS_CLIENT_DELETED":
+      unbind_socket();
+      break;
+    case "OTHER_CLIENT_DELETED":
+      if (m[1]==listener_id) {
+        unbind_socket();
+      }
+      else append_to_console("<p>Socket " + m[1]+" successfully deleted!</p>");
+      break;
+    case "PING_ANSWER":
+      alert(m[1]);
+      break;
+    case "ACQUISITION_STARTED":
+      append_to_console( "<p>Acquisition process successfully launched!</p>" );
+      alert("Acquisition process successfully launched!");
+      $( "#acquisition_button" ).html( "Stop acquisition" );
+      $( "#acquisition_button" ).click( stop_acquisition) ;
+      acquisition_started = true;
+      break;
+    case "ACQUISITION_STOPPED":
+      append_to_console( "<p>Acquisition process terminated!</p>" );
+      alert("Acquisition process terminated!");
+      $("#acquisition_button").html( "Start acquisition" );
+      $("#acquisition_button").click( start_acquisition );
+      acquisition_started = false;
+      break;
+    case "EXCEPTION":
+      append_to_console( "<p>" + d + "</p>" );
+      break;
+    case "MASTER_DISCONNECT":
+      alert("ALERT:\nMaster disconnected!");
+      // restore_init_state();
+      break;
+  }
+}
+
+
+
+function parse_message_old(event) {
   var d = event.data.slice(0,-1);
   // console_log.value = d;
   // append_to_console( "<p>" + d + "</p>" );
@@ -121,9 +174,11 @@ function unbind_socket() {
   send_message(connection, "REMOVE_CLIENT:" + listener_id);
   // connection.send("REMOVE_CLIENT:"+listener_id);
   connection.close();
-  connection = undefined;
   // connection = undefined;
+
   // interface_off();
+  alert( "UNBOUNDED!" );
+  // connection = undefined;
   // connection.onmessage = function(event) { parse_message(event); }
 }
 
@@ -149,6 +204,10 @@ function start_acquisition() {
   // connection.onmessage = function(event) { parse_message(event); } // CHECK: why use it? we set the handler on creation of the connection
 }
 
+function stop_acquisition() {
+  connection.send("STOP_ACQUISITION:"+listener_id);
+}
+
 
 
 
@@ -160,31 +219,40 @@ function bind_socket() {
   // alert( connection );
   // alert( hostname + ":" + port );
   // if (connection==0) { alert("no connection") };
+  alert("START BIND");
 
-  if (connection!==undefined) {
-    alert("repeated connection");
+  if (typeof connection !== "undefined") {
+    alert("repeated connection 2");
     console.error("Wrong (or multiple) attempt made to bind! Aborting.");
     // connection = 0;
     return;
   }
 
+  alert("CONNECTION IS UNDEFINED");
+
   // hostname = 'localhost';
   //hostname = '137.138.105.83';
-  connection = new WebSocket(connection_uri);
+  try {
+    connection = new WebSocket(connection_uri);
+  }
+  catch (e) {
+    alert(e);
+  }
 
+  alert("NEW CONNECTION");
   // alert( connection );
   // alert( connection );
 
   // bind_button.disabled = true;
   // built_clients = [];
 
-    connection.onopen = function () {
-      // what a hell
-      append_to_console( '<p class="incoming">GOT: Connection opened<\p>' );
-      interface_on();
-      // alert("socket onopen");
-    };
-    connection.onerror = function (event) {
+  connection.onopen = function () {
+    // what a hell
+    append_to_console( '<p class="incoming">GOT: Connection opened<\p>' );
+    interface_on();
+    // alert("socket onopen");
+  };
+  connection.onerror = function (event) {
       // if (event.originalTarget===undefined || event.originalTarget.readyState!==1) {
       //   // $( "#console_log" ).append( "<p>Server not ready for connection!<\p>");
       //   append_to_console( "<p>Server not ready for connection!<\p>" );
@@ -195,10 +263,11 @@ function bind_socket() {
       //   return;
       // }
       // unbind_socket();
-      alert("socket onerror");
+      alert("connection onerror");
       // connection.close();
       connection = undefined;
       alert( connection );
+      connection = undefined;
       interface_off();
   };
   connection.onmessage = function(event) {
@@ -216,8 +285,11 @@ function bind_socket() {
       // alert( "connection closed" );
       // alert( connection );
       interface_off();
+      window.clearInterval( image_changer );
       // alert( "socket onclose" );
   };
+
+  alert("CONNECTION HANDLERS ARE SET UP");
   image_changer = setInterval(change_image, 5000);
 }
 
@@ -237,6 +309,7 @@ function interface_off() {
       // enable bind button
       $( "#bind_button" ).click( bind_socket );
       // disable interface to ppsFetch process
+      $("#acquisition_button").html( "Start acquisition" ); // reset acquisition button
       $( "#unbind_button, #refresh_button, #acquisition_button" ).unbind();
       $( "input" ).prop("disabled", false);
       $( "#bind_button, #unbind_button, #refresh_button, #acquisition_button" ).toggleClass( "enabled" );
@@ -282,14 +355,14 @@ $( document ).ready( function(){
     // buttons
     $( "#bind_button" ).click( bind_socket );
     $( "#bind_button" ).toggleClass( "enabled" );
-    if (connection!==undefined) {
+    if (typeof connection !== "undefined") {
       // alert( connection );
       interface_on();
     }
 } );
 
 $( window ).unload( function() {
-  if (connection!==undefined) {
+  if (typeof connection !== "undefined") {
     connection.close();
   }
 });

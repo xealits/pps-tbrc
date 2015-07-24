@@ -27,67 +27,41 @@ def make_client( host, port ):
     return s
 
 
-def make_server( host, port ):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print 'Socket created'
-
-    try:
-        s.bind((host, port))
-    except socket.error , msg:
-        print 'Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
-        sys.exit()
-
-    print 'Socket bind complete'
-
-    s.listen(3)
-    print 'Socket now listening'
-    conn, addr = s.accept()
-    print 'Got a listener'
-    return conn
-
 
 def dummy_computing(filename):
     print "Computed the %s" % filename
     return filename
 
-def run_dqm_process( incomming_socket, listener_connection, computation = dummy_computing ):
+
+def run_dqm_process( messenger_socket, computation_process = dummy_computing ):
     while True: # while socket and connection are alive, but, as people say, it is hard to check
         incomming_message = ""
-        outgoing_message = ""
-        incomming_message = incomming_socket.recv(4096)
+        result_filename = ""
+
+        # RECEIVE
+        incomming_message = messenger_socket.recv(4096)
         tokens = incomming_message.split(":")
+
+        # COMPUTE
         if len(tokens) == 2 and tokens[0] == "DQM":
-            outgoing_message = computation( tokens[1] )
+            result_filename = computation_process( tokens[1] )
         else:
-            print "Got wrong message:\n%s" % incomming_message
+            print "Got wrong message:\n%s" % incomming_message # OR send error to the messenger?
+            # MAYBE add 1 more message -- "KILL_DQM" -- and stop DQM process with it?
             continue
-        listener_connection.sendall( outgoing_message )
 
+        # SEND
+        try :
+            messenger_socket.sendall( "DQM_DONE:" + result_filename )
+        except socket.error:
+            #Send failed
+            print 'Send failed'
+            sys.exit()
 
-# print 'Socket Connected to ' + host + ' on ip ' + remote_ip
- 
-# #Send some data to remote server
-# message = "GET / HTTP/1.1\r\n\r\n"
- 
-# try :
-#     #Set the whole string
-#     s.sendall(message)
-# except socket.error:
-#     #Send failed
-#     print 'Send failed'
-#     sys.exit()
- 
-# print 'Message send successfully'
- 
-# #Now receive data
-# reply = s.recv(4096)
- 
-# print reply
 
 
 if __name__ == '__main__':
     host = "localhost"
-    incomming_socket = make_client( host, 1982 )
-    outgoing_connection = make_server( host, 8762 )
-    run_dqm_process( incomming_socket, outgoing_connection )
+    socket_to_messenger = make_client( host, 38765 )
+    run_dqm_process( socket_to_messenger )
 
