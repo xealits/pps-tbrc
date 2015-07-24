@@ -24,6 +24,9 @@ add_executable(listener listener.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:
 # Here have tests
 add_subdirectory(test EXCLUDE_FROM_ALL)
 
+# Here have DQM clients
+add_subdirectory(dqm EXCLUDE_FROM_ALL)
+
 # CAEN stuff
 add_library(caen SHARED IMPORTED)
 set_property(TARGET caen PROPERTY IMPORTED_LOCATION "${CAEN_LOCATION}/libCAENVME.so")
