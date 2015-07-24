@@ -28,13 +28,15 @@ int main(int argc, char *argv[]) {
 
     vme->AddCFD(0x070000);
     VME::CFDV812* cfd = vme->GetCFD(0x070000);
-    std::cout << cfd->GetSerialNumber() << std::endl;
+    cout << cfd->GetSerialNumber() << endl;
     cfd->SetPOI(0xf);
     for (unsigned int i=0; i<16; i++) cfd->SetThreshold(i, 0x1);
  
-    vme->AddHVModule(0x900000, 0x1);
+    vme->AddHVModule(0x900000, 0x2);
     NIM::HVModuleN470* hv = vme->GetHVModule();
-    hv->GetModuleId();
+    cout << "module id=" << hv->GetModuleId() << endl;
+    //hv->ReadMonitoringValues();
+    hv->ReadChannelValues(1);
     
   } catch (Exception& e) {
     e.Dump();

@@ -4,16 +4,34 @@ namespace VME
 {
   CAENETControllerV288::CAENETControllerV288(int32_t bhandle, uint32_t baseaddr) :
     GenericBoard<CAENETControllerV288Register,cvA24_U_DATA>(bhandle, baseaddr)
-  {;}
+  {
+    //Reset();
+  }
 
   CAENETControllerV288::~CAENETControllerV288()
   {;}
 
   void
+  CAENETControllerV288::Reset() const
+  {
+    try {
+      WriteRegister(kV288ModuleReset, (uint16_t)0x1);
+      if (GetStatus().GetOperationStatus()!=CAENETControllerV288Status::Valid)
+        throw Exception(__PRETTY_FUNCTION__, "Wrong status retrieved", JustWarning);
+    } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to reset the CAENET/VME interface module", JustWarning);
+    }
+    usleep(5000);
+  }
+
+  void
   CAENETControllerV288::SendBuffer() const
   {
     uint16_t word = MSTIDENT;
-    try { WriteRegister(kV288Transmission, word); } catch (Exception& e) {
+    try {
+      WriteRegister(kV288Transmission, word);
+    } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to send buffer through the CAENET interface", JustWarning);
     }
@@ -23,8 +41,9 @@ namespace VME
   CAENETControllerV288::FetchBuffer(unsigned int num_words=1) const
   {
     unsigned short resp;
-    if (!WaitForResponse(&resp))
+    if (!WaitForResponse(&resp) or resp!=0) {
       throw Exception(__PRETTY_FUNCTION__, "Wrong response retrieved", JustWarning);
+    }
     std::vector<uint16_t> out;
     for (unsigned int i=0; i<num_words; i++) {
       uint16_t buf;

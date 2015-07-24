@@ -3,6 +3,7 @@
 
 #include "VME_GenericBoard.h"
 #include <vector>
+#include <unistd.h>
 
 #define MSTIDENT 1
 
@@ -39,6 +40,8 @@ namespace VME
     public:
       CAENETControllerV288(int32_t handle, uint32_t baseaddr);
       ~CAENETControllerV288();
+      
+      void Reset() const;
 
       CAENETControllerV288Status GetStatus() const;
 
@@ -54,7 +57,7 @@ namespace VME
         }
       }
       /// Read back a 16-bit word from the buffer
-      friend uint16_t operator>>(const CAENETControllerV288& cnt, uint16_t word) {
+      friend uint16_t& operator>>(const CAENETControllerV288& cnt, uint16_t& word) {
         try {
           cnt.ReadRegister(kV288DataBuffer, &word);
           if (cnt.GetStatus().GetOperationStatus()!=CAENETControllerV288Status::Valid)

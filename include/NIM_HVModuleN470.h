@@ -2,6 +2,7 @@
 #define NIM_HVModuleN470_h
 
 #include "VME_CAENETControllerV288.h"
+#define NUM_CHANNELS 4
 
 namespace NIM
 {
@@ -25,14 +26,92 @@ namespace NIM
     kN470TTLLevel          = 0x10, // W
     kN470NIMLevel          = 0x11  // W
   };
+
+  /**
+   * \brief General monitoring values for the HV power supply
+   * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+   * \date 24 Jul 2015
+   */
+  class HVModuleN470Values
+  {
+    public:
+      inline HVModuleN470Values(std::vector<unsigned short> vals) : fValues(vals) {;}
+      inline ~HVModuleN470Values() {;}
+
+      inline void Dump() const {
+        std::ostringstream os;
+        os << "Monitoring values:" << "\n\t"
+           << "  Vmon = " << Vmon() << "\n\t"
+           << "  Imon = " << Imon() << "\n\t"
+           << "  Individual channels status:" << "\n\t";
+        for (unsigned int i=0; i<NUM_CHANNELS; i++) {
+          os << "    Channel " << i << ": " << ChannelStatus(i);
+          if (i<3) os << "\n\t";
+        }
+        PrintInfo(os.str());
+      }
+
+      inline unsigned short Vmon() const { return fValues.at(0); }
+      inline unsigned short Imon() const { return fValues.at(1); }
+      inline unsigned short ChannelStatus(unsigned short ch_id) const {
+        if (ch_id<0 or ch_id>=NUM_CHANNELS) return 0;
+        return fValues.at(2+ch_id);
+      }
+
+    private:
+      std::vector<unsigned short> fValues;
+  };
+
+  /**
+   * \brief Single channel monitoring values for the HV power supply
+   * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+   * \date 24 Jul 2015
+   */
+  class HVModuleN470ChannelValues
+  {
+    public:
+      inline HVModuleN470ChannelValues(unsigned short ch_id, std::vector<unsigned short> vals) :
+        fChannelId(ch_id), fValues(vals) {;}
+      inline ~HVModuleN470ChannelValues() {;}
+      
+      inline void Dump() const {
+        std::ostringstream os;
+        os << "Individual channel values: channel " << fChannelId << "\n\t"
+           << "V0/I0 = " << V0() << " / " << I0() << "\n\t"
+           << "V1/I1 = " << V1() << " / " << I1() << "\n\t"
+           << "Trip = " << Trip() << "\n\t"
+           << "Ramp up/down = " << RampUp() << " / " << RampDown() << "\n\t"
+           << "Maximal V = " << MaxV();
+        PrintInfo(os.str());
+      }
+
+      inline unsigned short ChannelStatus() const { return fValues.at(0); }
+      inline unsigned short Vmon() const { return fValues.at(1); }
+      inline unsigned short Imon() const { return fValues.at(2); }
+      inline unsigned short V0() const { return fValues.at(3); }
+      inline unsigned short I0() const { return fValues.at(4); }
+      inline unsigned short V1() const { return fValues.at(5); }
+      inline unsigned short I1() const { return fValues.at(6); }
+      inline unsigned short Trip() const { return fValues.at(7); }
+      inline unsigned short RampUp() const { return fValues.at(8); }
+      inline unsigned short RampDown() const { return fValues.at(9); }
+      inline unsigned short MaxV() const { return fValues.at(10); }
+
+    private:
+      unsigned short fChannelId;
+      std::vector<unsigned short> fValues;
+  };
+
   class HVModuleN470
   {
     public:
       HVModuleN470(uint16_t addr, VME::CAENETControllerV288& cont);
       inline ~HVModuleN470() {;}
 
-      unsigned short GetModuleId() const;
+      std::string GetModuleId() const;
       unsigned short GetFWRevision() const;
+      HVModuleN470Values ReadMonitoringValues() const;
+      HVModuleN470ChannelValues ReadChannelValues(unsigned short ch_id) const;
 
     private:
       /**

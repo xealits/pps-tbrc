@@ -6,20 +6,46 @@ namespace NIM
     fController(cont), fAddress(addr)
   {;}
 
-  unsigned short
+  std::string
   HVModuleN470::GetModuleId() const
   {
-    unsigned short word = 0x0;
+    std::string word = "";
     std::vector<unsigned short> out;
     try {
       ReadRegister(kN470GeneralInfo, &out, 16);
       for (std::vector<unsigned short>::iterator it=out.begin(); it!=out.end(); it++) {
-        std::cout << "word -> " << *it << std::endl;
+        word += static_cast<char>((*it)&0xff);
       }
     } catch (Exception& e) {
       e.Dump();
     }
     return word;
+  }
+
+  HVModuleN470Values
+  HVModuleN470::ReadMonitoringValues() const
+  {
+    std::vector<unsigned short> out;
+    try { ReadRegister(kN470MonStatus, &out, 6); } catch (Exception& e) {
+      e.Dump();
+    }
+    HVModuleN470Values vals(out);
+    vals.Dump();
+    return vals;
+  }
+
+  HVModuleN470ChannelValues
+  HVModuleN470::ReadChannelValues(unsigned short ch_id) const
+  {
+    if (ch_id<0 or ch_id>=NUM_CHANNELS) throw Exception(__PRETTY_FUNCTION__, "Invalid channel id", JustWarning);
+    std::vector<unsigned short> out;
+    const HVModuleN470Opcodes opc = static_cast<HVModuleN470Opcodes>((unsigned short)(kN470OperationalParams&0xff)+(ch_id<<8));
+    try { ReadRegister(opc, &out, 11); } catch (Exception& e) {
+      e.Dump();
+    }
+    HVModuleN470ChannelValues vals(ch_id, out);
+    vals.Dump();
+    return vals;
   }
 
   void
@@ -31,7 +57,8 @@ namespace NIM
       fController << (uint16_t)reg;
       fController.SendBuffer();
       *data = fController.FetchBuffer(num_words);
-      std::cout << data->size() << std::endl;
+      if (data->size()!=num_words)
+        throw Exception(__PRETTY_FUNCTION__, "Wrong word size retrieved", JustWarning);
     } catch (Exception& e) {
       e.Dump();
       std::ostringstream o;
