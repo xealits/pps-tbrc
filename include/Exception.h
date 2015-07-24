@@ -2,6 +2,7 @@
 #define Exception_h
 
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <cstdlib> // exit()
 

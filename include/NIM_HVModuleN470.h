@@ -77,11 +77,11 @@ namespace NIM
       inline void Dump() const {
         std::ostringstream os;
         os << "Individual channel values: channel " << fChannelId << "\n\t"
-           << "V0/I0 = " << V0() << " / " << I0() << "\n\t"
-           << "V1/I1 = " << V1() << " / " << I1() << "\n\t"
+           << "V0/I0 = " << std::setw(4) << V0() << " V / " << std::setw(4) << I0() << " uA\n\t"
+           << "V1/I1 = " << std::setw(4) << V1() << " V / " << std::setw(4) << I1() << " uA\n\t"
            << "Trip = " << Trip() << "\n\t"
            << "Ramp up/down = " << RampUp() << " / " << RampDown() << "\n\t"
-           << "Maximal V = " << MaxV();
+           << "Maximal V = " << MaxV() << " V";
         PrintInfo(os.str());
       }
 
@@ -113,6 +113,11 @@ namespace NIM
       HVModuleN470Values ReadMonitoringValues() const;
       HVModuleN470ChannelValues ReadChannelValues(unsigned short ch_id) const;
 
+      void SetChannelV0(unsigned short ch_id, unsigned short v0) const;
+      void SetChannelI0(unsigned short ch_id, unsigned short i0) const;
+      void SetChannelV1(unsigned short ch_id, unsigned short v1) const;
+      void SetChannelI1(unsigned short ch_id, unsigned short i1) const;
+
     private:
       /**
        * Read a vector of 16-bit words in the register
@@ -122,12 +127,19 @@ namespace NIM
        */
       void ReadRegister(const HVModuleN470Opcodes& reg, std::vector<uint16_t>* data, unsigned int num_words=1) const;
       /**
-       * Write a 16-bit word in the register
+       * Write a vector of 16-bit words in the register
        * \brief Write on register
        * \param[in] addr register
        * \param[out] data word
        */
       void WriteRegister(const HVModuleN470Opcodes& reg, const std::vector<uint16_t>& data) const;
+      /**
+       * Write a 16-bit word in the register
+       * \brief Write on register
+       * \param[in] addr register
+       * \param[out] data word
+       */
+      void WriteRegister(const HVModuleN470Opcodes& reg, const uint16_t& data) const;
 
       VME::CAENETControllerV288 fController;
       uint16_t fAddress;
