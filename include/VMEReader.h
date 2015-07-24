@@ -2,13 +2,15 @@
 #define VMEReader_h
 
 #include "Client.h"
+
 #include "VME_BridgeVx718.h"
 #include "VME_FPGAUnitV1495.h"
 #include "VME_IOModuleV262.h"
 #include "VME_CFDV812.h"
 #include "VME_CAENETControllerV288.h"
 #include "VME_TDCV1x90.h"
-#include "VME_TDCEvent.h"
+
+#include "NIM_HVModuleN470.h"
 
 /**
  * VME reader object to fetch events on a HPTDC board
@@ -102,6 +104,11 @@ class VMEReader : public Client
       } catch (Exception& e) { e.Dump(); }
     }
 
+    /// Add a high voltage module (controlled by a VME-CAENET controller) to the DAQ
+    void AddHVModule(uint32_t vme_address, uint16_t nim_address);
+    /// Retrieve the NIM high voltage module
+    inline NIM::HVModuleN470* GetHVModule() { return fHV; }
+
     /// Set the path to the output file where the DAQ is to write
     void SetOutputFile(std::string filename);
     /// Return the path to the output file the DAQ is currently writing to
@@ -121,6 +128,10 @@ class VMEReader : public Client
     VME::IOModuleV262* fSG;
     /// Pointer to the VME general purpose FPGA unit object
     VME::FPGAUnitV1495* fFPGA;
+    /// Pointer to the VME CAENET controller
+    VME::CAENETControllerV288* fCAENET;
+    /// Pointer to the NIM high voltage module (passing through the CAENET controller)
+    NIM::HVModuleN470* fHV;
     /// Are we dealing with socket message passing?
     bool fOnSocket;
     /// Is the bridge's pulser already started?

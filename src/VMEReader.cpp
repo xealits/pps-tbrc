@@ -1,7 +1,8 @@
 #include "VMEReader.h"
 
 VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
-  Client(1987), fBridge(0), fSG(0), fFPGA(0), fOnSocket(on_socket), fIsPulserStarted(false),
+  Client(1987), fBridge(0), fSG(0), fFPGA(0), fCAENET(0), fHV(0),
+  fOnSocket(on_socket), fIsPulserStarted(false),
   fOutputFile("")
 {
   try {
@@ -20,6 +21,8 @@ VMEReader::~VMEReader()
   if (fFPGA) delete fFPGA;
   if (fIsPulserStarted) fBridge->StopPulser();
   if (fBridge) delete fBridge;
+  if (fHV) delete fHV;
+  if (fCAENET) delete fCAENET;
 }
 
 unsigned int
@@ -91,6 +94,23 @@ VMEReader::AddFPGAUnit(uint32_t address)
     if (fOnSocket) Client::Send(e);
   }
   sleep(4); // wait for FW to be ready...
+}
+
+void
+VMEReader::AddHVModule(uint32_t vme_address, uint16_t nim_address)
+{
+  if (!fBridge) throw Exception(__PRETTY_FUNCTION__, "No bridge detected! Aborting...", Fatal);
+  if (!fCAENET) fCAENET = new VME::CAENETControllerV288(fBridge->GetHandle(), vme_address);
+  try {
+    fHV = new NIM::HVModuleN470(nim_address, *fCAENET);
+  } catch (Exception& e) {
+    e.Dump();
+    if (fOnSocket) Client::Send(e);
+    std::ostringstream os;
+    os << "Failed to add NIM HV module at address   0x" << std::hex << nim_address << "\n\t"
+       << "through VME CAENET controller at address 0x" << std::hex << vme_address;
+    throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+  }
 }
 
 void

@@ -7,6 +7,9 @@ namespace VME
     fNumWordsInBuffer(0)
   {;}
 
+  CAENETControllerV288::~CAENETControllerV288()
+  {;}
+
   void
   CAENETControllerV288::Send()
   {

@@ -36,7 +36,9 @@ namespace VME
   {
     public:
       CAENETControllerV288(int32_t handle, uint32_t baseaddr);
-      inline ~CAENETControllerV288() {;}
+      ~CAENETControllerV288();
+
+      CAENETControllerV288Status GetStatus() const;
 
       /// Fill the buffer with an additional 16-bit word
       friend void operator<<(uint16_t& word, CAENETControllerV288& cnt) {
@@ -62,8 +64,6 @@ namespace VME
       /// Retrieve the network buffer
       std::vector<uint16_t> Receive() const;
       bool WaitForResponse(uint16_t* response, unsigned int max_trials=-1) const;
-
-      CAENETControllerV288Status GetStatus() const;
 
     private:
       unsigned int fNumWordsInBuffer;
