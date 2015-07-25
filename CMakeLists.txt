@@ -9,9 +9,14 @@ file(GLOB vme_sources ${PROJECT_SOURCE_DIR}/src/VME*.cpp)
 file(GLOB nim_sources ${PROJECT_SOURCE_DIR}/src/NIM*.cpp)
 add_library(det_lib OBJECT ${vme_sources} ${nim_sources})
 
+# File reader
+file(GLOB reader_sources ${PROJECT_SOURCE_DIR}/src/FileReader.cpp)
+add_library(reader_lib OBJECT ${reader_sources})
+
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
 list(REMOVE_ITEM sources ${vme_sources})
 list(REMOVE_ITEM sources ${nim_sources})
+list(REMOVE_ITEM sources ${reader_sources})
 add_library(src_lib OBJECT ${sources})
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
@@ -25,6 +30,9 @@ add_executable(listener listener.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:
 
 # Here have tests
 add_subdirectory(test EXCLUDE_FROM_ALL)
+
+# Here have DQM clients
+add_subdirectory(dqm EXCLUDE_FROM_ALL)
 
 # CAEN stuff
 add_library(caen SHARED IMPORTED)
