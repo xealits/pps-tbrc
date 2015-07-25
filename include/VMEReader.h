@@ -51,6 +51,23 @@ class VMEReader : public Client
 
     void AddIOModule(uint32_t address);
     inline VME::IOModuleV262* GetIOModule() { return fSG; }
+ 
+    /**
+     * \brief Add a CFD to handle
+     * \param[in] address 32-bit address of the CFD module on the VME bus
+     * Create a new CFD handler for the VME bus
+     */
+    void AddCFD(uint32_t address);
+    /**
+     * \brief Get a CFD on the VME bus
+     * Return a pointer to the CFD object, given its physical address on the VME bus
+     */
+    inline VME::CFDV812* GetCFD(uint32_t address) {
+      if (fCFDCollection.count(address)==0) return 0;
+      return fCFDCollection[address];
+    }
+    inline size_t GetNumCFD() const { return fCFDCollection.size(); }
+    inline VME::CFDCollection GetCFDCollection() { return fCFDCollection; }
 
     /**
      * \brief Add a CFD to handle
