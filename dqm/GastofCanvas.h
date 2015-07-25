@@ -52,7 +52,7 @@ namespace DQM
       inline void Save(TString ext="png") {
         if (strcmp(ext, "png")!=0) return;
         if (!fLabelsDrawn) {
-          fLabel1 = new TPaveText(.1122, .925, .2, .955, "NDC");
+          fLabel1 = new TPaveText(.112, .925, .2, .955, "NDC");
           fLabel1->AddText("GasToF");
           fLabel1->SetMargin(0.);
           fLabel1->SetFillColor(kWhite);
@@ -115,7 +115,7 @@ namespace DQM
         
         c1->SetTicks(1, 1);
 
-        fHist = new TH2D("hist", "", 8, 0., 8., 8, 0., 8.);
+        fHist = new TH2D(Form("hist_%s", TCanvas::GetName()), "", 8, 0., 8., 8, 0., 8.);
       }
       
       struct Coord { unsigned int x; unsigned int y; };
