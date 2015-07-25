@@ -2,6 +2,17 @@
 
 FileReader::FileReader(std::string file)
 {
+  Open(file);
+}
+
+FileReader::~FileReader()
+{
+  if (fFile.is_open()) fFile.close();
+}
+
+void
+FileReader::Open(std::string file)
+{
   fFile.open(file.c_str(), std::ios::in|std::ios::binary);
   
   if (!fFile.is_open()) {
@@ -32,11 +43,6 @@ FileReader::FileReader(std::string file)
   }
   fWriteTime = st.st_mtime;
   fReadoutMode = fHeader.acq_mode;
-}
-
-FileReader::~FileReader()
-{
-  if (fFile.is_open()) fFile.close();
 }
 
 void

@@ -8,8 +8,13 @@ add_definitions(${GCC_COMPILE_FLAGS})
 file(GLOB det_sources ${PROJECT_SOURCE_DIR}/src/VME*.cpp)
 add_library(det_lib OBJECT ${det_sources})
 
+# File reader
+file(GLOB reader_sources ${PROJECT_SOURCE_DIR}/src/FileReader.cpp)
+add_library(reader_lib OBJECT ${reader_sources})
+
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
 list(REMOVE_ITEM sources ${det_sources})
+list(REMOVE_ITEM sources ${reader_sources})
 add_library(src_lib OBJECT ${sources})
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
