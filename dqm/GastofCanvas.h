@@ -42,15 +42,18 @@ namespace DQM
         fUpperLabel->Draw();
       }
 
-      inline void FillChannel(unsigned short channel_id, double content) {
-        const Coord c = GetCoordinates(channel_id);
-        fHist->Fill(c.x, c.y, content);
+      inline void FillChannel(unsigned short nino_id, unsigned short channel_id, double content) {
+        const Coord c = GetCoordinates(nino_id, channel_id);
+        fHist->Fill(c.x-0.5, c.y-0.5, content);
       }
-      inline void DrawGrid() const { fHist->Draw("colz"); }
       inline TH2D* Grid() { return fHist; }
 
       inline void Save(TString ext="png") {
-        if (strcmp(ext, "png")!=0) return;
+        bool valid_ext = true;
+        valid_ext |= (strcmp(ext, "png")!=0);
+        valid_ext |= (strcmp(ext, "pdf")!=0);
+        if (!valid_ext) return;
+        DrawGrid();
         if (!fLabelsDrawn) {
           fLabel1 = new TPaveText(.112, .925, .2, .955, "NDC");
           fLabel1->AddText("GasToF");
@@ -83,18 +86,19 @@ namespace DQM
 
     private:
       inline void Build() {
+        fLegend = new TLegend(fLegendX, fLegendY, fLegendX+.35, fLegendY+.12);
+        fLegend->SetFillColor(kWhite);
+        fLegend->SetLineColor(kWhite);
+        fLegend->SetLineWidth(0);
+        fLegend->SetTextFont(43);
+        fLegend->SetTextSize(14);
+    
+        fHist = new TH2D(Form("hist_%s", TCanvas::GetName()), "", 8, 0.5, 8.5, 8, 0.5, 8.5);
+      }
+      inline void DrawGrid() {
+        TCanvas::cd();
         gStyle->SetOptStat(0);
-        gStyle->SetMarkerStyle(20);
-        gStyle->SetMarkerSize(.87);
-        gStyle->SetTitle("");
-        gStyle->SetTitleFont(43, "XYZ");
-        gStyle->SetTitleSize(22, "XYZ");
-        //gStyle->SetTitleOffset(2., "Y");
-        gStyle->SetLabelFont(43, "XYZ");
-        gStyle->SetLabelSize(22, "XY");
-        gStyle->SetLabelSize(18, "Z");
-        gStyle->SetTitleOffset(1.3, "Y");
-            
+
         TCanvas::Divide(1,2);
         c1 = (TPad*)TCanvas::GetPad(1);
         c2 = (TPad*)TCanvas::GetPad(2);
@@ -106,22 +110,102 @@ namespace DQM
         c1->SetTopMargin(0.1);
         TCanvas::cd(1);
         
-        fLegend = new TLegend(fLegendX, fLegendY, fLegendX+.35, fLegendY+.12);
-        fLegend->SetFillColor(kWhite);
-        fLegend->SetLineColor(kWhite);
-        fLegend->SetLineWidth(0);
-        fLegend->SetTextFont(43);
-        fLegend->SetTextSize(14);
-        
-        c1->SetTicks(1, 1);
+        fHist->Draw("colz");
 
-        fHist = new TH2D(Form("hist_%s", TCanvas::GetName()), "", 8, 0., 8., 8, 0., 8.);
+        fHist->SetMarkerStyle(20);
+        fHist->SetMarkerSize(.87);
+        fHist->SetTitleFont(43, "XYZ");
+        fHist->SetTitleSize(22, "XYZ");
+        //fHist->SetTitleOffset(2., "Y");
+        fHist->SetLabelFont(43, "XYZ");
+        fHist->SetLabelSize(24, "XY");
+        fHist->SetLabelSize(18, "Z");
+        fHist->SetTitleOffset(1.3, "Y");
+            
+        c1->SetTicks(1, 1);
+        //c1->SetGrid(1, 1);
       }
       
       struct Coord { unsigned int x; unsigned int y; };
-      inline Coord GetCoordinates(unsigned short channel_id) const {
+      inline Coord GetCoordinates(unsigned short nino_id, unsigned short channel_id) const {
         Coord out;
         out.x = out.y = 0;
+        switch (nino_id) {
+          case 0:
+            switch (channel_id) {
+              case 0:  out.x = 1, out.y = 1; break;
+              case 1:  out.x = 2, out.y = 1; break;
+              case 2:  out.x = 3, out.y = 1; break;
+              case 3:  out.x = 4, out.y = 1; break;
+              case 4:  out.x = 5, out.y = 1; break;
+              case 5:  out.x = 6, out.y = 1; break;
+              case 6:  out.x = 7, out.y = 1; break;
+              case 7:  out.x = 8, out.y = 1; break;
+              case 8:  out.x = 1, out.y = 2; break;
+              case 9:  out.x = 2, out.y = 2; break;
+              case 10: out.x = 7, out.y = 2; break;
+              case 11: out.x = 8, out.y = 2; break;
+              case 12: out.x = 1, out.y = 3; break;
+              case 13: out.x = 8, out.y = 3; break;
+              case 14: out.x = 1, out.y = 4; break;
+              case 15: out.x = 8, out.y = 4; break;
+              case 16: out.x = 1, out.y = 5; break;
+              case 17: out.x = 8, out.y = 5; break;
+              case 18: out.x = 1, out.y = 6; break;
+              case 19: out.x = 8, out.y = 6; break;
+              case 20: out.x = 1, out.y = 7; break;
+              case 21: out.x = 2, out.y = 7; break;
+              case 22: out.x = 7, out.y = 7; break;
+              case 23: out.x = 8, out.y = 7; break;
+              case 24: out.x = 1, out.y = 8; break;
+              case 25: out.x = 2, out.y = 8; break;
+              case 26: out.x = 3, out.y = 8; break;
+              case 27: out.x = 4, out.y = 8; break;
+              case 28: out.x = 5, out.y = 8; break;
+              case 29: out.x = 6, out.y = 8; break;
+              case 30: out.x = 7, out.y = 8; break;
+              case 31: out.x = 8, out.y = 8; break;
+            }
+            break;
+          case 1:
+            switch (channel_id) {
+              case 0:  out.x = 3, out.y = 2; break;
+              case 1:  out.x = 4, out.y = 2; break;
+              case 2:  out.x = 5, out.y = 2; break;
+              case 3:  out.x = 6, out.y = 2; break;
+              case 4:  out.x = 2, out.y = 3; break;
+              case 5:  out.x = 3, out.y = 3; break;
+              case 6:  out.x = 4, out.y = 3; break;
+              case 7:  out.x = 5, out.y = 3; break;
+              case 8:  out.x = 6, out.y = 3; break;
+              case 9:  out.x = 7, out.y = 3; break;
+              case 10: out.x = 2, out.y = 4; break;
+              case 11: out.x = 3, out.y = 4; break;
+              case 12: out.x = 4, out.y = 4; break;
+              case 13: out.x = 5, out.y = 4; break;
+              case 14: out.x = 6, out.y = 4; break;
+              case 15: out.x = 7, out.y = 4; break;
+              case 16: out.x = 2, out.y = 5; break;
+              case 17: out.x = 3, out.y = 5; break;
+              case 18: out.x = 4, out.y = 5; break;
+              case 19: out.x = 5, out.y = 5; break;
+              case 20: out.x = 6, out.y = 5; break;
+              case 21: out.x = 7, out.y = 5; break;
+              case 22: out.x = 2, out.y = 6; break;
+              case 23: out.x = 3, out.y = 6; break;
+              case 24: out.x = 4, out.y = 6; break;
+              case 25: out.x = 5, out.y = 6; break;
+              case 26: out.x = 6, out.y = 6; break;
+              case 27: out.x = 7, out.y = 6; break;
+              case 28: out.x = 3, out.y = 7; break;
+              case 29: out.x = 4, out.y = 7; break;
+              case 30: out.x = 5, out.y = 7; break;
+              case 31: out.x = 6, out.y = 7; break;
+            }
+            break;
+          default:
+            throw Exception(__PRETTY_FUNCTION__, Form("Invalid NINO identifier fetched! NINO: %d", nino_id), JustWarning);
+        }      
         return out;
       }
 
