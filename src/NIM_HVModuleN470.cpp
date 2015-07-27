@@ -40,7 +40,7 @@ namespace NIM
     if (ch_id<0 or ch_id>=NUM_CHANNELS) throw Exception(__PRETTY_FUNCTION__, "Invalid channel id", JustWarning);
     std::vector<unsigned short> out;
     const HVModuleN470Opcodes opc = static_cast<HVModuleN470Opcodes>((unsigned short)(kN470OperationalParams&0xff)+(ch_id<<8));
-    try { ReadRegister(opc, &out, 11); } catch (Exception& e) {
+    try { ReadRegister(opc, &out, 16); } catch (Exception& e) {
       e.Dump();
     }
     HVModuleN470ChannelValues vals(ch_id, out);
@@ -104,6 +104,7 @@ namespace NIM
       fController << (uint16_t)fAddress;
       fController << (uint16_t)reg;
       fController.SendBuffer();
+std::cout << "buffer sent" << std::endl;
       *data = fController.FetchBuffer(num_words);
       if (data->size()!=num_words)
         throw Exception(__PRETTY_FUNCTION__, "Wrong word size retrieved", JustWarning);
@@ -127,6 +128,8 @@ namespace NIM
         fController << (uint16_t)(*it);
       }
       fController.SendBuffer();
+std::cout << "buffer also sent" << std::endl;
+      usleep(100000);
     } catch (Exception& e) {
       e.Dump();
       std::ostringstream o;
@@ -139,7 +142,9 @@ namespace NIM
   void
   HVModuleN470::WriteRegister(const HVModuleN470Opcodes& reg, const uint16_t& data) const
   {
-    std::vector<uint16_t> v_data; v_data.push_back(data);
-    WriteRegister(reg, v_data);
+    try {
+      std::vector<uint16_t> v_data; v_data.push_back(data);
+      WriteRegister(reg, v_data);
+    } catch (Exception& e) { throw e; }
   }
 }

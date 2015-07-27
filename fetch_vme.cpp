@@ -32,11 +32,13 @@ int main(int argc, char *argv[]) {
     cfd->SetPOI(0xf);
     for (unsigned int i=0; i<16; i++) cfd->SetThreshold(i, 0x1);
  
-    vme->AddHVModule(0x900000, 0x2);
+    vme->AddHVModule(0x900000, 0xa);
     NIM::HVModuleN470* hv = vme->GetHVModule();
     cout << "module id=" << hv->GetModuleId() << endl;
-    //hv->ReadMonitoringValues();
-    hv->ReadChannelValues(1);
+    hv->ReadMonitoringValues();
+    hv->SetChannelV0(0, 310);
+    hv->SetChannelI0(0, 0);
+    hv->ReadChannelValues(0);
     
   } catch (Exception& e) {
     e.Dump();

@@ -17,6 +17,16 @@ namespace VME
     kV288IRQVector    = 0x08  // W
   };
 
+  enum CAENETControllerV288Answer {
+    cnSuccess            = 0x0000,
+    cnBusy               = 0xff00,
+    cnUnrecognizedCode   = 0xff01,
+    cnIncorrectValue     = 0xff02,
+    cnNoData             = 0xfffd,
+    cnIncorrectHCC       = 0xfffe,
+    cnWrongModuleAddress = 0xffff
+  };
+
   class CAENETControllerV288Status
   {
     public:
@@ -48,6 +58,7 @@ namespace VME
       /// Fill the buffer with an additional 16-bit word
       friend void operator<<(const CAENETControllerV288& cnt, uint16_t word) {
         try {
+std::cout << word << std::endl;
           cnt.WriteRegister(kV288DataBuffer, word);
           if (cnt.GetStatus().GetOperationStatus()!=CAENETControllerV288Status::Valid)
             throw Exception(__PRETTY_FUNCTION__, "Wrong status retrieved", JustWarning);
@@ -73,7 +84,7 @@ namespace VME
       void SendBuffer() const;
       /// Retrieve the network buffer
       std::vector<uint16_t> FetchBuffer(unsigned int num_words) const;
-      bool WaitForResponse(uint16_t* response, unsigned int max_trials=-1) const;
+      bool WaitForResponse(CAENETControllerV288Answer* response, unsigned int max_trials=-1) const;
 
     private:
   };
