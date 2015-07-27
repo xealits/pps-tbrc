@@ -112,3 +112,18 @@ Client::Receive()
     ParseMessage(msg);
   }
 }
+
+SocketMessage
+Client::Receive(const MessageKey& key)
+{
+  SocketMessage msg;
+  try {
+    msg = FetchMessage();
+    if (msg.GetKey()==key) {
+      return msg;
+    }
+  } catch (Exception& e) {
+    e.Dump();
+  }
+  return msg;
+}
