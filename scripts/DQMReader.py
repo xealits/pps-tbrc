@@ -19,7 +19,7 @@ class DQMReader:
 
         # Input filename obtined from the server communication. Output file has the same name except for extension
         self.inputbinaryfile = input
-        self.outputplotfile = self.inputbinaryfile.split('.')[0] + '_dqm_report.pdf'
+        self.outputplotfile = self.inputbinaryfile.split('.')[0] + '_dqm_report.svg'
         self.outputtextfile = self.inputbinaryfile.split('.')[0] + '_dqm_report.txt'
         self.nchannels = 64
         self.ngroups = 16
@@ -82,6 +82,9 @@ class DQMReader:
     def SetVerbosity(self,level):
         self.verbose = level
 
+    def SetOutputFileFormat(self,extension):
+        self.outputplotfile = self.outputplotfile.split('.')[0] + '.' + str(extension)
+                
     def GetOutputFilename(self):
         return self.outputplotfile
 
