@@ -112,29 +112,19 @@ Messenger::DisconnectClient(int sid, MessageKey key, bool force)
 void
 Messenger::SwitchClientType(int sid, SocketType type)
 {
-  SocketType oldtype;
   try {
-    oldtype = GetSocketType(sid);
-    fSocketsConnected.erase (std::pair<int,SocketType>(sid, oldtype));
+    fSocketsConnected.erase (std::pair<int,SocketType>(sid, GetSocketType(sid)));
     fSocketsConnected.insert(std::pair<int,SocketType>(sid, type));    
-  } catch (Exception& e) {
-    e.Dump();
-  }
+  } catch (Exception& e) { e.Dump(); }
 }
 
 void
 Messenger::Send(const Message& m, int sid) const
 {
-  bool ws = false;
   try {
-    ws = IsWebSocket(sid);
-    Message tosend = (ws) ? HTTPMessage(fWS, m, EncodeMessage) : m;
-    /*std::cout << "Sending a message to socket # " << sid << " (web? " << ws << "):" << std::endl;
-    m.Dump();*/
+    Message tosend = (IsWebSocket(sid)) ? HTTPMessage(fWS, m, EncodeMessage) : m;
     SendMessage(tosend, sid);
-  } catch (Exception& e) {
-    e.Dump();
-  }
+  } catch (Exception& e) { e.Dump(); }
 }
 
 void
@@ -147,9 +137,7 @@ Messenger::Receive()
   // temporary list for readout
   fReadFds = fMaster;
   
-  try {
-    SelectConnections();
-  } catch (Exception& e) {
+  try { SelectConnections(); } catch (Exception& e) {
     e.Dump();
     throw Exception(__PRETTY_FUNCTION__, "Impossible to select the connections!", Fatal);
   }
@@ -174,9 +162,7 @@ Messenger::Receive()
     // Message was successfully decoded
     fNumAttempts = 0;
     
-    try {
-      ProcessMessage(m, s->first);
-    } catch (Exception& e) {
+    try { ProcessMessage(m, s->first); } catch (Exception& e) {
       if (e.ErrorNumber()==11001) break;
     }
   }
@@ -225,11 +211,9 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
       os << it->first << ",";
       if (it->first==GetSocketId()) os << "Master,";
       else os << "Client" << it->first << ",";
-      os << static_cast<int>(type);
+      os << static_cast<int>(type) << "\0";
     }
-    try {
-      Send(SocketMessage(CLIENTS_LIST, os.str()), sid);
-    } catch (Exception& e) { e.Dump(); }
+    try { Send(SocketMessage(CLIENTS_LIST, os.str()), sid); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==START_ACQUISITION) {
     try {
@@ -252,18 +236,18 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   }
   else if (m.GetKey()==SET_NEW_FILENAME) {
     try {
-      for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++) {
-        if (it->second==DQM) Send(SocketMessage(NEW_FILENAME, m.GetValue().c_str()), it->first);
-      }
+      SendAll(DQM, SocketMessage(NEW_FILENAME, m.GetValue().c_str()));
     } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==NEW_DQM_PLOT) {
     try {
       m.Dump();
+      SendAll(WEBSOCKET_CLIENT, m);
     } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==EXCEPTION) {
     try {
+      SendAll(WEBSOCKET_CLIENT, m);
       Broadcast(m);
       std::cout << "------> " << m.GetValue() << std::endl;
     } catch (Exception& e) { e.Dump(); }

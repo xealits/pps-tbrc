@@ -2,7 +2,7 @@ var port = 1987;
 var listener_id, connection;
 var upper_fields;
 var bind_button, unbind_button, refresh_button, acquisition_button, time_field;
-var socket_id, console_log;
+var socket_id, console_log, dqm_block;
 var built_clients;
 var acquisition_started;
 
@@ -54,6 +54,7 @@ function socket_init() {
   socket_id = document.getElementById("socket_id");
   console_log = document.getElementById("console_log");
   time_field = document.getElementById("time_field");
+  dqm_block = document.getElementById("dqm_block");
   
   restore_init_state();
   disable_connected_buttons();
@@ -85,7 +86,7 @@ function bind_socket() {
   }
   connection.onopen = function () {};
   connection.onmessage = function(event) { parse_message(event); };
-  connection.onclose = function() { bind_socket(); };
+  connection.onclose = function() { connection = 0; bind_socket(); };
 }
   
 function unbind_socket() {
@@ -112,6 +113,7 @@ function socket_close() {
   unbind_socket();
   connection.onclose = function (event) {};
   connection.close();
+  //bind_socket();
 }
 
 function start_acquisition() {
@@ -127,16 +129,16 @@ function stop_acquisition() {
 
 function parse_message(event) {
   var d = event.data.slice(0,-1);
-  console_log.value = d;
   
-  if (d.indexOf("SET_CLIENT_ID")>-1) {
-    listener_id = parseInt(d.substr(d.indexOf(":")+1));
+  if (key(d, "SET_CLIENT_ID")) {
+    listener_id = parseInt(value(d));
     socket_id.value = listener_id;
     enable_connected_buttons();
     socket_refresh();
+    console_log.value += d+'\n';
   }
-  else if (d.indexOf("CLIENTS_LIST")>-1) {
-    var listeners = d.substr(d.indexOf(":")+1);
+  else if (key(d, "CLIENTS_LIST")) {
+    var listeners = value(d);
     var list = listeners.split(';');
     var retrieved = [];
     var retrieved_ids = [];
@@ -174,46 +176,58 @@ function parse_message(event) {
       acquisition_started = true;
     }
   }
-  else if (d.indexOf("THIS_CLIENT_DELETED")>-1) {
+  else if (key(d, "THIS_CLIENT_DELETED")) {
     restore_init_state();
     unbind_socket();
   }
-  else if (d.indexOf("OTHER_CLIENT_DELETED")>-1) {
-    var id = parseInt(d.substr(d.indexOf(":")+1));
-    if (id===listener_id) {
-      restore_init_state();
-      unbind_socket();
-    }
+  else if (key(d, "OTHER_CLIENT_DELETED")) {
+    var id = parseInt(value(d));
+    if (id===listener_id) { restore_init_state(); unbind_socket(); }
     else console.log("Socket "+id+" successfully deleted!");
+    console_log.value += d+'\n';
   }
-  else if (d.indexOf("PING_ANSWER")>-1) {
-    alert(d.substr(d.indexOf(":")+1));
+  else if (key(d, "PING_ANSWER")) {
+    alert(value(d));
+    console_log.value += d+'\n';
   }
-  else if (d.indexOf("ACQUISITION_STARTED")>-1) {
+  else if (key(d, "ACQUISITION_STARTED")) {
     alert("Acquisition process successfully launched!");
     acquisition_button.innerHTML = "Stop acquisition";
     acquisition_button.setAttribute('onClick', 'stop_acquisition()');
     acquisition_started = true;
   }
-  else if (d.indexOf("ACQUISITION_STOPPED")>-1) {
+  else if (key(d, "ACQUISITION_STOPPED")) {
     alert("Acquisition process terminated!");
     acquisition_button.innerHTML = "Start acquisition";
     acquisition_button.setAttribute('onClick', 'start_acquisition()');
     acquisition_started = false;
   }
-  else if (d.indexOf("EXCEPTION")>-1) {
+  else if (key(d, "NEW_DQM_PLOT")) {
+    dqm_block.innerHTML += value(d)+"\n";
+  }
+  else if (key(d, "EXCEPTION")) {
     console_log.innerHTML = d;
     console.log(d);
   }
-  else if (d.indexOf("MASTER_DISCONNECT")>-1) {
+  else if (key(d, "MASTER_DISCONNECT")) {
     alert("ALERT:\nMaster disconnected!");
     restore_init_state();
     return;
   }  
 }
 
+function key(dat, key_str) {
+  if (dat.indexOf(key_str)>-1) return true;
+  return false;
+}
+
+function value(dat) {
+  return dat.substr(dat.indexOf(":")+1);
+}
+
 function socket_refresh() {
-  if (connection===0 || connection===undefined) return;
+  if (connection===0) return;
+  else if (connection===undefined) bind_socket();
   if (listener_id<0) return;
   
   connection.send("WEB_GET_CLIENTS:"+listener_id);
@@ -272,6 +286,10 @@ function create_block(obj) {
       acquisition_button.innerHTML = "Stop acquisition";
       acquisition_button.setAttribute('onClick', 'stop_acquisition()');
       acquisition_started = true;
+      dqm_block.disabled = false;
+      break;
+    case 4: // DQM socket
+      block.className += ' block_dqmsocket';
       break;
     default:
       block.className += ' block_othersocket';

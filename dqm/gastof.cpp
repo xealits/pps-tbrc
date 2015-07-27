@@ -9,7 +9,7 @@
 using namespace std;
 
 bool
-RunDQM(string filename, vector<string>* outputs)
+RunGastofDQM(string filename, vector<string>* outputs)
 {
   FileReader reader;
   try {
@@ -18,8 +18,6 @@ RunDQM(string filename, vector<string>* outputs)
 
   } catch (Exception& e) { e.Dump(); }
 
-    Client client(1987);
-    client.Connect(Socket::DQM);
   const unsigned int num_channels = 32;
   double mean_num_events[num_channels], mean_tot[num_channels];
   unsigned int num_events[num_channels];
@@ -76,11 +74,11 @@ main(int argc, char* argv[])
     Client client(1987);
     client.Connect(Socket::DQM);
     SocketMessage msg;
-    vector<string> outputs;
     while (true) {
       msg = client.Receive(NEW_FILENAME);
       if (msg.GetKey()==INVALID_KEY) continue;
-      if (RunDQM(msg.GetCleanedValue(), &outputs)) {
+      vector<string> outputs;
+      if (RunGastofDQM(msg.GetCleanedValue(), &outputs)) {
         cout << "Produced " << outputs.size() << " plot(s)" << endl;
         for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
           client.Send(SocketMessage(NEW_DQM_PLOT, *nm));

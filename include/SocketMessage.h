@@ -23,13 +23,13 @@ class SocketMessage : public Message
   public:
     inline SocketMessage() : Message("") {;}
     inline SocketMessage(const Message& msg) : Message(msg) {
-      try { fMessage = Object(); } catch (Exception& e) { throw e; }
+      try { fMessage = Object(); } catch (Exception& e) { return; }
     }
     inline SocketMessage(const char* msg_s) : Message(msg_s) { 
-      try { fMessage = Object(); } catch (Exception& e) { throw e; }
+      try { fMessage = Object(); } catch (Exception& e) { return; }
     }
     inline SocketMessage(std::string msg_s) : Message(msg_s) {
-      try { fMessage = Object(); } catch (Exception& e) { throw e; }
+      try { fMessage = Object(); } catch (Exception& e) { return; }
     }
     /// Construct a socket message out of a key
     inline SocketMessage(const MessageKey& key) : Message() { SetKeyValue(key, ""); }
