@@ -19,7 +19,7 @@ FileReader::Open(std::string file)
     std::stringstream s;
     s << "Error while trying to open the file \""
       << file << "\" for reading!";
-    throw Exception(__PRETTY_FUNCTION__, s.str(), Fatal);
+    throw Exception(__PRETTY_FUNCTION__, s.str(), JustWarning);
   }
   
   struct stat st;
@@ -28,18 +28,18 @@ FileReader::Open(std::string file)
     std::stringstream s;
     s << "Error retrieving size of \"" << file << "\"!";
     fFile.close();
-    throw Exception(__PRETTY_FUNCTION__, s.str(), Fatal);
+    throw Exception(__PRETTY_FUNCTION__, s.str(), JustWarning);
   }
   
   if (!fFile.good()) {
     fFile.close();
-    throw Exception(__PRETTY_FUNCTION__, "Can not read file header!", Fatal);
+    throw Exception(__PRETTY_FUNCTION__, "Can not read file header!", JustWarning);
   }
   fFile.read((char*)&fHeader, sizeof(file_header_t));
   fNumEvents = (st.st_size-sizeof(file_header_t))/sizeof(uint32_t);
   if (fHeader.magic!=0x30535050) {
     fFile.close();
-    throw Exception(__PRETTY_FUNCTION__, "Wrong magic number!", Fatal);
+    throw Exception(__PRETTY_FUNCTION__, "Wrong magic number!", JustWarning);
   }
   fWriteTime = st.st_mtime;
   fReadoutMode = fHeader.acq_mode;
@@ -149,7 +149,7 @@ FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* mc)
   else {
     std::ostringstream os;
     os << "Unrecognized readout/acquisition mode: " << fReadoutMode;
-    throw Exception(__PRETTY_FUNCTION__, os.str(), Fatal);
+    throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
   }
   mc->SetEventsCollection(ec);
   return true;

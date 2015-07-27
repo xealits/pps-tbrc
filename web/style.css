@@ -7,6 +7,7 @@ body
 h1
 {
   font-size: 16pt;
+  display: inline-block;
 }
 
 input
@@ -14,9 +15,20 @@ input
   border: 1px lightgray solid;
 }
 
+textarea
+{
+  display: inline;
+}
+
+#output
+{
+  display: inline-block;
+  vertical-align: top;
+}
+
 .socket_block
 {
-  width: 150px;
+  width: 120px;
   border: 1px lightgray solid;
   display: inline-block;
   margin: 3px;
@@ -26,7 +38,7 @@ input
 .socket_block_title
 {
   font-weight: bold;
-  font-size: 12pt;
+  font-size: 10pt;
   padding: 2px;
   text-align: center;
 }
@@ -34,13 +46,23 @@ input
 .socket_block_logger
 {
   font-size: 9pt;
-  width: 12em;
+  width: 9em;
   height: 2em;
 }
 
 #time_field
 {
   font-size: 9pt;
+  display: inline-block;
+  float: right;
+}
+
+#dqm_block
+{
+  background-color: white;
+  display: block;
+  border: 1px lightgray solid;
+  height: 520px;
 }
 
 .block_master
@@ -61,6 +83,11 @@ input
 .block_detsocket
 {
   background-color: lightblue;
+}
+
+.block_dqmsocket
+{
+  background-color: salmon;
 }
 
 .block_othersocket
