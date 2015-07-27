@@ -82,6 +82,8 @@ namespace DQM
           fLabelsDrawn = true;
         }
         TCanvas::SaveAs(Form("%s.%s", TCanvas::GetName(), ext.Data()));
+        c1->SetLogz();
+        TCanvas::SaveAs(Form("%s_logscale.%s", TCanvas::GetName(), ext.Data()));
       }
 
     private:
@@ -119,7 +121,7 @@ namespace DQM
         //fHist->SetTitleOffset(2., "Y");
         fHist->SetLabelFont(43, "XYZ");
         fHist->SetLabelSize(24, "XY");
-        fHist->SetLabelSize(18, "Z");
+        fHist->SetLabelSize(15, "Z");
         fHist->SetTitleOffset(1.3, "Y");
             
         c1->SetTicks(1, 1);

@@ -73,7 +73,12 @@ class SocketMessage : public Message
     /// Extract the message's key
     inline MessageKey GetKey() const { return fMessage.first; }
     /// Extract the message's string value
-    inline std::string GetValue() const { return fMessage.second; }
+    inline std::string GetValue() const {
+      std::string s = fMessage.second;
+      s.erase(std::remove(s.begin(), s.end(), '\n'), s.end());
+      s.erase(std::remove(s.begin(), s.end(), '\r'), s.end());
+      return s;
+    }
     /// Extract the message's integer value
     inline int GetIntValue() const { return atoi(fMessage.second.c_str()); }
     /// Extract the message's vector of string value

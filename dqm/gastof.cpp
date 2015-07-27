@@ -6,22 +6,18 @@
 
 using namespace std;
 
-int
-main(int argc, char* argv[])
+void
+RunDQM(std::string filename)
 {
-  if (argc<2) {
-    cerr << "Usage: " << argv[0] << " <input filename>" << endl;
-    return -1;
-  }
-
   FileReader reader;
   try {
-    reader.Open(argv[1]);
-    if (!reader.IsOpen()) return -1;
+    reader.Open(filename);
+    if (!reader.IsOpen()) return;
+
   } catch (Exception& e) { e.Dump(); }
 
-  Client client(1987);
-
+    Client client(1987);
+    client.Connect(Socket::DQM);
   const unsigned int num_channels = 32;
   double mean_num_events[num_channels], mean_tot[num_channels];
   unsigned int num_events[num_channels];
@@ -54,8 +50,8 @@ main(int argc, char* argv[])
         mean_num_events[i] /= num_events[i];
         mean_tot[i] /= num_events[i];
       }
-      if (i<32) { nino_board = 0; ch_id = i; }
-      else      { nino_board = 1; ch_id = i-32; }
+      if (i<32) { nino_board = 1; ch_id = i; }
+      else      { nino_board = 0; ch_id = i-32; }
       canv[kDensity]->FillChannel(nino_board, ch_id, mean_num_events[i]);
       canv[kMeanToT]->FillChannel(nino_board, ch_id, mean_tot[i]);
       cout << "Finished extracting channel " << i << ": " << num_events[i] << " measurements, "
@@ -67,6 +63,25 @@ main(int argc, char* argv[])
   for (unsigned int i=0; i<num_plots; i++) {
     canv[i]->Save("png");
   }
+}
 
+int
+main(int argc, char* argv[])
+{
+  if (argc<2) {
+    cerr << "Usage: " << argv[0] << " <input filename>" << endl;
+    return -1;
+  }
+  try {
+    Client client(1987);
+    client.Connect(Socket::DQM);
+    SocketMessage msg;
+    while (true) {
+      msg = client.Receive(NEW_FILENAME);
+      if (msg.GetKey()!=INVALID_KEY) RunDQM(msg.GetValue());
+    }
+  } catch (Exception& e) {
+    e.Dump();
+  }
   return 0;
 }
