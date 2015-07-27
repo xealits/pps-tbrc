@@ -257,6 +257,11 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
       }
     } catch (Exception& e) { e.Dump(); }
   }
+  else if (m.GetKey()==NEW_DQM_PLOT) {
+    try {
+      m.Dump();
+    } catch (Exception& e) { e.Dump(); }
+  }
   else if (m.GetKey()==EXCEPTION) {
     try {
       Broadcast(m);

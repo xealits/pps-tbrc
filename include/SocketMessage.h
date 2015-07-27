@@ -73,7 +73,9 @@ class SocketMessage : public Message
     /// Extract the message's key
     inline MessageKey GetKey() const { return fMessage.first; }
     /// Extract the message's string value
-    inline std::string GetValue() const {
+    inline std::string GetValue() const { return fMessage.second; }
+    /// Extract the message's string value (without the trailing endlines)
+    inline std::string GetCleanedValue() const {
       std::string s = fMessage.second;
       s.erase(std::remove(s.begin(), s.end(), '\n'), s.end());
       s.erase(std::remove(s.begin(), s.end(), '\r'), s.end());

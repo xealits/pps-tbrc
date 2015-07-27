@@ -4,15 +4,17 @@
 #include "Exception.h"
 #include <iostream>
 
+#define DQM_OUTPUT_DIR "/tmp/"
+
 using namespace std;
 
-void
-RunDQM(std::string filename)
+bool
+RunDQM(string filename, vector<string>* outputs)
 {
   FileReader reader;
   try {
     reader.Open(filename);
-    if (!reader.IsOpen()) return;
+    if (!reader.IsOpen()) return false;
 
   } catch (Exception& e) { e.Dump(); }
 
@@ -58,27 +60,32 @@ RunDQM(std::string filename)
            << "mean number of hits: " << mean_num_events[i] << ", "
            << "mean tot: " << mean_tot[i] << endl;
       reader.Clear();
-    } catch (Exception& e) { e.Dump(); }
+    } catch (Exception& e) { e.Dump(); return false; }
   }
   for (unsigned int i=0; i<num_plots; i++) {
-    canv[i]->Save("png");
+    canv[i]->Save("png", DQM_OUTPUT_DIR);
+    outputs->push_back(canv[i]->GetName());
   }
+  return true;
 }
 
 int
 main(int argc, char* argv[])
 {
-  if (argc<2) {
-    cerr << "Usage: " << argv[0] << " <input filename>" << endl;
-    return -1;
-  }
   try {
     Client client(1987);
     client.Connect(Socket::DQM);
     SocketMessage msg;
+    vector<string> outputs;
     while (true) {
       msg = client.Receive(NEW_FILENAME);
-      if (msg.GetKey()!=INVALID_KEY) RunDQM(msg.GetValue());
+      if (msg.GetKey()==INVALID_KEY) continue;
+      if (RunDQM(msg.GetCleanedValue(), &outputs)) {
+        cout << "Produced " << outputs.size() << " plot(s)" << endl;
+        for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
+          client.Send(SocketMessage(NEW_DQM_PLOT, *nm));
+        }
+      }
     }
   } catch (Exception& e) {
     e.Dump();

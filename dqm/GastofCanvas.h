@@ -48,7 +48,7 @@ namespace DQM
       }
       inline TH2D* Grid() { return fHist; }
 
-      inline void Save(TString ext="png") {
+      inline void Save(TString ext="png", TString path=".") {
         bool valid_ext = true;
         valid_ext |= (strcmp(ext, "png")!=0);
         valid_ext |= (strcmp(ext, "pdf")!=0);
@@ -81,9 +81,9 @@ namespace DQM
           SetUpperLabel(fUpperLabelText);
           fLabelsDrawn = true;
         }
-        TCanvas::SaveAs(Form("%s.%s", TCanvas::GetName(), ext.Data()));
+        TCanvas::SaveAs(Form("%s/%s.%s", path.Data(), TCanvas::GetName(), ext.Data()));
         c1->SetLogz();
-        TCanvas::SaveAs(Form("%s_logscale.%s", TCanvas::GetName(), ext.Data()));
+        TCanvas::SaveAs(Form("%s/%s_logscale.%s", path.Data(), TCanvas::GetName(), ext.Data()));
       }
 
     private:
