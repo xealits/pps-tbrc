@@ -27,7 +27,10 @@ MESSAGES_ENUM(\
   START_ACQUISITION, STOP_ACQUISITION,\
 
   // DQM messages
-  NEW_DQM_PLOT,
+  NEW_DQM_PLOT,\
+
+  // other
+  OTHER_MESSAGE,\
 );
 
 #endif

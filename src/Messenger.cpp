@@ -172,8 +172,6 @@ void
 Messenger::ProcessMessage(SocketMessage m, int sid)
 {
   if (m.GetKey()==REMOVE_CLIENT) {
-    MessageKey key;
-    
     if (m.GetIntValue()==GetSocketId()) {
       std::ostringstream o;
       o << "Some client (id=" << sid << ") asked for this master's disconnection!"
@@ -181,21 +179,19 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
       return;
     }
-    
-    key = (sid==m.GetIntValue()) ? THIS_CLIENT_DELETED : OTHER_CLIENT_DELETED;
+    const MessageKey key = (sid==m.GetIntValue()) ? THIS_CLIENT_DELETED : OTHER_CLIENT_DELETED;
     DisconnectClient(m.GetIntValue(), key);
     throw Exception(__PRETTY_FUNCTION__, "Removing socket client", Info, 11001);
   }
   else if (m.GetKey()==PING_CLIENT) {
-    int toping = m.GetIntValue();
+    const int toping = m.GetIntValue();
     Send(SocketMessage(PING_CLIENT), toping);
     SocketMessage msg; int i=0;
     do { msg = FetchMessage(toping); i++; } while (msg.GetKey()!=PING_ANSWER && i<MAX_SOCKET_ATTEMPTS);
     try { Send(SocketMessage(PING_ANSWER, msg.GetValue()), sid); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==GET_CLIENTS) {
-    int i = 0;
-    std::ostringstream os;
+    int i = 0; std::ostringstream os;
     for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++, i++) {
       if (i!=0) os << ";";
       os << it->first << " (type " << static_cast<int>(it->second) << ")";
@@ -203,8 +199,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     try { Send(SocketMessage(CLIENTS_LIST, os.str()), sid); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==WEB_GET_CLIENTS) {
-    int i = 0; SocketType type;
-    std::ostringstream os;
+    int i = 0; SocketType type; std::ostringstream os;
     for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++, i++) {
       type = (it->first==GetSocketId()) ? MASTER : it->second;
       if (i!=0) os << ";";
@@ -252,12 +247,12 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
       std::cout << "------> " << m.GetValue() << std::endl;
     } catch (Exception& e) { e.Dump(); }
   }
-  else {
+  /*else {
     try { Send(SocketMessage(INVALID_KEY), sid); } catch (Exception& e) { e.Dump(); }
     std::ostringstream o;
     o << "Received an invalid message: " << m.GetString();
     throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
-  }
+  }*/
 }
 
 void

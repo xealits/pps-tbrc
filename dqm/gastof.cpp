@@ -70,13 +70,21 @@ RunGastofDQM(string filename, vector<string>* outputs)
 int
 main(int argc, char* argv[])
 {
+  Client client;
   try {
-    Client client(1987);
+    client = Client(1987);
     client.Connect(Socket::DQM);
+  } catch (Exception& e) {
+    e.Dump();
+    return -1;
+  }
+ 
+  try {
     SocketMessage msg;
     while (true) {
       msg = client.Receive(NEW_FILENAME);
       if (msg.GetKey()==INVALID_KEY) continue;
+      if (msg.GetValue()=="" or msg.GetCleanedValue()=="") continue;
       vector<string> outputs;
       if (RunGastofDQM(msg.GetCleanedValue(), &outputs)) {
         cout << "Produced " << outputs.size() << " plot(s)" << endl;
@@ -87,6 +95,7 @@ main(int argc, char* argv[])
     }
   } catch (Exception& e) {
     e.Dump();
+    client.Send(e);
   }
   return 0;
 }

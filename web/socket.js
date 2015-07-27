@@ -10,6 +10,15 @@ Array.prototype.diff = function(b) {
   return this.filter(function(i) { return b.indexOf(i)<0; });
 }
 
+String.prototype.has_key = function(key_str) {
+  if (this.indexOf(key_str)>-1) return true;
+  return false;
+}
+
+String.prototype.value = function() {
+  return this.substr(this.indexOf(":")+1);
+}
+
 function enable_connected_buttons() {
   console.log("Connected");
   socket_id.style.backgroundColor = "lightgreen";
@@ -129,16 +138,16 @@ function stop_acquisition() {
 
 function parse_message(event) {
   var d = event.data.slice(0,-1);
-  
-  if (key(d, "SET_CLIENT_ID")) {
-    listener_id = parseInt(value(d));
+  //console.log(d) ;
+  if (d.has_key("SET_CLIENT_ID")) {
+    listener_id = parseInt(d.value());
     socket_id.value = listener_id;
     enable_connected_buttons();
     socket_refresh();
     console_log.value += d+'\n';
   }
-  else if (key(d, "CLIENTS_LIST")) {
-    var listeners = value(d);
+  else if (d.has_key("CLIENTS_LIST")) {
+    var listeners = d.value();
     var list = listeners.split(';');
     var retrieved = [];
     var retrieved_ids = [];
@@ -176,64 +185,55 @@ function parse_message(event) {
       acquisition_started = true;
     }
   }
-  else if (key(d, "THIS_CLIENT_DELETED")) {
+  else if (d.has_key("THIS_CLIENT_DELETED")) {
     restore_init_state();
     unbind_socket();
   }
-  else if (key(d, "OTHER_CLIENT_DELETED")) {
-    var id = parseInt(value(d));
+  else if (d.has_key("OTHER_CLIENT_DELETED")) {
+    var id = parseInt(d.value());
     if (id===listener_id) { restore_init_state(); unbind_socket(); }
     else console.log("Socket "+id+" successfully deleted!");
     console_log.value += d+'\n';
   }
-  else if (key(d, "PING_ANSWER")) {
-    alert(value(d));
+  else if (d.has_key("PING_ANSWER")) {
+    alert(d.value());
     console_log.value += d+'\n';
   }
-  else if (key(d, "ACQUISITION_STARTED")) {
+  else if (d.has_key("ACQUISITION_STARTED")) {
     alert("Acquisition process successfully launched!");
     acquisition_button.innerHTML = "Stop acquisition";
     acquisition_button.setAttribute('onClick', 'stop_acquisition()');
     acquisition_started = true;
   }
-  else if (key(d, "ACQUISITION_STOPPED")) {
+  else if (d.has_key("ACQUISITION_STOPPED")) {
     alert("Acquisition process terminated!");
     acquisition_button.innerHTML = "Start acquisition";
     acquisition_button.setAttribute('onClick', 'start_acquisition()');
     acquisition_started = false;
   }
-  else if (key(d, "NEW_DQM_PLOT")) {
-    dqm_block.innerHTML += value(d)+"\n";
+  else if (d.has_key("NEW_DQM_PLOT")) {
+    dqm_block.innerHTML += d.value()+"\n";
+    console.log(d.value());
   }
-  else if (key(d, "EXCEPTION")) {
+  else if (d.has_key("EXCEPTION")) {
     console_log.innerHTML = d;
     console.log(d);
   }
-  else if (key(d, "MASTER_DISCONNECT")) {
+  else if (d.has_key("MASTER_DISCONNECT")) {
     alert("ALERT:\nMaster disconnected!");
     restore_init_state();
     return;
   }  
 }
 
-function key(dat, key_str) {
-  if (dat.indexOf(key_str)>-1) return true;
-  return false;
-}
-
-function value(dat) {
-  return dat.substr(dat.indexOf(":")+1);
-}
-
 function socket_refresh() {
   if (connection===0) return;
-  else if (connection===undefined) bind_socket();
+  else if (connection===undefined) { bind_socket(); return; }
   if (listener_id<0) return;
   
   connection.send("WEB_GET_CLIENTS:"+listener_id);
-  connection.onmessage = function(event) {
-    parse_message(event);
-  };
+  connection.onmessage = function(event) { parse_message(event); };
+
   time_field.style.color = "black";
   time_field.innerHTML = new Date;
 }
