@@ -21,7 +21,14 @@ void CtrlC(int aSig) {
 
 int main(int argc, char *argv[]) {
   signal(SIGINT, CtrlC);
-  
+ 
+  string xml_config;
+  if (argc<2) {
+    cout << "No configuration file provided! using default config/config.xml" << endl;
+    xml_config = "config/config.xml";
+  }
+  else xml_config = argv[1];
+ 
   const unsigned int num_tdc = 1;
 
   fstream out_file[num_tdc];
@@ -49,7 +56,7 @@ int main(int argc, char *argv[]) {
   try {
     bool with_socket = false;
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
-    vme->ReadXML(argv[1]);
+    vme->ReadXML(xml_config);
   
     static const unsigned int num_tdc = vme->GetNumTDC();
     

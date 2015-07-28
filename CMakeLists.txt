@@ -36,6 +36,12 @@ add_subdirectory(dqm EXCLUDE_FROM_ALL)
 add_library(caen SHARED IMPORTED)
 set_property(TARGET caen PROPERTY IMPORTED_LOCATION "${CAEN_LOCATION}/libCAENVME.so")
 
+# Copy the XML configuration files to the config/ folder
+file(GLOB config_files RELATIVE ${PROJECT_SOURCE_DIR} config/*.xml)
+foreach(_script ${config_files})
+  configure_file(${_script} ${PROJECT_BINARY_DIR}/${_script} COPYONLY)
+endforeach()
+
 set(CMAKE_CXX_FLAGS "-DLINUX")
 
 add_executable(ppsFetch fetch_vme.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:det_lib> $<TARGET_OBJECTS:ws_lib>)
