@@ -62,7 +62,6 @@ Messenger::AddClient()
       // if not a WebSocket connection
       SocketMessage m(message);
       if (m.GetKey()==ADD_CLIENT) {
-        std::cout << "client: " << m.GetIntValue() << std::endl;
         SocketType type = static_cast<SocketType>(m.GetIntValue());
         if (type!=CLIENT) SwitchClientType(s.GetSocketId(), type);
       }
@@ -78,9 +77,7 @@ void
 Messenger::DisconnectClient(int sid, MessageKey key, bool force)
 {
   SocketType type;
-  try {
-    type = GetSocketType(sid);
-  } catch (Exception& e) {
+  try { type = GetSocketType(sid); } catch (Exception& e) {
     e.Dump();
     return;
   }
@@ -122,7 +119,9 @@ void
 Messenger::Send(const Message& m, int sid) const
 {
   try {
+    //std::cout << "DQM plot: " << m.GetValue() << " -- " << m.GetCleanedValue() << std::endl;
     Message tosend = (IsWebSocket(sid)) ? HTTPMessage(fWS, m, EncodeMessage) : m;
+    std::cout << "sending to " << sid << " --> web socket? " << IsWebSocket(sid) << std::endl;
     SendMessage(tosend, sid);
   } catch (Exception& e) { e.Dump(); }
 }

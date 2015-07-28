@@ -128,7 +128,8 @@ function stop_acquisition() {
 }
 
 function parse_message(event) {
-  var d = event.data.slice(0,-1);
+  //var d = event.data.slice(0,-1);
+  var d = event.data.replace('\0', '');
   
   if (key(d, "SET_CLIENT_ID")) {
     listener_id = parseInt(value(d));
@@ -203,7 +204,8 @@ function parse_message(event) {
     acquisition_started = false;
   }
   else if (key(d, "NEW_DQM_PLOT")) {
-    dqm_block.innerHTML += value(d)+"\n";
+    dqm_block.innerHTML += value(d)+"<br />";
+    alert(value(d));
   }
   else if (key(d, "EXCEPTION")) {
     console_log.innerHTML = d;
@@ -227,7 +229,8 @@ function value(dat) {
 
 function socket_refresh() {
   if (connection===0) return;
-  else if (connection===undefined) bind_socket();
+  //else if (connection===undefined) bind_socket();
+  else if (connection===undefined) return;
   if (listener_id<0) return;
   
   connection.send("WEB_GET_CLIENTS:"+listener_id);

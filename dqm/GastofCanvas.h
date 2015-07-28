@@ -3,6 +3,7 @@
 #include "TLegend.h"
 #include "TH2.h"
 #include "TStyle.h"
+#include "TDatime.h"
 
 namespace DQM
 {
@@ -14,20 +15,25 @@ namespace DQM
   {
     public:
       inline GastofCanvas() :
-        TCanvas("null"), fLegend(0), fLegendX(.52), fLegendY(.76), fLegendNumEntries(0), fUpperLabel(0), fLabelsDrawn(false) {;}
+        TCanvas("null"), fLegend(0), fLegendX(.52), fLegendY(.76), fLegendNumEntries(0),
+        fUpperLabel(0), fLabelsDrawn(false), fRunId(0), fRunDate(TDatime().AsString()) {;}
       inline GastofCanvas(TString name, unsigned int width=500, unsigned int height=500, TString upper_label="") :
         TCanvas(name, "", width, height), fWidth(width), fHeight(height), fLegend(0), fLegendX(.52), fLegendY(.76), fLegendNumEntries(0),
-        fUpperLabelText(upper_label), fUpperLabel(0), fLabelsDrawn(false) { Build(); }
+        fUpperLabelText(upper_label), fUpperLabel(0), fLabelsDrawn(false),
+        fRunId(0), fRunDate(TDatime().AsString()) { Build(); }
       inline GastofCanvas(TString name, TString upper_label) :
         TCanvas(name, "", 500, 500), fWidth(500), fHeight(500), fLegend(0), fLegendX(.52), fLegendY(.76), fLegendNumEntries(0),
-        fUpperLabelText(upper_label), fUpperLabel(0), fLabelsDrawn(false) { Build(); }
+        fUpperLabelText(upper_label), fUpperLabel(0), fLabelsDrawn(false),
+        fRunId(0), fRunDate(TDatime().AsString()) { Build(); }
       inline virtual ~GastofCanvas() {
         if (fLegend) delete fLegend;
         if (fUpperLabel) delete fUpperLabel;
         if (fHist) delete fHist;
       }
 
-      void SetUpperLabel(TString text) {
+      inline void SetRunInfo(unsigned int id, TString date) { fRunId = id; fRunDate = date; }
+
+      inline void SetUpperLabel(TString text) {
         fUpperLabelText = text;
         fUpperLabel = new TPaveText(.45, .922, .885, .952, "NDC");
         fUpperLabel->SetMargin(0.);
@@ -77,6 +83,28 @@ namespace DQM
           fLabel2->SetTextAlign(13);
           fLabel2->SetTextSize(22);
           fLabel2->Draw();
+          fLabel3 = new TPaveText(.8, .0, .98, .05, "NDC");
+          fLabel3->AddText(Form("Run %d - %s", fRunId, fRunDate.Data()));
+          fLabel3->SetMargin(0.);
+          fLabel3->SetFillColor(kWhite);
+          fLabel3->SetLineColor(kWhite);
+          fLabel3->SetLineWidth(0);
+          fLabel3->SetShadowColor(kWhite);
+          fLabel3->SetTextFont(43);
+          fLabel3->SetTextAlign(32);
+          fLabel3->SetTextSize(16);
+          fLabel3->Draw();
+          fLabel4 = new TPaveText(.1, .0, .3, .05, "NDC");
+          fLabel4->AddText("#downarrow beam #downarrow");
+          fLabel4->SetMargin(0.);
+          fLabel4->SetFillColor(kWhite);
+          fLabel4->SetLineColor(kWhite);
+          fLabel4->SetLineWidth(0);
+          fLabel4->SetShadowColor(kWhite);
+          fLabel4->SetTextFont(43);
+          fLabel4->SetTextAlign(22);
+          fLabel4->SetTextSize(18);
+          fLabel4->Draw();
           if (fLegend->GetNRows()!=0) fLegend->Draw();
           SetUpperLabel(fUpperLabelText);
           fLabelsDrawn = true;
@@ -217,9 +245,11 @@ namespace DQM
       TLegend *fLegend;
       double fLegendX, fLegendY;
       unsigned int fLegendNumEntries;
-      TPaveText *fLabel1, *fLabel2;
+      TPaveText *fLabel1, *fLabel2, *fLabel3, *fLabel4;
       TString fUpperLabelText;
       TPaveText *fUpperLabel;
       bool fLabelsDrawn;
+      unsigned fRunId;
+      TString fRunDate;
   };
 }
