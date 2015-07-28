@@ -40,4 +40,4 @@ set(CMAKE_CXX_FLAGS "-DLINUX")
 
 add_executable(ppsFetch fetch_vme.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:det_lib> $<TARGET_OBJECTS:ws_lib>)
 target_link_libraries(ppsFetch caen)
-set_property(TARGET ppsFetch PROPERTY LINK_FLAGS "-lCAENVME")
+set_property(TARGET ppsFetch PROPERTY LINK_FLAGS "-lCAENVME -ltinyxml2")

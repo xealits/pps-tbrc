@@ -49,59 +49,27 @@ int main(int argc, char *argv[]) {
   try {
     bool with_socket = false;
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
+    vme->ReadXML(argv[1]);
+  
+    static const unsigned int num_tdc = vme->GetNumTDC();
     
-    fh.run_id = vme->GetRunNumber();
-    
-    if (use_fpga) {
-      vme->AddFPGAUnit(0x00ee0000);
-      fpga = vme->GetFPGAUnit();
-      if (!fpga) throw Exception(__PRETTY_FUNCTION__, "FPGA not detected/reachable!", Fatal);
+    VME::FPGAUnitV1495* fpga = vme->GetFPGAUnit();
+    const bool use_fpga = (fpga!=0);
+    fstream out_file[num_tdc];
+    string acqmode[num_tdc], detmode[num_tdc];
+    unsigned int num_events[num_tdc];
 
-      //fpga->ResetFPGA();
-      //exit(0);
-      //cout << ">>> " << fpga->GetUserFirmwareRevision() << endl;
-
-      //fpga->SetInternalClockPeriod(1); // in units of 25 ns
-      fpga->SetInternalTriggerPeriod(4000); // in units of 25 ns
-      /*for (int i=0; i<4; i++) {
-        fpga->SetOutputDelay(i);
-        cout << "--> " << fpga->GetOutputDelay() << endl;
-      }*/
-      fpga->SetOutputDelay(0);
-      //sleep(2);
-      fpga->DumpFWInformation();
-      //exit(0);
-
-      bool poi[] = { // pattern of inhibit for the signal generator
-        true, true, true, true, false, false, false, false,
-        false, false, false, false, false, false, false, false,
-        false, false, false, false, false, false, false, false,
-        false, false, false, false, false, false, false, false
-      };
-      fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear);
-      for (unsigned short i=0; i<32; i++) {
-        //poi[i] = (i%2==0);
-        poi[i] = true;
-        fpga->SetOutputPulser(i, poi[i]);
-      }
-      //exit(0);
-    }
-
-    // TDC configuration
-    const uint32_t tdc_address[] = { 0x00aa0000, 0x00bb0000 }; // V1290A (32 ch., CERN)
-
-    for (unsigned int i=0; i<num_tdc; i++) {
-      vme->AddTDC(tdc_address[i]);
-      tdc[i] = vme->GetTDC(tdc_address[i]);
-      tdc[i]->SetVerboseLevel(1);
-      tdc[i]->SetAcquisitionMode(acq_mode);
-      tdc[i]->SetDetectionMode(det_mode);
-      tdc[i]->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
-      tdc[i]->SetETTT();
-
-      tdc[i]->SetWindowWidth(4000);
-      tdc[i]->SetWindowOffset(-2000);
-    
+    VME::TDCCollection tdcs = vme->GetTDCCollection(); unsigned int i=0;
+    for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
+      VME::TDCV1x90* tdc = atdc->second;
+      
+      file_header_t fh;
+      fh.magic = 0x30535050; // PPS0 in ASCII
+      fh.run_id = 0;
+      fh.spill_id = 0;
+      fh.acq_mode = tdc->GetAcquisitionMode();
+      fh.det_mode = tdc->GetDetectionMode();
+  
       std::ostringstream filename;
       filename << "events_board" << i << ".dat";
       vme->SetOutputFile(filename.str());
@@ -111,22 +79,21 @@ int main(int argc, char *argv[]) {
         throw Exception(__PRETTY_FUNCTION__, "Error opening file", Fatal);
       }
       out_file[i].write((char*)&fh, sizeof(file_header_t));
-   }
- 
-    std::string acqmode, detmode;
-    switch (tdc[0]->GetAcquisitionMode()) {
-      case VME::CONT_STORAGE: acqmode = "Continuous storage"; break;
-      case VME::TRIG_MATCH: acqmode = "Trigger matching"; break;
-      default:
-        acqmode = "[Invalid mode]";
-        throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
-    }
-    switch (tdc[0]->GetDetectionMode()) {
-      case VME::PAIR: detmode = "Pair measurement"; break;
-      case VME::OLEADING: detmode = "Leading edge only"; break;
-      case VME::OTRAILING: detmode = "Trailing edge only"; break;
-      case VME::TRAILEAD: detmode = "Leading and trailing edges"; break;
-    }
+
+      switch (fh.acq_mode) {
+        case VME::CONT_STORAGE: acqmode[i] = "Continuous storage"; break;
+        case VME::TRIG_MATCH: acqmode[i] = "Trigger matching"; break;
+        default:
+          acqmode[i] = "[Invalid mode]";
+          throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
+      }
+      switch (fh.det_mode) {
+        case VME::PAIR: detmode[i] = "Pair measurement"; break;
+        case VME::OLEADING: detmode[i] = "Leading edge only"; break;
+        case VME::OTRAILING: detmode[i] = "Trailing edge only"; break;
+        case VME::TRAILEAD: detmode[i] = "Leading and trailing edges"; break;
+      }
+    } 
 
     if (use_fpga) {
       fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
@@ -136,13 +103,18 @@ int main(int argc, char *argv[]) {
     t_beg = std::time(0);
 
     cerr << endl << "*** Ready for acquisition! ***" << endl
-         << "Acquisition mode: " << acqmode << endl 
-         << "Detection mode: " << detmode << endl 
+         << "Acquisition mode: ";
+    for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << acqmode[i]; }
+    cerr << endl 
+         << "Detection mode: ";
+    for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << detmode[i]; }
+    cerr << endl 
          << "Local time: " << asctime(std::localtime(&t_beg));
 
+    for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
     while (true) {
-      for (unsigned int i=0; i<num_tdc; i++) {
-        ec = tdc[i]->FetchEvents();
+      for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++) {
+        ec = atdc->second->FetchEvents();
         if (ec.size()==0) continue; // no events were fetched
         for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
           uint32_t word = e->GetWord();
