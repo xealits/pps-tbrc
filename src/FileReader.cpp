@@ -19,7 +19,7 @@ FileReader::Open(std::string file)
     std::stringstream s;
     s << "Error while trying to open the file \""
       << file << "\" for reading!";
-    throw Exception(__PRETTY_FUNCTION__, s.str(), JustWarning);
+    throw Exception(__PRETTY_FUNCTION__, s.str(), JustWarning, 40000);
   }
   
   struct stat st;
@@ -28,18 +28,18 @@ FileReader::Open(std::string file)
     std::stringstream s;
     s << "Error retrieving size of \"" << file << "\"!";
     fFile.close();
-    throw Exception(__PRETTY_FUNCTION__, s.str(), JustWarning);
+    throw Exception(__PRETTY_FUNCTION__, s.str(), JustWarning, 40001);
   }
   
   if (!fFile.good()) {
     fFile.close();
-    throw Exception(__PRETTY_FUNCTION__, "Can not read file header!", JustWarning);
+    throw Exception(__PRETTY_FUNCTION__, "Can not read file header!", JustWarning, 40002);
   }
   fFile.read((char*)&fHeader, sizeof(file_header_t));
   fNumEvents = (st.st_size-sizeof(file_header_t))/sizeof(uint32_t);
   if (fHeader.magic!=0x30535050) {
     fFile.close();
-    throw Exception(__PRETTY_FUNCTION__, "Wrong magic number!", JustWarning);
+    throw Exception(__PRETTY_FUNCTION__, "Wrong magic number!", JustWarning, 40003);
   }
   fWriteTime = st.st_mtime;
   fReadoutMode = fHeader.acq_mode;
@@ -120,7 +120,7 @@ FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* mc)
       }
       if (has_lead and has_trail) break;
     }
-    if (has_error) throw Exception(__PRETTY_FUNCTION__, "Measurement has at least one error word.", JustWarning);
+    if (has_error) throw Exception(__PRETTY_FUNCTION__, "Measurement has at least one error word.", JustWarning, 41000);
   }
   else if (fReadoutMode==VME::TRIG_MATCH) {
     bool has_error = false;
@@ -144,12 +144,12 @@ FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* mc)
 
       if (ev.GetType()==VME::TDCEvent::GlobalTrailer) break;
     }
-    if (has_error) throw Exception(__PRETTY_FUNCTION__, "Measurement has at least one error word.", JustWarning);
+    if (has_error) throw Exception(__PRETTY_FUNCTION__, "Measurement has at least one error word.", JustWarning, 41000);
   }
   else {
     std::ostringstream os;
     os << "Unrecognized readout/acquisition mode: " << fReadoutMode;
-    throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+    throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, 40004);
   }
   mc->SetEventsCollection(ec);
   return true;
