@@ -58,7 +58,10 @@ RunGastofDQM(string filename, vector<string>* outputs)
            << "mean number of hits: " << mean_num_events[i] << ", "
            << "mean tot: " << mean_tot[i] << endl;
       reader.Clear();
-    } catch (Exception& e) { e.Dump(); return false; }
+    } catch (Exception& e) {
+      e.Dump();
+      if (e.ErrorNumber()<41000) return false;
+    }
   }
   for (unsigned int i=0; i<num_plots; i++) {
     canv[i]->Save("png", DQM_OUTPUT_DIR);
