@@ -4,6 +4,7 @@
 #define VME_BridgeVx718_h
 
 #include "VME_GenericBoard.h"
+#include "VME_PCIInterfaceA2818.h"
 
 #include <unistd.h>
 
@@ -106,7 +107,7 @@ namespace VME
        * \param[in] device Device identifier on the VME crate
        * \param[in] type Device type (1718/2718)
        */
-      BridgeVx718(const char *device, BridgeType type);
+      BridgeVx718(const char* device, BridgeType type);
       /**
        * Bridge class destructor
        * \brief Destructor
@@ -118,6 +119,7 @@ namespace VME
        * \return Handle value
        */ 
       inline int32_t GetHandle() const { return fHandle; }
+      void CheckPCIInterface(const char* device) const;
       void CheckConfiguration() const;
       void TestOutputs() const;
       /// Perform a system reset of the module

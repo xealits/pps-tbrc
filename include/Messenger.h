@@ -41,7 +41,17 @@ class Messenger : public Socket
      * \param[in] m Message to transmit
      * \param[in] sid Unique identifier of the client on this socket
      */
-    inline void Send(const Message& m, int sid) const;
+    void Send(const Message& m, int sid) const;
+    /**
+     * \brief Send any type of message to all clients of one type
+     * \param[in] type Client type
+     * \param[in] m Message to transmit
+     */
+    inline void SendAll(const Socket::SocketType& type, const Message& m) const {
+      for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++) {
+        if (it->second==type) Send(m, it->first);
+      }
+    }
     /// Handle a message reception from a client
     void Receive();
     /**
