@@ -249,7 +249,8 @@ function bind_socket() {
   connection.onopen = function () {
     // what a hell
     append_to_console( '<p class="incoming">GOT: Connection opened<\p>' );
-    interface_on();
+    // interface_on();
+    // image_changer = setInterval(change_image, 5000);
     // alert("socket onopen");
   };
   connection.onerror = function (event) {
@@ -289,8 +290,10 @@ function bind_socket() {
       // alert( "socket onclose" );
   };
 
-  alert("CONNECTION HANDLERS ARE SET UP");
+  interface_on();
   image_changer = setInterval(change_image, 5000);
+
+  alert("CONNECTION HANDLERS ARE SET UP");
 }
 
 
@@ -332,7 +335,8 @@ function change_image() {
   x = (x <= 0) ? images.length - 1 : x - 1;
   d = new Date();
   // $("img").src = "intergalactic-light.png";
-  $( "img" ).attr( "src", images[x] + "?" + d.getTime() );
+  $( "#output1" ).attr( "src", images[x] + "?" + d.getTime() );
+  $( "#output1" ).panzoom("reset");
   // alert( x + images[x]);
 }
 
@@ -352,6 +356,8 @@ $( document ).ready( function(){
     $( "#time_field" ).html( new Date() );
     setInterval( function() {$( "#time_field" ).html( new Date() );}, 1000);
 
+    $( "#output1" ).panzoom({$zoomIn: $("#zoom-in"), $zoomOut: $("#zoom-out")});
+
     // buttons
     $( "#bind_button" ).click( bind_socket );
     $( "#bind_button" ).toggleClass( "enabled" );
@@ -359,6 +365,7 @@ $( document ).ready( function(){
       // alert( connection );
       interface_on();
     }
+
 } );
 
 $( window ).unload( function() {

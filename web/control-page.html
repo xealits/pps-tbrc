@@ -7,9 +7,17 @@
         <title>CT-PPS Run control</title>
 
         <!-- <link rel="stylesheet" type="text/css" href="style.css"/> -->
-        <link rel="stylesheet" type="text/css" href="style3.css"/>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-        <script language="javascript" src="socket3.js"></script>
+        <!-- <link rel="stylesheet" type="text/css" href="style3.css"/> -->
+        <link rel="stylesheet" type="text/css" href="control-appearance.css"/>
+
+        <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script> -->
+        <script src="jquery-1.11.3.min.js"></script>
+        <!-- <script src="jQuery-Plugin-For-Panning-Zooming-SVG-Images/compiled/jquery.svg.pan.zoom.js"></script> -->
+        <script src="jQuery-Plugin-For-Panning-Zooming-Any-Elements-panzoom/dist/jquery.panzoom.min.js"></script>
+
+        <script language="javascript" src="control-behavior.js"></script>
+        <!-- <script language="javascript" src="socket3.js"></script> -->
+
         <!-- <script language="javascript" type="text/javascript"> -->
             <!-- // window.addEventListener("load", socket_init, false); -->
             <!-- // window.addEventListener("beforeunload", socket_close, false); -->
@@ -70,10 +78,18 @@
                 <img src="PopSci-journal-history-diagram.png" alt="PopSci-journal-history-diagram">
                 <img src="intergalactic-light.png" alt="intergalactic-light">
                 -->
+
+                <div class="controls" id="zooming">
+                    <button id="zoom-in"  class="enabled">Zoom In</button>
+                    <button id="zoom-out" class="enabled">Zoom Out</button>
+                </div>
                 
                 <div class="output">
-                    <img id="output1" src="dialup-final.png" alt="DQM report">
+                    <img id="output1" src="gnu-meditate.svg" alt="DQM report">
+                    <!-- <img id="output1" src="dialup-final.png" alt="DQM report"> -->
+                    <!-- <embed id="output1" src="BEatmega32u4.pdf" type='application/pdf'> -->
                 </div>
+
 <!--
                  <div class="output" id="output2">
                     <img src="dencity-for-web.jpg" alt="dencity-for-web">

@@ -144,8 +144,13 @@ p.incoming {
   /*height: 100%;*/
 }
 
+#zooming.controls {
+  width: 36vw;
+  height: 3vw;
+}
+
 button {
-  float: right;
+  float: left;
   /*height: 23%;  4 buttons */
   height: 2vw;
   /*width: 70%;*/
@@ -203,17 +208,31 @@ button:active {
 
 
 
+/*
+#output .interface {
+  position: relative;
+}
+
+#zooming  {
+  position: absolute;
+  bottom: 0;
+}
+*/
+
 
 #output .output {
   /*width: 48%;*/
   /*height: 48%;*/
   /*margin: 1%;*/
   width: 82vw;
+  /*width: 64vw;*/
   height: 82vw;
   margin: 5vw;
-  float: left;
+  /*margin-left: 0;*/
+  float: right;
 }
-img {
+
+img, embed {
   /*width: 100%;*/
   max-height:100%;
   max-width:100%;
