@@ -8,6 +8,8 @@ h1
 {
   font-size: 16pt;
   display: inline-block;
+  height: 10px;
+  margin: 5px 0px;
 }
 
 input
@@ -28,7 +30,7 @@ textarea
 
 .socket_block
 {
-  width: 120px;
+  width: 100px;
   border: 1px lightgray solid;
   display: inline-block;
   margin: 3px;
@@ -50,6 +52,14 @@ textarea
   height: 2em;
 }
 
+#upper_fields
+{
+  display: block;
+  margin: 4px 0px;;
+  border: 1px lightgray solid;
+  width: 1007px;
+}
+
 #time_field
 {
   font-size: 9pt;
@@ -57,12 +67,26 @@ textarea
   float: right;
 }
 
+#exception_block
+{
+  background-color: beige;
+  display: inline-block;
+  border: 1px lightgray solid;
+  margin: 0px;
+  height: 520px;
+  width: 250px;
+  /*float: left;*/
+}
+
 #dqm_block
 {
   background-color: white;
-  display: block;
+  display: inline-block;
   border: 1px lightgray solid;
+  margin: 0px;
   height: 520px;
+  width: 750px;
+  /*float: right;*/
 }
 
 .block_master

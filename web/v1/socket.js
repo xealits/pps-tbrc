@@ -63,6 +63,7 @@ function socket_init() {
   socket_id = document.getElementById("socket_id");
   console_log = document.getElementById("console_log");
   time_field = document.getElementById("time_field");
+  exception_block = document.getElementById("exception_block");
   dqm_block = document.getElementById("dqm_block");
   
   restore_init_state();
@@ -216,7 +217,7 @@ function parse_message(event) {
     console.log(d.value());
   }
   else if (d.has_key("EXCEPTION")) {
-    console_log.innerHTML = d;
+    exception_block.innerHTML += d.value()+"<br />";
     console.log(d);
   }
   else if (d.has_key("MASTER_DISCONNECT")) {
@@ -260,11 +261,11 @@ function create_block(obj) {
   button_ping.innerHTML = "Ping";
   block.appendChild(button_ping);
   
-  var logger = document.createElement("textarea");
+  /*var logger = document.createElement("textarea");
   logger.className = "socket_block_logger";
   logger.setAttribute('id', 'logger_'+obj.id);
   logger.disabled = true;
-  block.appendChild(logger);
+  block.appendChild(logger);*/
   
   switch (obj.type) {
     case 0: // master socket
