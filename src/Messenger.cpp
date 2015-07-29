@@ -234,7 +234,6 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   else if (m.GetKey()==EXCEPTION) {
     try {
       SendAll(WEBSOCKET_CLIENT, m);
-      Broadcast(m);
       std::cout << "------> " << m.GetValue() << std::endl;
     } catch (Exception& e) { e.Dump(); }
   }

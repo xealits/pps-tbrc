@@ -119,9 +119,7 @@ Client::Receive(const MessageKey& key)
   SocketMessage msg;
   try {
     msg = FetchMessage();
-    if (msg.GetKey()==key) {
-      return msg;
-    }
+    if (msg.GetKey()==key) { return msg; }
   } catch (Exception& e) {
     if (e.ErrorNumber()==11000) // client has been disconnected
       throw Exception(__PRETTY_FUNCTION__, "Some other socket asked for this client's disconnection. Obtemperating...", Fatal);

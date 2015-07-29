@@ -36,6 +36,8 @@ class FileReader
 
     void Dump() const;    
     inline unsigned int GetNumTDCs() const { return fHeader.num_hptdc; }
+    inline unsigned int GetRunId() const { return fHeader.run_id; }
+    inline unsigned int GetSpillId() const { return fHeader.spill_id; }
     
     unsigned long GetNumEvents() const { return fNumEvents; }
     bool GetNextEvent(VME::TDCEvent*);

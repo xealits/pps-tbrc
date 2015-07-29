@@ -113,7 +113,10 @@ int main(int argc, char *argv[]) {
         fh.det_mode = tdc->GetDetectionMode();
 
         ostringstream filename;
-        filename << PATH << "/events_board" << i << "_" << std::time(0)
+        filename << PATH << "/events_board" << i
+                 << "_" << fh.run_id
+                 << "_" << fh.spill_id
+                 << "_" << std::time(0)
                  //<< "_" GenerateString(4)
                  << ".dat";
         //filename << GenerateString(5);
@@ -126,8 +129,6 @@ int main(int argc, char *argv[]) {
         
       }
       
-      t_beg = std::time(0);
-      
       // Pulse to set a common starting time for both TDC boards
       if (use_fpga) {
         fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
@@ -138,8 +139,9 @@ int main(int argc, char *argv[]) {
 
       // Data readout from the two TDC boards
       for (unsigned int i=0; i<num_tdc; i++) { num_events[i] = 0; }
+      unsigned long tm = 0;
       while (true) {
-        unsigned int i = 0;
+        unsigned int i = 0; tm += 1;
         for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
           ec = atdc->second->FetchEvents();
           if (ec.size()==0) continue; // no events were fetched
@@ -151,7 +153,7 @@ int main(int argc, char *argv[]) {
           }
           num_events[i] += ec.size();
         }
-        if (use_fpga) {
+        if (use_fpga and tm%1000==0) {
           num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
           num_triggers_in_files = num_triggers-num_all_triggers;
           if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
@@ -162,7 +164,7 @@ int main(int argc, char *argv[]) {
         }
       }
       num_files += 1;
-cerr << "---> " << num_triggers_in_files << " triggers written in current files" << endl;
+      cerr << "---> " << num_triggers_in_files << " triggers written in current files" << endl;
       unsigned int i = 0;
       for (VME::TDCCollection::const_iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
         if (out_file[i].is_open()) out_file[i].close();

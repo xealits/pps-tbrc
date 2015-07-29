@@ -31,7 +31,12 @@ namespace DQM
         if (fHist) delete fHist;
       }
 
-      inline void SetRunInfo(unsigned int id, TString date) { fRunId = id; fRunDate = date; }
+      inline void SetRunInfo(unsigned int board_id, unsigned int run_id, unsigned int spill_id, TString date) {
+        fBoardId = board_id;
+        fRunId = run_id;
+        fSpillId = spill_id;
+        fRunDate = date;
+      }
 
       inline void SetUpperLabel(TString text) {
         fUpperLabelText = text;
@@ -83,8 +88,8 @@ namespace DQM
           fLabel2->SetTextAlign(13);
           fLabel2->SetTextSize(22);
           fLabel2->Draw();
-          fLabel3 = new TPaveText(.8, .0, .98, .05, "NDC");
-          fLabel3->AddText(Form("Run %d - %s", fRunId, fRunDate.Data()));
+          fLabel3 = new TPaveText(.5, .0, .98, .05, "NDC");
+          fLabel3->AddText(Form("Board %d, Run %d - Spill %d - %s", fBoardId, fRunId, fSpillId, fRunDate.Data()));
           fLabel3->SetMargin(0.);
           fLabel3->SetFillColor(kWhite);
           fLabel3->SetLineColor(kWhite);
@@ -94,7 +99,7 @@ namespace DQM
           fLabel3->SetTextAlign(32);
           fLabel3->SetTextSize(16);
           fLabel3->Draw();
-          fLabel4 = new TPaveText(.1, .0, .3, .05, "NDC");
+          fLabel4 = new TPaveText(.01, .0, .21, .05, "NDC");
           fLabel4->AddText("#downarrow beam #downarrow");
           fLabel4->SetMargin(0.);
           fLabel4->SetFillColor(kWhite);
@@ -249,7 +254,7 @@ namespace DQM
       TString fUpperLabelText;
       TPaveText *fUpperLabel;
       bool fLabelsDrawn;
-      unsigned fRunId;
+      unsigned int fBoardId, fRunId, fSpillId;
       TString fRunDate;
   };
 }
