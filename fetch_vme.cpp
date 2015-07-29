@@ -35,8 +35,6 @@ int main(int argc, char *argv[]) {
   unsigned int num_events[num_tdc];
 
   VME::TDCEventCollection ec;
-  VME::TDCV1x90* tdc[num_tdc];
-  VME::FPGAUnitV1495* fpga;
 
   VME::AcquisitionMode acq_mode = VME::TRIG_MATCH;
   VME::DetectionMode det_mode = VME::TRAILEAD;
@@ -51,7 +49,6 @@ int main(int argc, char *argv[]) {
   std::time_t t_beg;
   for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
   unsigned int num_triggers = 0;
-  bool use_fpga = true;
 
   try {
     bool with_socket = false;
@@ -66,6 +63,7 @@ int main(int argc, char *argv[]) {
     string acqmode[num_tdc], detmode[num_tdc];
     unsigned int num_events[num_tdc];
 
+    // TDC output files configuration
     VME::TDCCollection tdcs = vme->GetTDCCollection(); unsigned int i=0;
     for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
       VME::TDCV1x90* tdc = atdc->second;
@@ -77,11 +75,10 @@ int main(int argc, char *argv[]) {
       fh.acq_mode = tdc->GetAcquisitionMode();
       fh.det_mode = tdc->GetDetectionMode();
   
-      std::ostringstream filename;
-      filename << "events_board" << i << ".dat";
-      vme->SetOutputFile(filename.str());
+      ostringstream filename; filename << "events_board" << i << ".dat";
       //filename << GenerateFileName(0);
-      out_file[i].open(vme->GetOutputFile().c_str(), fstream::out | ios::binary );	
+      vme->SetOutputFile(atdc->first, filename.str());
+      out_file[i].open(vme->GetOutputFile(atdc->first).c_str(), fstream::out | ios::binary | fstream::app);
       if (!out_file[i].is_open()) {
         throw Exception(__PRETTY_FUNCTION__, "Error opening file", Fatal);
       }
@@ -102,11 +99,6 @@ int main(int argc, char *argv[]) {
       }
     } 
 
-    if (use_fpga) {
-      fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
-      fpga->StartScaler();
-    }
-
     t_beg = std::time(0);
 
     cerr << endl << "*** Ready for acquisition! ***" << endl
@@ -118,9 +110,17 @@ int main(int argc, char *argv[]) {
     cerr << endl 
          << "Local time: " << asctime(std::localtime(&t_beg));
 
+    // Pulse to set a common starting time for both TDC boards
+    if (use_fpga) {
+      fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
+      fpga->StartScaler();
+    }
+
+    // Data readout from the two TDC boards
     for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
     while (true) {
-      for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++) {
+      unsigned int i = 0;
+      for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
         ec = atdc->second->FetchEvents();
         if (ec.size()==0) continue; // no events were fetched
         for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {

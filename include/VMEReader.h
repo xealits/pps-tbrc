@@ -9,6 +9,7 @@
 #include "VME_TDCV1x90.h"
 #include "VME_TDCEvent.h"
 
+#include <map>
 #include "tinyxml2.h"
 
 /**
@@ -110,9 +111,14 @@ class VMEReader : public Client
     }
 
     /// Set the path to the output file where the DAQ is to write
-    void SetOutputFile(std::string filename);
+    void SetOutputFile(uint32_t tdc_address, std::string filename);
     /// Return the path to the output file the DAQ is currently writing to
-    inline std::string GetOutputFile() const { return fOutputFile; }
+    inline std::string GetOutputFile(uint32_t tdc_address) {
+      OutputFiles::iterator it = fOutputFiles.find(tdc_address);
+      if (it==fOutputFiles.end())
+        throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve output file", JustWarning);
+      return it->second;
+    }
 
     /// Abort data collection for all modules on the bus handled by the bridge
     void Abort();
@@ -132,8 +138,10 @@ class VMEReader : public Client
     bool fOnSocket;
     /// Is the bridge's pulser already started?
     bool fIsPulserStarted;
-    /// Path to the current output file the DAQ is writing to
-    std::string fOutputFile;
+    typedef std::map<uint32_t, std::string> OutputFiles;
+    /// Path to the current output files the DAQ is writing to
+    /// (indexed by the TDC id)
+    OutputFiles fOutputFiles;
 };
 
 #endif

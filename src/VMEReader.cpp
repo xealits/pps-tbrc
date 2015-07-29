@@ -1,8 +1,7 @@
 #include "VMEReader.h"
 
 VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
-  Client(1987), fBridge(0), fSG(0), fFPGA(0), fOnSocket(on_socket), fIsPulserStarted(false),
-  fOutputFile("")
+  Client(1987), fBridge(0), fSG(0), fFPGA(0), fOnSocket(on_socket), fIsPulserStarted(false)
 {
   try {
     if (fOnSocket) Client::Connect(DETECTOR);
@@ -220,8 +219,10 @@ VMEReader::Abort()
 }
 
 void
-VMEReader::SetOutputFile(std::string filename)
+VMEReader::SetOutputFile(uint32_t tdc_address, std::string filename)
 {
-  if (fOnSocket) Client::Send(SocketMessage(SET_NEW_FILENAME, filename.c_str()));
-  fOutputFile = filename;
+  if (fOnSocket) Client::Send(SocketMessage(SET_NEW_FILENAME, tdc_address+filename.c_str()));
+  OutputFiles::iterator it = fOutputFiles.find(tdc_address);
+  if (it!=fOutputFiles.end()) { it->second = filename; }
+  else fOutputFiles.insert(std::pair<uint32_t, std::string>(tdc_address, filename));
 }
