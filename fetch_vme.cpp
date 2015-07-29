@@ -174,25 +174,27 @@ int main(int argc, char *argv[]) {
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
       unsigned int i = 0;
-      VME::TDCCollection tdcs = vme->GetTDCCollection();
-      for (VME::TDCCollection::const_iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
-        if (out_file[i].is_open()) out_file[i].close();
-        vme->SendOutputFile(atdc->first);
-      }
-
-      std::time_t t_end = std::time(0);
-      double nsec_tot = difftime(t_end, t_beg), nsec = fmod(nsec_tot,60), nmin = (nsec_tot-nsec)/60.;
-      cerr << endl << "*** Acquisition stopped! ***" << endl
-           << "Local time: " << asctime(std::localtime(&t_end))
-           << "Total acquisition time: " << difftime(t_end, t_beg) << " seconds"
-           << " (" << nmin << " min " << nsec << " sec)"
-           << endl;
-    
-      cerr << endl << "Acquired ";
-      for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << num_events[i]; }
-      cerr << " words in " << num_files << " files for " << num_all_triggers << " triggers in this run" << endl;
+      try {
+        VME::TDCCollection tdcs = vme->GetTDCCollection();
+        for (VME::TDCCollection::const_iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
+          if (out_file[i].is_open()) out_file[i].close();
+          vme->SendOutputFile(atdc->first);
+        }
   
-      delete vme;
+        std::time_t t_end = std::time(0);
+        double nsec_tot = difftime(t_end, t_beg), nsec = fmod(nsec_tot,60), nmin = (nsec_tot-nsec)/60.;
+        cerr << endl << "*** Acquisition stopped! ***" << endl
+             << "Local time: " << asctime(std::localtime(&t_end))
+             << "Total acquisition time: " << difftime(t_end, t_beg) << " seconds"
+             << " (" << nmin << " min " << nsec << " sec)"
+             << endl;
+      
+        cerr << endl << "Acquired ";
+        for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << num_events[i]; }
+        cerr << " words in " << num_files << " files for " << num_all_triggers << " triggers in this run" << endl;
+    
+        delete vme;
+      } catch (Exception& e) { e.Dump(); }
       return 0;
     }
     e.Dump();
