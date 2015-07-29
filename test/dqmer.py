@@ -2,7 +2,8 @@
  
 import socket   #for sockets
 import sys  #for exit
-
+sys.path.append("../scripts")
+import DQMReader
 
 def make_client( host, port ):
 
@@ -29,9 +30,10 @@ def make_client( host, port ):
 
 
 def dummy_computing(filename):
-    print "Computed the %s" % filename
-    return filename
-
+    reader = DQMReader.DQMReader(filename)
+    reader.ProcessBinaryFile()
+    resultfilename = reader.GetOutputFilename()
+    return resultfilename
 
 def run_dqm_process( messenger_socket, computation_process = dummy_computing ):
     while True: # while socket and connection are alive, but, as people say, it is hard to check
@@ -58,10 +60,7 @@ def run_dqm_process( messenger_socket, computation_process = dummy_computing ):
             print 'Send failed'
             sys.exit()
 
-
-
 if __name__ == '__main__':
     host = "localhost"
     socket_to_messenger = make_client( host, 38765 )
     run_dqm_process( socket_to_messenger )
-

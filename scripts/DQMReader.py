@@ -3,7 +3,7 @@
 # Simple python script for converting binary CTPPS HPTDC data files to human-readable format. 
 # Based on https://github.com/forthommel/pps-tbrc/src/FileReader.cpp C++ version by L. Forthomme
 
-import os, string, sys, posix, tokenize, array, getopt,struct
+import os, string, sys, posix, tokenize, array, getopt, struct, ast
 import numpy as np
 import pylab as P
 import matplotlib as mpl
@@ -84,17 +84,21 @@ class DQMReader:
 
     def SetOutputFileFormat(self,extension):
         self.outputplotfile = self.outputplotfile.split('.')[0] + '.' + str(extension)
-                
+
     def GetOutputFilename(self):
         return self.outputplotfile
 
-    # Main method for analyzing a binary HPTDC output file
     def ProcessBinaryFile(self):
+        self.ReadFile()
+        self.ProducePlots()
+
+    #############################################################
+    # Main method for analyzing a single binary HPTDC output file
+    #############################################################                                                                                                                                  
+    def ReadFile(self):
 
         with open(self.inputbinaryfile, 'rb') as f:
-            #######################################
             # First read and unpack the file header
-            #######################################
             byte = f.read(24)
             decode = struct.unpack("IIIBII",byte[:24])
             magic = decode[0]
@@ -238,9 +242,10 @@ class DQMReader:
                         print "Error detected: " + str(errorflag)
 
 
-        ####################
-        # Generate DQM plots
-        ####################
+    ####################
+    # Generate DQM plots
+    ####################
+    def ProducePlots(self):
         i = 0
         while i < self.nchannels:
             if(self.occupancy[i]>0):
@@ -320,7 +325,7 @@ class DQMReader:
         plt.ylabel('Readout FIFO overflow errors',fontsize=6)
         plt.xlabel('Group',fontsize=6)
         plt.axis([0, self.ngroups, 0, 2])
-        if(self.readoutfifooverflowerrors[0]>0):
+        if(max(self.readoutfifooverflowerrors)>0):
             plt.axis([0, self.ngroups, 0, max(self.readoutfifooverflowerrors)*2])
         frame2 = plt.gca()
         plt.grid(True)
@@ -330,7 +335,7 @@ class DQMReader:
         plt.ylabel('L1 buffer overflow errors',fontsize=6)
         plt.xlabel('Group',fontsize=6)
         plt.axis([0, self.ngroups, 0, 2])
-        if(self.l1bufferoverflowerrors[0]>0):
+        if(max(self.l1bufferoverflowerrors)>0):
             plt.axis([0, self.ngroups, 0, max(self.l1bufferoverflowerrors)*2])
         frame2 = plt.gca()
         plt.grid(True)
