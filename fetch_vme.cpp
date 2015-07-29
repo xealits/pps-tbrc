@@ -57,7 +57,9 @@ int main(int argc, char *argv[]) {
 
     // Initialize the configuration one single time
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
-    vme->ReadXML(xml_config);
+    try { vme->ReadXML(xml_config); } catch (Exception& e) {
+      if (vme->UseSocket()) vme->Send(e);
+    }
  
     fh.run_id = vme->GetRunNumber();
   
@@ -146,7 +148,9 @@ int main(int argc, char *argv[]) {
         }
         if (use_fpga) {
           num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
-          //num_triggers = 
+          num_triggers_in_files = num_all_triggers-num_triggers;
+          num_all_triggers = num_triggers;
+cerr << "---> " << num_triggers_in_files << endl;
           if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
         }
       }
@@ -171,7 +175,6 @@ int main(int argc, char *argv[]) {
       cerr << endl << "Acquired ";
       for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << num_events[i]; }
       cerr << " words for " << num_triggers << " triggers in this run" << endl;
-      //if (use_fpga) fpga->StopScaler();
   
       delete vme;
       return 0;

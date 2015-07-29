@@ -210,18 +210,10 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     try { Send(SocketMessage(CLIENTS_LIST, os.str()), sid); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==START_ACQUISITION) {
-    try {
-      StartAcquisition();
-      SendAll(WEBSOCKET_CLIENT, SocketMessage(ACQUISITION_STARTED));
-      throw Exception(__PRETTY_FUNCTION__, "Acquisition started!", Info, 30000);
-    } catch (Exception& e) { e.Dump(); }
+    try { StartAcquisition(); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==STOP_ACQUISITION) {
-    try {
-      StopAcquisition();
-      SendAll(WEBSOCKET_CLIENT, SocketMessage(ACQUISITION_STOPPED));
-      throw Exception(__PRETTY_FUNCTION__, "Acquisition stopped!", Info, 30000);
-    } catch (Exception& e) { e.Dump(); }
+    try { StopAcquisition(); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==GET_RUN_NUMBER) {
     try {
@@ -284,6 +276,8 @@ Messenger::StartAcquisition()
       default:
         break;
     }
+    SendAll(WEBSOCKET_CLIENT, SocketMessage(ACQUISITION_STARTED));
+    throw Exception(__PRETTY_FUNCTION__, "Acquisition started!", Info, 30000);
   } catch (Exception& e) { e.Dump(); }
 }
 
@@ -292,10 +286,12 @@ Messenger::StopAcquisition()
 {
   signal(SIGCHLD, SIG_IGN);
   int ret = kill(fPID, SIGINT);
-  if (ret<1) {
+  if (ret<0) {
     std::ostringstream os;
     os << "Failed to kill the acquisition process with pid=" << fPID << "\n\t"
        << "Return value: " << ret << " (errno=" << errno << ")";
     throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
   }
+  SendAll(WEBSOCKET_CLIENT, SocketMessage(ACQUISITION_STOPPED));
+  throw Exception(__PRETTY_FUNCTION__, "Acquisition stopped!", Info, 30001);
 }

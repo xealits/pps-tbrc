@@ -12,7 +12,8 @@
 #include "VME_TDCEvent.h"
 #include "VME_TDCV1x90Opcodes.h"
 
-#define TDC_ACQ_STOP 20000
+#define TDC_ACQ_START 20000
+#define TDC_ACQ_STOP 20001
 
 namespace VME
 {

@@ -15,7 +15,10 @@ VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
 
 VMEReader::~VMEReader()
 {
-  if (fOnSocket) Client::Disconnect();
+  if (fOnSocket) {
+    Client::Send(Exception(__PRETTY_FUNCTION__, "Stopping the acquisition process", Info, 30001));
+    Client::Disconnect();
+  }
   if (fSG) delete fSG;
   if (fFPGA) delete fFPGA;
   if (fIsPulserStarted) fBridge->StopPulser();
@@ -42,7 +45,7 @@ VMEReader::ReadXML(const char* filename)
       unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
       if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse FPGA's base address", Fatal);
       try {
-        AddFPGAUnit(addr);
+        try { AddFPGAUnit(addr); } catch (Exception& e) { if (fOnSocket) Client::Send(e); }
         VME::FPGAUnitV1495Control control = fFPGA->GetControl();
         if (tinyxml2::XMLElement* clock=fpga->FirstChildElement("clock")) {
           if (tinyxml2::XMLElement* source=clock->FirstChildElement("source")) {
@@ -80,7 +83,7 @@ VMEReader::ReadXML(const char* filename)
       unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
       if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse TDC's base address", Fatal);
       try {
-        AddTDC(addr);
+        try { AddTDC(addr); } catch (Exception& e) { if (fOnSocket) Client::Send(e); }
         VME::TDCV1x90* tdc = GetTDC(addr);
         if (tinyxml2::XMLElement* verb=atdc->FirstChildElement("verbosity")) {
           tdc->SetVerboseLevel(atoi(verb->GetText()));
@@ -164,6 +167,8 @@ VMEReader::AddTDC(uint32_t address)
     e.Dump();
     if (fOnSocket) Client::Send(e);
   }
+  std::ostringstream os; os << "TDC with base address 0x" << std::hex << address << " successfully built";
+  throw Exception(__PRETTY_FUNCTION__, os.str(), Info, TDC_ACQ_START);
 }
 
 void
