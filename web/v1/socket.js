@@ -213,7 +213,15 @@ function parse_message(event) {
     acquisition_started = false;
   }
   else if (d.has_key("NEW_DQM_PLOT")) {
-    dqm_block.innerHTML += d.value()+"<br />";
+    var img = document.createElement("img");
+    img.setAttribute('src', 'file:///tmp/'+d.value()+".png");
+    img.setAttribute('alt', d.value());
+    img.setAttribute('width', "200");
+    var link = document.createElement("a");
+    link.setAttribute('href', 'file:///tmp/'+d.value()+".png");
+    link.setAttribute('target', "_blank");
+    link.appendChild(img);
+    dqm_block.appendChild(link);
     console.log(d.value());
   }
   else if (d.has_key("EXCEPTION")) {

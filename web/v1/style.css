@@ -57,7 +57,7 @@ textarea
   display: block;
   margin: 4px 0px;;
   border: 1px lightgray solid;
-  width: 1007px;
+  width: 1057px;
 }
 
 #time_field
@@ -75,6 +75,7 @@ textarea
   margin: 0px;
   height: 520px;
   width: 250px;
+  vertical-align: top;
   /*float: left;*/
 }
 
@@ -85,7 +86,8 @@ textarea
   border: 1px lightgray solid;
   margin: 0px;
   height: 520px;
-  width: 750px;
+  width: 800px;
+  vertical-align: top;
   /*float: right;*/
 }
 
