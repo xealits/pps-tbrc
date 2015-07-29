@@ -128,6 +128,7 @@ class VMEReader : public Client
       return it->second;
     }
 
+    inline bool UseSocket() const { return fOnSocket; }
     /// Abort data collection for all modules on the bus handled by the bridge
     void Abort();
 

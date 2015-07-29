@@ -140,7 +140,6 @@ unsigned int
 VMEReader::GetRunNumber()
 {
   if (!fOnSocket) return 0;
-  
   SocketMessage msg;
   try {
     msg = Client::SendAndReceive(SocketMessage(GET_RUN_NUMBER), RUN_NUMBER);
@@ -241,8 +240,13 @@ VMEReader::Abort()
 void
 VMEReader::SetOutputFile(uint32_t tdc_address, std::string filename)
 {
-  if (fOnSocket) Client::Send(SocketMessage(SET_NEW_FILENAME, tdc_address+filename.c_str()));
   OutputFiles::iterator it = fOutputFiles.find(tdc_address);
-  if (it!=fOutputFiles.end()) { it->second = filename; }
+  if (it!=fOutputFiles.end()) {
+    if (fOnSocket) {
+      std::ostringstream os; os << tdc_address << ":" << it->second;
+      Client::Send(SocketMessage(SET_NEW_FILENAME, os.str()));
+    }
+    it->second = filename;
+  }
   else fOutputFiles.insert(std::pair<uint32_t, std::string>(tdc_address, filename));
 }

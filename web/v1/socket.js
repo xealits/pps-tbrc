@@ -63,6 +63,7 @@ function socket_init() {
   socket_id = document.getElementById("socket_id");
   console_log = document.getElementById("console_log");
   time_field = document.getElementById("time_field");
+  exception_block = document.getElementById("exception_block");
   dqm_block = document.getElementById("dqm_block");
   
   restore_init_state();
@@ -139,8 +140,8 @@ function stop_acquisition() {
 function parse_message(event) {
   var d = event.data.replace('\0', '');
   
-  if (key(d, "SET_CLIENT_ID")) {
-    listener_id = parseInt(value(d));
+  if (d.has_key("SET_CLIENT_ID")) {
+    listener_id = parseInt(d.value());
     socket_id.value = listener_id;
     enable_connected_buttons();
     socket_refresh();
@@ -216,7 +217,7 @@ function parse_message(event) {
     console.log(d.value());
   }
   else if (d.has_key("EXCEPTION")) {
-    console_log.innerHTML = d;
+    exception_block.innerHTML += d.value()+"<br />";
     console.log(d);
   }
   else if (d.has_key("MASTER_DISCONNECT")) {
@@ -260,11 +261,11 @@ function create_block(obj) {
   button_ping.innerHTML = "Ping";
   block.appendChild(button_ping);
   
-  var logger = document.createElement("textarea");
+  /*var logger = document.createElement("textarea");
   logger.className = "socket_block_logger";
   logger.setAttribute('id', 'logger_'+obj.id);
   logger.disabled = true;
-  block.appendChild(logger);
+  block.appendChild(logger);*/
   
   switch (obj.type) {
     case 0: // master socket

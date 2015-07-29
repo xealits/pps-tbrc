@@ -26,33 +26,16 @@ void CtrlC(int aSig) {
 int main(int argc, char* argv[])
 {
   signal(SIGINT, CtrlC);
-  //pid_t fid = fork();
-  
-  //if (fid!=0) {
-    m = new Messenger(1987);
 
-    if (!m->Connect()) {
-      cout << "Failed to connect the messenger!" << endl;
-      return -1;
-    }
-    
-    while (true) {
-      try { m->Receive(); } catch (Exception& e) { e.Dump(); }
-    }
-    
-    delete m;
-  /*}
-  else { // We're in the child
-    sleep(1);
-    l = new Client(1987);
-    if (!l->Connect()) {
-      cout << "Failed to connect the listener!" << endl;
-      return -1;
-    }
-    while (true) {
-      try { l->Receive(); } catch (Exception& e) { e.Dump(); }
-    }
-  }*/  
-  
+  m = new Messenger(1987);
+  if (!m->Connect()) {
+    cout << "Failed to connect the messenger!" << endl;
+    return -1;
+  }
+  while (true) {
+    try { m->Receive(); } catch (Exception& e) { e.Dump(); }
+  }
+
+  delete m;
   return 0;
 }

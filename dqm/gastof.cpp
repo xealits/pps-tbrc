@@ -9,7 +9,7 @@
 using namespace std;
 
 bool
-RunGastofDQM(string filename, vector<string>* outputs)
+RunGastofDQM(unsigned int address, string filename, vector<string>* outputs)
 {
   FileReader reader;
   try {
@@ -30,9 +30,9 @@ RunGastofDQM(string filename, vector<string>* outputs)
   };
   const unsigned short num_plots = kNumPlots;
   DQM::GastofCanvas* canv[num_plots];
-  canv[kDensity] = new DQM::GastofCanvas("gastof_channels_density", "Channels density");
-  canv[kMeanToT] = new DQM::GastofCanvas("gastof_mean_tot", "Mean ToT (ns)");
-  canv[kTriggerTimeDiff] = new DQM::GastofCanvas("gastof_trigger_time_difference", "Time btw. each trigger (ns)");
+  canv[kDensity] = new DQM::GastofCanvas(Form("gastof_channels_density_%i", address), "Channels density");
+  canv[kMeanToT] = new DQM::GastofCanvas(Form("gastof_mean_tot_%i", address), "Mean ToT (ns)");
+  canv[kTriggerTimeDiff] = new DQM::GastofCanvas(Form("gastof_trigger_time_difference_%i", address), "Time btw. each trigger (ns)");
 
   VME::TDCMeasurement m;
   for (unsigned int i=0; i<num_channels; i++) {
@@ -89,9 +89,18 @@ main(int argc, char* argv[])
       msg = client.Receive(NEW_FILENAME);
       if (msg.GetKey()==INVALID_KEY) continue;
       if (msg.GetValue()=="" or msg.GetCleanedValue()=="") continue;
-      vector<string> outputs;
-      if (RunGastofDQM(msg.GetCleanedValue(), &outputs)) {
-        cout << "Produced " << outputs.size() << " plot(s)" << endl;
+      vector<string> outputs; string value = msg.GetValue();
+      
+      size_t end; uint32_t board_address; string filename;
+      if ((end=value.find(':'))==std::string::npos) {
+        std::ostringstream s; s << "Invalid filename message built! (\"" << value << "\")";
+        throw Exception(__PRETTY_FUNCTION__, s.str().c_str(), JustWarning);
+      }
+      board_address = atoi(value.substr(0, end).c_str());
+      filename = value.substr(end+1);
+
+      if (RunGastofDQM(board_address, filename, &outputs)) {
+        cout << "Produced " << outputs.size() << " plot(s) for board with address 0x" << hex << board_address << endl;
         for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
           client.Send(SocketMessage(NEW_DQM_PLOT, *nm));
         }
