@@ -212,14 +212,14 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   else if (m.GetKey()==START_ACQUISITION) {
     try {
       StartAcquisition();
-      Send(SocketMessage(ACQUISITION_STARTED), sid);
+      SendAll(WEBSOCKET_CLIENT, SocketMessage(ACQUISITION_STARTED));
       throw Exception(__PRETTY_FUNCTION__, "Acquisition started!", Info, 30000);
     } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==STOP_ACQUISITION) {
     try {
       StopAcquisition();
-      Send(SocketMessage(ACQUISITION_STOPPED), sid);
+      SendAll(WEBSOCKET_CLIENT, SocketMessage(ACQUISITION_STOPPED));
       throw Exception(__PRETTY_FUNCTION__, "Acquisition stopped!", Info, 30000);
     } catch (Exception& e) { e.Dump(); }
   }
@@ -279,7 +279,7 @@ Messenger::StartAcquisition()
       case 0:
         PrintInfo("Launching the daughter acquisition process");
         execl("ppsFetch", "", (char*)NULL);
-        close(fStdoutPipe[1]);
+        //close(fStdoutPipe[1]);
         throw Exception(__PRETTY_FUNCTION__, "Failed to launch the daughter process!", JustWarning);
       default:
         break;

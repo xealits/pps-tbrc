@@ -8,6 +8,9 @@
 #include <ctime>
 #include <signal.h>
 
+#define NUM_TRIG_BEFORE_FILE_CHANGE 1000
+#define PATH "."
+
 using namespace std;
 
 VMEReader* vme;
@@ -41,19 +44,22 @@ int main(int argc, char *argv[]) {
   
   file_header_t fh;
   fh.magic = 0x30535050; // PPS0 in ASCII
-  fh.run_id = 0;
   fh.spill_id = 0;
   fh.acq_mode = acq_mode;
   fh.det_mode = det_mode;
   
   std::time_t t_beg;
   for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
-  unsigned int num_triggers = 0;
+  unsigned long num_triggers = 0, num_all_triggers = 0;
 
   try {
     bool with_socket = true;
+
+    // Initialize the configuration one single time
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
     vme->ReadXML(xml_config);
+ 
+    fh.run_id = vme->GetRunNumber();
   
     static const unsigned int num_tdc = vme->GetNumTDC();
     
@@ -62,80 +68,89 @@ int main(int argc, char *argv[]) {
     fstream out_file[num_tdc];
     string acqmode[num_tdc], detmode[num_tdc];
     unsigned int num_events[num_tdc];
-
-    // TDC output files configuration
-    VME::TDCCollection tdcs = vme->GetTDCCollection(); unsigned int i=0;
-    for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
-      VME::TDCV1x90* tdc = atdc->second;
-      
-      file_header_t fh;
-      fh.magic = 0x30535050; // PPS0 in ASCII
-      fh.run_id = 0;
-      fh.spill_id = 0;
-      fh.acq_mode = tdc->GetAcquisitionMode();
-      fh.det_mode = tdc->GetDetectionMode();
-  
-      ostringstream filename; filename << "events_board" << i << ".dat";
-      //filename << GenerateFileName(0);
-      vme->SetOutputFile(atdc->first, filename.str());
-      out_file[i].open(vme->GetOutputFile(atdc->first).c_str(), fstream::out | ios::binary);
-      if (!out_file[i].is_open()) {
-        throw Exception(__PRETTY_FUNCTION__, "Error opening file", Fatal);
-      }
-      out_file[i].write((char*)&fh, sizeof(file_header_t));
-
-      switch (fh.acq_mode) {
-        case VME::CONT_STORAGE: acqmode[i] = "Continuous storage"; break;
-        case VME::TRIG_MATCH: acqmode[i] = "Trigger matching"; break;
-        default:
-          acqmode[i] = "[Invalid mode]";
-          throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
-      }
-      switch (fh.det_mode) {
-        case VME::PAIR: detmode[i] = "Pair measurement"; break;
-        case VME::OLEADING: detmode[i] = "Leading edge only"; break;
-        case VME::OTRAILING: detmode[i] = "Trailing edge only"; break;
-        case VME::TRAILEAD: detmode[i] = "Leading and trailing edges"; break;
-      }
-    } 
+    unsigned int num_triggers_in_files;
 
     t_beg = std::time(0);
 
-    cerr << endl << "*** Ready for acquisition! ***" << endl
-         << "Acquisition mode: ";
-    for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << acqmode[i]; }
-    cerr << endl 
-         << "Detection mode: ";
-    for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << detmode[i]; }
-    cerr << endl 
-         << "Local time: " << asctime(std::localtime(&t_beg));
-
-    // Pulse to set a common starting time for both TDC boards
-    if (use_fpga) {
-      fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
-      fpga->StartScaler();
-    }
-
-    // Data readout from the two TDC boards
-    for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
-    while (true) {
-      unsigned int i = 0;
+    // Change outputs file once a minimal amount of triggers is hit
+    do {
+      // TDC output files configuration
+      VME::TDCCollection tdcs = vme->GetTDCCollection(); unsigned int i=0;
       for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
-        ec = atdc->second->FetchEvents();
-        if (ec.size()==0) continue; // no events were fetched
-        for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
-          uint32_t word = e->GetWord();
-          out_file[i].write((char*)&word, sizeof(uint32_t));
-          /*cout << hex << e->GetType() << endl;
-          if (e->GetType()==VME::TDCEvent::TDCMeasurement) cout << e->GetChannelId() << endl;*/
+        VME::TDCV1x90* tdc = atdc->second;
+        
+        fh.spill_id += 1;
+        fh.acq_mode = tdc->GetAcquisitionMode();
+        fh.det_mode = tdc->GetDetectionMode();
+
+        ostringstream filename;
+        filename << PATH << "/events_board" << i << "_" << t_beg
+                 //<< "_" GenerateString(4)
+                 << ".dat";
+        //filename << GenerateString(5);
+        vme->SetOutputFile(atdc->first, filename.str());
+        out_file[i].open(vme->GetOutputFile(atdc->first).c_str(), fstream::out | ios::binary);
+        if (!out_file[i].is_open()) {
+          throw Exception(__PRETTY_FUNCTION__, "Error opening file", Fatal);
         }
-        num_events[i] += ec.size();
+        out_file[i].write((char*)&fh, sizeof(file_header_t));
+        
+        switch (fh.acq_mode) {
+          case VME::CONT_STORAGE: acqmode[i] = "Continuous storage"; break;
+          case VME::TRIG_MATCH: acqmode[i] = "Trigger matching"; break;
+          default:
+            acqmode[i] = "[Invalid mode]";
+            throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
+        }
+        switch (fh.det_mode) {
+          case VME::PAIR: detmode[i] = "Pair measurement"; break;
+          case VME::OLEADING: detmode[i] = "Leading edge only"; break;
+          case VME::OTRAILING: detmode[i] = "Trailing edge only"; break;
+          case VME::TRAILEAD: detmode[i] = "Leading and trailing edges"; break;
+        }
       }
+      
+      t_beg = std::time(0);
+      
+      cerr << endl << "*** Ready for acquisition! ***" << endl
+           << "Acquisition mode: ";
+      for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << acqmode[i]; }
+      cerr << endl 
+           << "Detection mode: ";
+      for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << detmode[i]; }
+      cerr << endl 
+           << "Local time: " << asctime(std::localtime(&t_beg));
+      
+      // Pulse to set a common starting time for both TDC boards
       if (use_fpga) {
-        num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
-        if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
+        fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
+        fpga->StartScaler();
       }
-    }
+      
+      num_triggers_in_files = 0;
+
+      // Data readout from the two TDC boards
+      for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
+      while (true) {
+        unsigned int i = 0;
+        for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
+          ec = atdc->second->FetchEvents();
+          if (ec.size()==0) continue; // no events were fetched
+          for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
+            uint32_t word = e->GetWord();
+            out_file[i].write((char*)&word, sizeof(uint32_t));
+            /*cout << hex << e->GetType() << endl;
+            if (e->GetType()==VME::TDCEvent::TDCMeasurement) cout << e->GetChannelId() << endl;*/
+          }
+          num_events[i] += ec.size();
+        }
+        if (use_fpga) {
+          num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
+          //num_triggers = 
+          if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
+        }
+      }
+    } while (true);
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
       unsigned int i = 0;

@@ -80,7 +80,7 @@ class Exception
     }
     inline std::string OneLine() const {
       std::ostringstream os;
-      os << "[" << Type() << "] === " << From() << " === " << std::endl
+      os << "[" << Type() << "] === " << From() << " === "
          << Description();
       return os.str();
     }
