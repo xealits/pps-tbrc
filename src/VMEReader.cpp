@@ -1,13 +1,8 @@
 #include "VMEReader.h"
 
 VMEReader::VMEReader(const char *device, VME::BridgeType type, bool on_socket) :
-<<<<<<< HEAD
   Client(1987), fBridge(0), fSG(0), fFPGA(0), fCAENET(0), fHV(0),
-  fOnSocket(on_socket), fIsPulserStarted(false),
-  fOutputFile("")
-=======
-  Client(1987), fBridge(0), fSG(0), fFPGA(0), fOnSocket(on_socket), fIsPulserStarted(false)
->>>>>>> master
+  fOnSocket(on_socket), fIsPulserStarted(false)
 {
   try {
     if (fOnSocket) Client::Connect(DETECTOR);
