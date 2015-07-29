@@ -139,8 +139,8 @@ function stop_acquisition() {
 function parse_message(event) {
   var d = event.data.replace('\0', '');
   
-  if (key(d, "SET_CLIENT_ID")) {
-    listener_id = parseInt(value(d));
+  if (d.has_key("SET_CLIENT_ID")) {
+    listener_id = parseInt(d.value());
     socket_id.value = listener_id;
     enable_connected_buttons();
     socket_refresh();
