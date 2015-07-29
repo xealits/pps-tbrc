@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
   unsigned int num_triggers = 0;
 
   try {
-    bool with_socket = false;
+    bool with_socket = true;
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
     vme->ReadXML(xml_config);
   
@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
       ostringstream filename; filename << "events_board" << i << ".dat";
       //filename << GenerateFileName(0);
       vme->SetOutputFile(atdc->first, filename.str());
-      out_file[i].open(vme->GetOutputFile(atdc->first).c_str(), fstream::out | ios::binary | fstream::app);
+      out_file[i].open(vme->GetOutputFile(atdc->first).c_str(), fstream::out | ios::binary);
       if (!out_file[i].is_open()) {
         throw Exception(__PRETTY_FUNCTION__, "Error opening file", Fatal);
       }
@@ -138,8 +138,11 @@ int main(int argc, char *argv[]) {
     }
   } catch (Exception& e) {
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
-      for (unsigned int i=0; i<num_tdc; i++) {
+      unsigned int i = 0;
+      VME::TDCCollection tdcs = vme->GetTDCCollection();
+      for (VME::TDCCollection::const_iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
         if (out_file[i].is_open()) out_file[i].close();
+        vme->SetOutputFile(atdc->first, "");
       }
 
       std::time_t t_end = std::time(0);
@@ -159,6 +162,7 @@ int main(int argc, char *argv[]) {
       return 0;
     }
     e.Dump();
+    if (vme->UseSocket()) vme->Send(e);
     return -1;
   }
     
