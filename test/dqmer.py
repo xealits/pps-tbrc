@@ -45,7 +45,8 @@ def run_dqm_process( messenger_socket, computation_process = dummy_computing ):
         tokens = incomming_message.split(":")
 
         # COMPUTE
-        if len(tokens) == 2 and tokens[0] == "DQM":
+        #        if len(tokens) == 2 and tokens[0] == "DQM":
+        if len(tokens) == 2 and tokens[0] == "NEW_FILENAME":
             result_filename = computation_process( tokens[1] )
         else:
             print "Got wrong message:\n%s" % incomming_message # OR send error to the messenger?
@@ -54,7 +55,8 @@ def run_dqm_process( messenger_socket, computation_process = dummy_computing ):
 
         # SEND
         try :
-            messenger_socket.sendall( "DQM_DONE:" + result_filename )
+            #            messenger_socket.sendall( "DQM_DONE:" + result_filename )
+            messenger_socket.sendall( "NEW_DQM_PLOT:" + result_filename )
         except socket.error:
             #Send failed
             print 'Send failed'
