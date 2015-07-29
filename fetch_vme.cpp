@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     NIM::HVModuleN470* hv = vme->GetHVModule();
     cout << "module id=" << hv->GetModuleId() << endl;
     hv->ReadMonitoringValues();
-    hv->SetChannelV0(0, 310);
+    hv->SetChannelV0(0, 320);
     hv->SetChannelI0(0, 0);
     hv->ReadChannelValues(0);
     

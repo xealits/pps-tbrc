@@ -26,7 +26,7 @@ namespace NIM
   HVModuleN470::ReadMonitoringValues() const
   {
     std::vector<unsigned short> out;
-    try { ReadRegister(kN470MonStatus, &out, 6); } catch (Exception& e) {
+    try { ReadRegister(kN470MonStatus, &out, 16); } catch (Exception& e) {
       e.Dump();
     }
     HVModuleN470Values vals(out);
@@ -40,7 +40,7 @@ namespace NIM
     if (ch_id<0 or ch_id>=NUM_CHANNELS) throw Exception(__PRETTY_FUNCTION__, "Invalid channel id", JustWarning);
     std::vector<unsigned short> out;
     const HVModuleN470Opcodes opc = static_cast<HVModuleN470Opcodes>((unsigned short)(kN470OperationalParams&0xff)+(ch_id<<8));
-    try { ReadRegister(opc, &out, 16); } catch (Exception& e) {
+    try { ReadRegister(opc, &out, 11); } catch (Exception& e) {
       e.Dump();
     }
     HVModuleN470ChannelValues vals(ch_id, out);
@@ -104,7 +104,6 @@ namespace NIM
       fController << (uint16_t)fAddress;
       fController << (uint16_t)reg;
       fController.SendBuffer();
-std::cout << "buffer sent" << std::endl;
       *data = fController.FetchBuffer(num_words);
       if (data->size()!=num_words)
         throw Exception(__PRETTY_FUNCTION__, "Wrong word size retrieved", JustWarning);
@@ -128,7 +127,6 @@ std::cout << "buffer sent" << std::endl;
         fController << (uint16_t)(*it);
       }
       fController.SendBuffer();
-std::cout << "buffer also sent" << std::endl;
       usleep(100000);
     } catch (Exception& e) {
       e.Dump();

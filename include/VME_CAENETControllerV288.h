@@ -58,7 +58,6 @@ namespace VME
       /// Fill the buffer with an additional 16-bit word
       friend void operator<<(const CAENETControllerV288& cnt, uint16_t word) {
         try {
-std::cout << word << std::endl;
           cnt.WriteRegister(kV288DataBuffer, word);
           if (cnt.GetStatus().GetOperationStatus()!=CAENETControllerV288Status::Valid)
             throw Exception(__PRETTY_FUNCTION__, "Wrong status retrieved", JustWarning);
