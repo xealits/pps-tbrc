@@ -19,7 +19,6 @@ namespace VME
              << "CAEN error: " << CAENVME_DecodeError(ret);
           throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, CAEN_ERROR(ret));
         }
-        std::cout << "haha " << fHandle << std::endl;
       }
       inline virtual ~PCIInterfaceA2818() {
         CAENVME_End(fHandle);

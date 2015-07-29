@@ -82,11 +82,13 @@ main(int argc, char* argv[])
   try {
     client.Connect(Socket::DQM);
   } catch (Exception& e) { e.Dump(); }
+
   try {
     SocketMessage msg;
     while (true) {
       msg = client.Receive(NEW_FILENAME);
       if (msg.GetKey()==INVALID_KEY) continue;
+      if (msg.GetValue()=="" or msg.GetCleanedValue()=="") continue;
       vector<string> outputs;
       if (RunGastofDQM(msg.GetCleanedValue(), &outputs)) {
         cout << "Produced " << outputs.size() << " plot(s)" << endl;
