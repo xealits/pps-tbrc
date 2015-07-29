@@ -36,7 +36,7 @@ namespace VME
         std::ostringstream os; os << "Wrong response retrieved: " << resp;
         throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
       }
-      usleep(100000);
+      usleep(50000);
     } catch (Exception& e) {
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Failed to send buffer through the CAENET interface", JustWarning);

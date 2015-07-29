@@ -41,11 +41,13 @@ namespace NIM
       inline void Dump() const {
         std::ostringstream os;
         os << "Monitoring values:" << "\n\t"
-           << "  Vmon = " << Vmon() << "\n\t"
-           << "  Imon = " << Imon() << "\n\t"
+           << "  Vmon = " << Vmon() << " V" << "\n\t"
+           << "  Imon = " << Imon() << " uA" << "\n\t"
+           << "  Vmax = " << Vmax() << " V" << "\n\t"
            << "  Individual channels status:" << "\n\t";
         for (unsigned int i=0; i<NUM_CHANNELS; i++) {
-          os << "    Channel " << i << ": " << ChannelStatus(i);
+          os << "===== Channel " << i << " =====" << "\n\t"
+             << GetChannelStatus(i);
           if (i<3) os << "\n\t";
         }
         PrintInfo(os.str());
@@ -53,9 +55,50 @@ namespace NIM
 
       inline unsigned short Vmon() const { return fValues.at(0); }
       inline unsigned short Imon() const { return fValues.at(1); }
-      inline unsigned short ChannelStatus(unsigned short ch_id) const {
+      inline unsigned short Vmax() const { return fValues.at(2); }
+
+      class ChannelStatus {
+        public:
+          inline ChannelStatus(unsigned short word) : fWord(word) {;}
+          inline ~ChannelStatus() {;}
+
+          inline bool Enabled() const { return (fWord&0x1); }
+          inline bool OVC() const { return ((fWord>>1)&0x1); }
+          inline bool OVV() const { return ((fWord>>2)&0x1); }
+          inline bool UNV() const { return ((fWord>>3)&0x1); }
+          inline bool Trip() const { return ((fWord>>4)&0x1); }
+          inline bool RampUp() const { return ((fWord>>5)&0x1); }
+          inline bool RampDown() const { return ((fWord>>6)&0x1); }
+          inline bool MaxV() const { return ((fWord>>7)&0x1); }
+          inline bool Polarity() const { return ((fWord>>8)&0x1); }
+          inline bool Vsel() const { return ((fWord>>9)&0x1); }
+          inline bool Isel() const { return ((fWord>>10)&0x1); }
+          inline bool Kill() const { return ((fWord>>11)&0x1); }
+          inline bool HVEnabled() const { return ((fWord>>12)&0x1); }
+          enum SignalStandard { NIM=0x0, TTL=0x1 };
+          inline SignalStandard Standard() const { return static_cast<SignalStandard>((fWord>>13)&0x1); }
+          inline bool NonCalibrated() const { return ((fWord>>14)&0x1); }
+          inline bool Alarm() const { return ((fWord>>15)&0x1); }
+
+          inline friend std::ostream& operator<<(std::ostream& os, const ChannelStatus& cs) {
+            os << "Channel enabled? " << cs.Enabled() << " with polarity " << cs.Polarity() << "\n\t"
+               << "OVC=" << cs.OVC() << ", OVV=" << cs.OVV() << ", UNV=" << cs.UNV() << "\n\t"
+               << "Trip? " << cs.Trip() << ", Kill? " << cs.Kill() << ", Alarm? " << cs.Alarm() << "\n\t"
+               << "Ramp up? " << cs.RampUp() << " / down? " << cs.RampDown() << "\n\t"
+               << "MaxV=" << cs.MaxV() << ", Vsel=" << cs.Vsel() << ", Isel=" << cs.Isel() << "\n\t"
+               << "HV enabled? " << cs.HVEnabled();
+            return os;
+          }
+          inline void Dump() const {
+            std::ostringstream os; os << this;
+            PrintInfo(os.str());
+          }
+        private:
+          unsigned short fWord;
+      };
+      inline ChannelStatus GetChannelStatus(unsigned short ch_id) const {
         if (ch_id<0 or ch_id>=NUM_CHANNELS) return 0;
-        return fValues.at(2+ch_id);
+        return ChannelStatus(fValues.at(3+ch_id));
       }
 
     private:

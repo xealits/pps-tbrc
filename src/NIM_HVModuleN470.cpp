@@ -127,7 +127,7 @@ namespace NIM
         fController << (uint16_t)(*it);
       }
       fController.SendBuffer();
-      usleep(100000);
+      usleep(5000);
     } catch (Exception& e) {
       e.Dump();
       std::ostringstream o;
