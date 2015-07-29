@@ -13,23 +13,26 @@
 </script>
 
 <h1>CT-PPS Test beam run control</h1>
+<p id="time_field"></p>
 
 <div id="upper_fields">
-  <button onClick="bind_socket()" id="bind_button">Bind</button>
-  <button onClick="unbind_socket()" id="unbind_button">Unbind</button>
-  <input type="text" id="socket_id" size=2 disabled />
-  <span id="time_field"></span><br />
-  <button onClick="socket_refresh()" id="refresh_button">Refresh</button>
-  <button onClick="start_acquisition()" id="acquisition_button">Launch acquisition</button>
-  <br />
-  <textarea id="console_log" cols=60 rows=4 disabled></textarea>
+  <div style="display:inline-block;vertical-align:top;">
+    <button onClick="bind_socket()" id="bind_button">Bind</button>
+    <button onClick="unbind_socket()" id="unbind_button">Unbind</button>
+    <input type="text" id="socket_id" size=2 disabled />
+    <button onClick="socket_refresh()" id="refresh_button">Refresh</button><br />
+    <button onClick="start_acquisition()" id="acquisition_button">Launch acquisition</button>
+  </div>
+  <textarea id="console_log" cols=50 rows=5 disabled></textarea>
+  <div id="output"></div>
 </div>
-<div id="output"></div>
+<div id="dqm_block"></div>
 
 Legend:
 <div class="legend block_master"></div> = Master
 <div class="legend block_websocket"></div> = Web connexion
 <div class="legend block_regularsocket"></div> = Terminal
 <div class="legend block_detsocket"></div> = Detector
+<div class="legend block_dqmsocket"></div> = DQM
 <div class="legend block_othersocket"></div> = Other
 

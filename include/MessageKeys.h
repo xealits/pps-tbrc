@@ -25,6 +25,12 @@ MESSAGES_ENUM(\
   // web socket messages
   WEB_GET_CLIENTS,\
   START_ACQUISITION, STOP_ACQUISITION,\
+
+  // DQM messages
+  NEW_DQM_PLOT,\
+
+  // other
+  OTHER_MESSAGE,\
 );
 
 #endif

@@ -71,6 +71,7 @@ Client::Disconnect()
   } catch (Exception& e) {
     if (e.ErrorNumber()!=11000) // client has been disconnected
       e.Dump();
+    else return;
   }
 }
 
@@ -83,7 +84,6 @@ Client::Receive()
   } catch (Exception& e) {
     if (e.ErrorNumber()==11000) // client has been disconnected
       throw Exception(__PRETTY_FUNCTION__, "Some other socket asked for this client's disconnection. Obtemperating...", Fatal);
-    else e.Dump();
   }
   if (msg.GetKey()==MASTER_DISCONNECT) {
     throw Exception(__PRETTY_FUNCTION__, "Master disconnected!", Fatal);
@@ -111,4 +111,21 @@ Client::Receive()
   else {
     ParseMessage(msg);
   }
+}
+
+SocketMessage
+Client::Receive(const MessageKey& key)
+{
+  SocketMessage msg;
+  try {
+    msg = FetchMessage();
+    if (msg.GetKey()==key) {
+      return msg;
+    }
+  } catch (Exception& e) {
+    if (e.ErrorNumber()==11000) // client has been disconnected
+      throw Exception(__PRETTY_FUNCTION__, "Some other socket asked for this client's disconnection. Obtemperating...", Fatal);
+    e.Dump();
+  }
+  return msg;
 }

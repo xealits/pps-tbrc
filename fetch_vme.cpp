@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
   
   try {
     bool with_socket = false;
-    vme = new VMEReader("/dev/usb/v1718_0", VME::CAEN_V1718, with_socket);
+    vme = new VMEReader("/dev/usb/v2718_0", VME::CAEN_V2718, with_socket);
 
     vme->AddCFD(0x070000);
     VME::CFDV812* cfd = vme->GetCFD(0x070000);

@@ -62,7 +62,6 @@ Messenger::AddClient()
       // if not a WebSocket connection
       SocketMessage m(message);
       if (m.GetKey()==ADD_CLIENT) {
-        std::cout << "client: " << m.GetIntValue() << std::endl;
         SocketType type = static_cast<SocketType>(m.GetIntValue());
         if (type!=CLIENT) SwitchClientType(s.GetSocketId(), type);
       }
@@ -78,9 +77,7 @@ void
 Messenger::DisconnectClient(int sid, MessageKey key, bool force)
 {
   SocketType type;
-  try {
-    type = GetSocketType(sid);
-  } catch (Exception& e) {
+  try { type = GetSocketType(sid); } catch (Exception& e) {
     e.Dump();
     return;
   }
@@ -112,29 +109,21 @@ Messenger::DisconnectClient(int sid, MessageKey key, bool force)
 void
 Messenger::SwitchClientType(int sid, SocketType type)
 {
-  SocketType oldtype;
   try {
-    oldtype = GetSocketType(sid);
-    fSocketsConnected.erase (std::pair<int,SocketType>(sid, oldtype));
+    fSocketsConnected.erase (std::pair<int,SocketType>(sid, GetSocketType(sid)));
     fSocketsConnected.insert(std::pair<int,SocketType>(sid, type));    
-  } catch (Exception& e) {
-    e.Dump();
-  }
+  } catch (Exception& e) { e.Dump(); }
 }
 
 void
 Messenger::Send(const Message& m, int sid) const
 {
-  bool ws = false;
   try {
-    ws = IsWebSocket(sid);
-    Message tosend = (ws) ? HTTPMessage(fWS, m, EncodeMessage) : m;
-    /*std::cout << "Sending a message to socket # " << sid << " (web? " << ws << "):" << std::endl;
-    m.Dump();*/
+    //std::cout << "DQM plot: " << m.GetValue() << " -- " << m.GetCleanedValue() << std::endl;
+    Message tosend = (IsWebSocket(sid)) ? HTTPMessage(fWS, m, EncodeMessage) : m;
+    std::cout << "sending to " << sid << " --> web socket? " << IsWebSocket(sid) << std::endl;
     SendMessage(tosend, sid);
-  } catch (Exception& e) {
-    e.Dump();
-  }
+  } catch (Exception& e) { e.Dump(); }
 }
 
 void
@@ -147,9 +136,7 @@ Messenger::Receive()
   // temporary list for readout
   fReadFds = fMaster;
   
-  try {
-    SelectConnections();
-  } catch (Exception& e) {
+  try { SelectConnections(); } catch (Exception& e) {
     e.Dump();
     throw Exception(__PRETTY_FUNCTION__, "Impossible to select the connections!", Fatal);
   }
@@ -174,9 +161,7 @@ Messenger::Receive()
     // Message was successfully decoded
     fNumAttempts = 0;
     
-    try {
-      ProcessMessage(m, s->first);
-    } catch (Exception& e) {
+    try { ProcessMessage(m, s->first); } catch (Exception& e) {
       if (e.ErrorNumber()==11001) break;
     }
   }
@@ -186,8 +171,6 @@ void
 Messenger::ProcessMessage(SocketMessage m, int sid)
 {
   if (m.GetKey()==REMOVE_CLIENT) {
-    MessageKey key;
-    
     if (m.GetIntValue()==GetSocketId()) {
       std::ostringstream o;
       o << "Some client (id=" << sid << ") asked for this master's disconnection!"
@@ -195,21 +178,19 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
       throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
       return;
     }
-    
-    key = (sid==m.GetIntValue()) ? THIS_CLIENT_DELETED : OTHER_CLIENT_DELETED;
+    const MessageKey key = (sid==m.GetIntValue()) ? THIS_CLIENT_DELETED : OTHER_CLIENT_DELETED;
     DisconnectClient(m.GetIntValue(), key);
     throw Exception(__PRETTY_FUNCTION__, "Removing socket client", Info, 11001);
   }
   else if (m.GetKey()==PING_CLIENT) {
-    int toping = m.GetIntValue();
+    const int toping = m.GetIntValue();
     Send(SocketMessage(PING_CLIENT), toping);
     SocketMessage msg; int i=0;
     do { msg = FetchMessage(toping); i++; } while (msg.GetKey()!=PING_ANSWER && i<MAX_SOCKET_ATTEMPTS);
     try { Send(SocketMessage(PING_ANSWER, msg.GetValue()), sid); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==GET_CLIENTS) {
-    int i = 0;
-    std::ostringstream os;
+    int i = 0; std::ostringstream os;
     for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++, i++) {
       if (i!=0) os << ";";
       os << it->first << " (type " << static_cast<int>(it->second) << ")";
@@ -217,19 +198,16 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     try { Send(SocketMessage(CLIENTS_LIST, os.str()), sid); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==WEB_GET_CLIENTS) {
-    int i = 0; SocketType type;
-    std::ostringstream os;
+    int i = 0; SocketType type; std::ostringstream os;
     for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++, i++) {
       type = (it->first==GetSocketId()) ? MASTER : it->second;
       if (i!=0) os << ";";
       os << it->first << ",";
       if (it->first==GetSocketId()) os << "Master,";
       else os << "Client" << it->first << ",";
-      os << static_cast<int>(type);
+      os << static_cast<int>(type) << "\0";
     }
-    try {
-      Send(SocketMessage(CLIENTS_LIST, os.str()), sid);
-    } catch (Exception& e) { e.Dump(); }
+    try { Send(SocketMessage(CLIENTS_LIST, os.str()), sid); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==START_ACQUISITION) {
     try {
@@ -252,23 +230,28 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   }
   else if (m.GetKey()==SET_NEW_FILENAME) {
     try {
-      for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++) {
-        if (it->second==DQM) Send(SocketMessage(NEW_FILENAME, m.GetValue().c_str()), it->first);
-      }
+      SendAll(DQM, SocketMessage(NEW_FILENAME, m.GetValue().c_str()));
+    } catch (Exception& e) { e.Dump(); }
+  }
+  else if (m.GetKey()==NEW_DQM_PLOT) {
+    try {
+      m.Dump();
+      SendAll(WEBSOCKET_CLIENT, m);
     } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==EXCEPTION) {
     try {
+      SendAll(WEBSOCKET_CLIENT, m);
       Broadcast(m);
       std::cout << "------> " << m.GetValue() << std::endl;
     } catch (Exception& e) { e.Dump(); }
   }
-  else {
+  /*else {
     try { Send(SocketMessage(INVALID_KEY), sid); } catch (Exception& e) { e.Dump(); }
     std::ostringstream o;
     o << "Received an invalid message: " << m.GetString();
     throw Exception(__PRETTY_FUNCTION__, o.str(), JustWarning);
-  }
+  }*/
 }
 
 void
