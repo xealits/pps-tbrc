@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
     xml_config = "config/config.xml";
   }
   else xml_config = argv[1];
- 
+
   const unsigned int num_tdc = 1;
 
   fstream out_file[num_tdc];
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
   
   std::time_t t_beg;
   for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
-  unsigned long num_triggers = 0, num_all_triggers = 0;
+  unsigned long num_triggers = 0, num_all_triggers = 0, num_files = 0;
 
   try {
     bool with_socket = true;
@@ -70,14 +70,41 @@ int main(int argc, char *argv[]) {
     fstream out_file[num_tdc];
     string acqmode[num_tdc], detmode[num_tdc];
     unsigned int num_events[num_tdc];
-    unsigned int num_triggers_in_files;
+    int num_triggers_in_files;
 
     t_beg = std::time(0);
+
+    // Initial dump of the acquisition parameters before writing the files
+    cerr << endl << "*** Ready for acquisition! ***" << endl;
+    VME::TDCCollection tdcs = vme->GetTDCCollection(); unsigned int i = 0;
+    for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
+      switch (fh.acq_mode) {
+        case VME::CONT_STORAGE: acqmode[i] = "Continuous storage"; break;
+        case VME::TRIG_MATCH: acqmode[i] = "Trigger matching"; break;
+        default:
+          acqmode[i] = "[Invalid mode]";
+          throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
+      }
+      switch (fh.det_mode) {
+        case VME::PAIR: detmode[i] = "Pair measurement"; break;
+        case VME::OLEADING: detmode[i] = "Leading edge only"; break;
+        case VME::OTRAILING: detmode[i] = "Trailing edge only"; break;
+        case VME::TRAILEAD: detmode[i] = "Leading and trailing edges"; break;
+      }
+    }
+    cerr << "Acquisition mode: ";
+    for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << acqmode[i]; }
+    cerr << endl 
+         << "Detection mode: ";
+    for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << detmode[i]; }
+    cerr << endl 
+         << "Local time: " << asctime(std::localtime(&t_beg));
+      
 
     // Change outputs file once a minimal amount of triggers is hit
     do {
       // TDC output files configuration
-      VME::TDCCollection tdcs = vme->GetTDCCollection(); unsigned int i=0;
+      i = 0;
       for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
         VME::TDCV1x90* tdc = atdc->second;
         
@@ -86,7 +113,7 @@ int main(int argc, char *argv[]) {
         fh.det_mode = tdc->GetDetectionMode();
 
         ostringstream filename;
-        filename << PATH << "/events_board" << i << "_" << t_beg
+        filename << PATH << "/events_board" << i << "_" << std::time(0)
                  //<< "_" GenerateString(4)
                  << ".dat";
         //filename << GenerateString(5);
@@ -97,31 +124,9 @@ int main(int argc, char *argv[]) {
         }
         out_file[i].write((char*)&fh, sizeof(file_header_t));
         
-        switch (fh.acq_mode) {
-          case VME::CONT_STORAGE: acqmode[i] = "Continuous storage"; break;
-          case VME::TRIG_MATCH: acqmode[i] = "Trigger matching"; break;
-          default:
-            acqmode[i] = "[Invalid mode]";
-            throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
-        }
-        switch (fh.det_mode) {
-          case VME::PAIR: detmode[i] = "Pair measurement"; break;
-          case VME::OLEADING: detmode[i] = "Leading edge only"; break;
-          case VME::OTRAILING: detmode[i] = "Trailing edge only"; break;
-          case VME::TRAILEAD: detmode[i] = "Leading and trailing edges"; break;
-        }
       }
       
       t_beg = std::time(0);
-      
-      cerr << endl << "*** Ready for acquisition! ***" << endl
-           << "Acquisition mode: ";
-      for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << acqmode[i]; }
-      cerr << endl 
-           << "Detection mode: ";
-      for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << detmode[i]; }
-      cerr << endl 
-           << "Local time: " << asctime(std::localtime(&t_beg));
       
       // Pulse to set a common starting time for both TDC boards
       if (use_fpga) {
@@ -132,7 +137,7 @@ int main(int argc, char *argv[]) {
       num_triggers_in_files = 0;
 
       // Data readout from the two TDC boards
-      for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
+      for (unsigned int i=0; i<num_tdc; i++) { num_events[i] = 0; }
       while (true) {
         unsigned int i = 0;
         for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
@@ -148,11 +153,20 @@ int main(int argc, char *argv[]) {
         }
         if (use_fpga) {
           num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
-          num_triggers_in_files = num_all_triggers-num_triggers;
-          num_all_triggers = num_triggers;
-cerr << "---> " << num_triggers_in_files << endl;
+          num_triggers_in_files = num_triggers-num_all_triggers;
           if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
+          if (num_triggers_in_files>0 and num_triggers_in_files>=NUM_TRIG_BEFORE_FILE_CHANGE) {
+            num_all_triggers = num_triggers;
+            break; // break the infinite loop to write and close the current file
+          }
         }
+      }
+      num_files += 1;
+cerr << "---> " << num_triggers_in_files << " triggers written in current files" << endl;
+      unsigned int i = 0;
+      for (VME::TDCCollection::const_iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
+        if (out_file[i].is_open()) out_file[i].close();
+        vme->SendOutputFile(atdc->first);
       }
     } while (true);
   } catch (Exception& e) {
@@ -161,7 +175,7 @@ cerr << "---> " << num_triggers_in_files << endl;
       VME::TDCCollection tdcs = vme->GetTDCCollection();
       for (VME::TDCCollection::const_iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
         if (out_file[i].is_open()) out_file[i].close();
-        vme->SetOutputFile(atdc->first, "");
+        vme->SendOutputFile(atdc->first);
       }
 
       std::time_t t_end = std::time(0);
@@ -174,7 +188,7 @@ cerr << "---> " << num_triggers_in_files << endl;
     
       cerr << endl << "Acquired ";
       for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << num_events[i]; }
-      cerr << " words for " << num_triggers << " triggers in this run" << endl;
+      cerr << " words in " << num_files << " files for " << num_all_triggers << " triggers in this run" << endl;
   
       delete vme;
       return 0;

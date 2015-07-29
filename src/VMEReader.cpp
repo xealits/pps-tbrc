@@ -246,12 +246,17 @@ void
 VMEReader::SetOutputFile(uint32_t tdc_address, std::string filename)
 {
   OutputFiles::iterator it = fOutputFiles.find(tdc_address);
-  if (it!=fOutputFiles.end()) {
-    if (fOnSocket) {
-      std::ostringstream os; os << tdc_address << ":" << it->second;
-      Client::Send(SocketMessage(SET_NEW_FILENAME, os.str()));
-    }
-    it->second = filename;
-  }
+  if (it!=fOutputFiles.end()) { it->second = filename; }
   else fOutputFiles.insert(std::pair<uint32_t, std::string>(tdc_address, filename));
+}
+
+void
+VMEReader::SendOutputFile(uint32_t tdc_address) const
+{
+  if (!fOnSocket) return;
+  OutputFiles::const_iterator it = fOutputFiles.find(tdc_address);
+  if (it!=fOutputFiles.end()) {
+    std::ostringstream os; os << tdc_address << ":" << it->second;
+    Client::Send(SocketMessage(SET_NEW_FILENAME, os.str()));
+  }
 }

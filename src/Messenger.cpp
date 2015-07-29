@@ -119,9 +119,8 @@ void
 Messenger::Send(const Message& m, int sid) const
 {
   try {
-    //std::cout << "DQM plot: " << m.GetValue() << " -- " << m.GetCleanedValue() << std::endl;
     Message tosend = (IsWebSocket(sid)) ? HTTPMessage(fWS, m, EncodeMessage) : m;
-    std::cout << "sending to " << sid << " --> web socket? " << IsWebSocket(sid) << std::endl;
+    //std::cout << "sending to " << sid << " --> web socket? " << IsWebSocket(sid) << std::endl;
     SendMessage(tosend, sid);
   } catch (Exception& e) { e.Dump(); }
 }
@@ -222,6 +221,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   }
   else if (m.GetKey()==SET_NEW_FILENAME) {
     try {
+      std::cout << "---> " << m.GetValue() << std::endl;
       SendAll(DQM, SocketMessage(NEW_FILENAME, m.GetValue().c_str()));
     } catch (Exception& e) { e.Dump(); }
   }
