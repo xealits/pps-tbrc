@@ -26,11 +26,12 @@
                     <button id="bind_button">Bind</button>
                     <button id="unbind_button">Unbind</button>
                     <button id="refresh_button">Refresh</button>
-                    <button id="acquisition_button">Launch acquisition</button>
+                    <button id="start_acquisition_button">Launch acquisition</button>
+                    <button id="stop_acquisition_button">Stop acquisition</button>
                 </div>
                 <div class="status">
-                    <input type="text" id="connection_uri"  value="wss://echo.websocket.org/" autocomplete="off" />
-                    <input type="text" id="socket_id" value="###" autocomplete="off" />
+                    <input type="text" id="connection_uri"  value="ws://localhost:1987" autocomplete="off" />
+                    <input type="text" id="socket_id" value="###" autocomplete="off" disabled="disabled" />
                     <div id="bind_time"></div>
                     <div id="console_log">
                     </div>

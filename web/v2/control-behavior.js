@@ -2,61 +2,80 @@ var port = 1987;
 var listener_id;
 var connection = undefined;
 var upper_fields;
-var bind_button, unbind_button, refresh_button, acquisition_button, time_field;
+var bind_button, unbind_button, refresh_button, start_acquisition_button, time_field;
 var socket_id, console_log;
 var built_clients;
 var acquisition_started;
 
 
-
-
-
-function parse_message(event) {
-  var d = event.data.slice(0,-1);
+function parse_handshake_message(event) {
+  var d = event.data; //.slice(0,-1); // CHECK: is slice needed?
   m = d.split(":");
   switch (m[0]) {
     case "SET_CLIENT_ID":
-      listener_id = parseInt(m[1]);
-      $( "#socket_id" ).val( listener_id );
-      socket_refresh();
-      break;
+          listener_id = parseInt(m[1]);
+          $( "#socket_id" ).val( listener_id );
+          socket_refresh();
+          setup_connection(connection);
+          interface_on();
+          image_changer = setInterval(change_image, 5000); // TODO: kick when DQM is ready
+          break;
+    default:
+          append_to_console( '<p>wierd message @ handshake<\p>' );
+  }
+}
+
+
+function parse_message(event) {
+  var d = event.data; // .slice(0,-1);
+  m = d.split(":");
+  switch (m[0]) {
+    case "SET_CLIENT_ID":
+          listener_id = parseInt(m[1]);
+          $( "#socket_id" ).val( listener_id );
+          socket_refresh();
+          break;
     case "CLIENTS_LIST":
-      var listeners = m[1].split(';');
-      // TODO: do something
-      break;
+          var listeners = m[1].split(';');
+          // TODO: do something
+          break;
     case "THIS_CLIENT_DELETED":
-      unbind_socket();
-      break;
+          unbind_socket();
+          break;
     case "OTHER_CLIENT_DELETED":
-      if (m[1]==listener_id) {
-        unbind_socket();
-      }
-      else append_to_console("<p>Socket " + m[1]+" successfully deleted!</p>");
-      break;
+          if (m[1]==listener_id) {
+            unbind_socket();
+          }
+          else append_to_console("<p>Socket " + m[1]+" successfully deleted!</p>");
+          break;
     case "PING_ANSWER":
-      alert(m[1]);
-      break;
+          alert(m[1]);
+          break;
     case "ACQUISITION_STARTED":
-      append_to_console( "<p>Acquisition process successfully launched!</p>" );
-      alert("Acquisition process successfully launched!");
-      $( "#acquisition_button" ).html( "Stop acquisition" );
-      $( "#acquisition_button" ).click( stop_acquisition) ;
-      acquisition_started = true;
-      break;
+          append_to_console( "<p>Acquisition process successfully launched!</p>" );
+          // alert("Acquisition process successfully launched!");
+          $( "#start_acquisition_button" ).removeClass().unbind();
+          $( "#stop_acquisition_button" ).attr( "class", "enabled" ).click( stop_acquisition ) ;
+          acquisition_started = true;
+          break;
     case "ACQUISITION_STOPPED":
-      append_to_console( "<p>Acquisition process terminated!</p>" );
-      alert("Acquisition process terminated!");
-      $("#acquisition_button").html( "Start acquisition" );
-      $("#acquisition_button").click( start_acquisition );
-      acquisition_started = false;
-      break;
+          append_to_console( "<p>Acquisition process terminated!</p>" );
+          // alert("Acquisition process terminated!");
+          $( "#stop_acquisition_button" ).removeClass().unbind();
+          $( "#start_acquisition_button" ).attr( "class", "enabled" ).click( start_acquisition ) ;
+          acquisition_started = false;
+          break;
     case "EXCEPTION":
-      append_to_console( "<p>" + d + "</p>" );
-      break;
+          append_to_console( "<p>" + d + "</p>" );
+          break;
     case "MASTER_DISCONNECT":
-      alert("ALERT:\nMaster disconnected!");
-      // restore_init_state();
-      break;
+          // alert("ALERT:\nMaster disconnected!");
+          append_to_console( "<p>ALERT:\nMaster disconnected!</p>" );
+          // restore_init_state();
+          break;
+    default:
+          append_to_console( "<p>Received unknown message:" + d + "</p>" );
+          break;
   }
 }
 
@@ -102,13 +121,13 @@ function parse_message_old(event) {
       built_clients.splice(built_clients.indexOf(difference[i]), 1);
     }
     if (num_det===0) { // no detector process has been found
-      acquisition_button.innerHTML = "Start acquisition";
-      acquisition_button.setAttribute('onClick', 'start_acquisition()');
+      start_acquisition_button.innerHTML = "Start acquisition";
+      start_acquisition_button.setAttribute('onClick', 'start_acquisition()');
       acquisition_started = false;
     }
     else {
-      acquisition_button.innerHTML = "Stop acquisition";
-      acquisition_button.setAttribute('onClick', 'stop_acquisition()');
+      start_acquisition_button.innerHTML = "Stop acquisition";
+      start_acquisition_button.setAttribute('onClick', 'stop_acquisition()');
       acquisition_started = true;
     }
   }
@@ -129,14 +148,14 @@ function parse_message_old(event) {
   }
   else if (d.indexOf("ACQUISITION_STARTED")>-1) {
     alert("Acquisition process successfully launched!");
-    acquisition_button.innerHTML = "Stop acquisition";
-    acquisition_button.setAttribute('onClick', 'stop_acquisition()');
+    start_acquisition_button.innerHTML = "Stop acquisition";
+    start_acquisition_button.setAttribute('onClick', 'stop_acquisition()');
     acquisition_started = true;
   }
   else if (d.indexOf("ACQUISITION_STOPPED")>-1) {
     alert("Acquisition process terminated!");
-    acquisition_button.innerHTML = "Start acquisition";
-    acquisition_button.setAttribute('onClick', 'start_acquisition()');
+    start_acquisition_button.innerHTML = "Start acquisition";
+    start_acquisition_button.setAttribute('onClick', 'start_acquisition()');
     acquisition_started = false;
   }
   else if (d.indexOf("EXCEPTION")>-1) {
@@ -174,10 +193,11 @@ function unbind_socket() {
   send_message(connection, "REMOVE_CLIENT:" + listener_id);
   // connection.send("REMOVE_CLIENT:"+listener_id);
   connection.close();
-  // connection = undefined;
+  connection = undefined;
 
   // interface_off();
-  alert( "UNBOUNDED!" );
+  // alert( "UNBOUNDED!" );
+  append_to_console( '<p>UNBOUNDED!<\p>' );
   // connection = undefined;
   // connection.onmessage = function(event) { parse_message(event); }
 }
@@ -198,54 +218,19 @@ function socket_refresh() {
 
 
 function start_acquisition() {
-  if (connection===0) alert("no connection initiated");
+  // if (connection===0) alert("no connection initiated");
   send_message(connection, "START_ACQUISITION:" + listener_id );
   // connection.send("START_ACQUISITION:"+listener_id);
   // connection.onmessage = function(event) { parse_message(event); } // CHECK: why use it? we set the handler on creation of the connection
 }
 
 function stop_acquisition() {
-  connection.send("STOP_ACQUISITION:"+listener_id);
+  send_message(connection, "STOP_ACQUISITION:" + listener_id );
 }
 
 
 
-
-
-function bind_socket() {
-  connection_uri = $("#connection_uri").val();
-  // hostname = $("#hostname").val();
-
-  // alert( connection );
-  // alert( hostname + ":" + port );
-  // if (connection==0) { alert("no connection") };
-  alert("START BIND");
-
-  if (typeof connection !== "undefined") {
-    alert("repeated connection 2");
-    console.error("Wrong (or multiple) attempt made to bind! Aborting.");
-    // connection = 0;
-    return;
-  }
-
-  alert("CONNECTION IS UNDEFINED");
-
-  // hostname = 'localhost';
-  //hostname = '137.138.105.83';
-  try {
-    connection = new WebSocket(connection_uri);
-  }
-  catch (e) {
-    alert(e);
-  }
-
-  alert("NEW CONNECTION");
-  // alert( connection );
-  // alert( connection );
-
-  // bind_button.disabled = true;
-  // built_clients = [];
-
+function setup_connection(connection) {
   connection.onopen = function () {
     // what a hell
     append_to_console( '<p class="incoming">GOT: Connection opened<\p>' );
@@ -264,7 +249,7 @@ function bind_socket() {
       //   return;
       // }
       // unbind_socket();
-      alert("connection onerror");
+      alert("connection onerror"); // Parse error, write error message to console
       // connection.close();
       connection = undefined;
       alert( connection );
@@ -290,32 +275,85 @@ function bind_socket() {
       // alert( "socket onclose" );
   };
 
-  interface_on();
-  image_changer = setInterval(change_image, 5000);
+  append_to_console( '<p>CONNECTION HANDLERS ARE SET UP<\p>' );
+  // alert("CONNECTION HANDLERS ARE SET UP");
+}
 
-  alert("CONNECTION HANDLERS ARE SET UP");
+
+
+
+
+function bind_socket() {
+  connection_uri = $("#connection_uri").val();
+  // hostname = $("#hostname").val();
+
+  // alert( connection );
+  // alert( hostname + ":" + port );
+  // if (connection==0) { alert("no connection") };
+  append_to_console( '<p>Start Bind<\p>' );
+
+  if (typeof connection !== "undefined") {
+    alert("repeated connection 2");
+    console.error("Wrong (or multiple) attempt made to bind! Aborting.");
+    // connection = 0;
+    return;
+  }
+
+  append_to_console( '<p>Connection is undefined<\p>' );
+
+  // hostname = 'localhost';
+  //hostname = '137.138.105.83';
+  try {
+    connection = new WebSocket(connection_uri);
+  }
+  catch (e) {
+    alert(e);
+  }
+
+  append_to_console( '<p>New connection created:' + connection + '<\p>' );
+
+  // prepare handshake response
+  connection.onmessage = function(event) {
+    append_to_console( '<p class="incoming">GOT @ handshake: ' + event.data + "<\p>" );
+    //SET_CLIENT_ID:ID
+    parse_handshake_message(event); // if it receives SET_CLIENT_ID:ID the connection is set up for run
+  };
+  connection.onopen = function(event) {
+    append_to_console( '<p>Connection opened @ handshake<\p>' );
+    send_message( connection, "ADD_CLIENT:1" ); // Handshake call
+    append_to_console( '<p>Sent the handshake<\p>' );
+  }
+  connection.onerror = function(event) {
+    append_to_console( '<p>Connection error @ handshake<\p>' );
+    // TODO: print the error message
+  }
+  connection.onclose = function(event) {
+    append_to_console( '<p>Connection closed @ handshake<\p>' );
+  }
 }
 
 
 function interface_on() {
       // disable bind button
-      $( "#bind_button" ).unbind();
+      $( "#bind_button" ).unbind().removeClass();
       // enable interface to the ppsFetch process
       $( "#unbind_button" ).click( unbind_socket );
       $( "#refresh_button" ).click( socket_refresh );
-      $( "#acquisition_button" ).click( start_acquisition );
-      $( "input" ).prop("disabled", true);
-      $( "#bind_button, #unbind_button, #refresh_button, #acquisition_button" ).toggleClass( "enabled" );
+      $( "#start_acquisition_button" ).click( start_acquisition );
+      $( "#stop_acquisition_button" ).unbind();
+      $( "input#connection_uri" ).prop("disabled", true);
+      $( "#unbind_button, #refresh_button, #start_acquisition_button" ).attr( "class", "enabled" );//toggleClass( "enabled" );
+      $( "#stop_acquisition_button" ).removeClass();
 }
 
 function interface_off() {
       // enable bind button
-      $( "#bind_button" ).click( bind_socket );
+      $( "#bind_button" ).click( bind_socket ).attr( "class", "enabled" );
       // disable interface to ppsFetch process
-      $("#acquisition_button").html( "Start acquisition" ); // reset acquisition button
-      $( "#unbind_button, #refresh_button, #acquisition_button" ).unbind();
-      $( "input" ).prop("disabled", false);
-      $( "#bind_button, #unbind_button, #refresh_button, #acquisition_button" ).toggleClass( "enabled" );
+      // $("#start_acquisition_button").html( "Start acquisition" ); // reset acquisition button
+      $( "#unbind_button, #refresh_button, #start_acquisition_button, #stop_acquisition_button" ).unbind();
+      $( "input#connection_uri" ).prop("disabled", false);
+      $( "#unbind_button, #refresh_button, #start_acquisition_button, #stop_acquisition_button" ).removeClass();
 }
 
 
