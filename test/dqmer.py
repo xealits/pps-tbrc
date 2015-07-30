@@ -45,7 +45,6 @@ def run_dqm_process( messenger_socket, computation_process = dummy_computing ):
         tokens = incomming_message.split(":")
 
         # COMPUTE
-        #        if len(tokens) == 2 and tokens[0] == "DQM":
         if len(tokens) == 2 and tokens[0] == "NEW_FILENAME":
             result_filename = computation_process( tokens[1] )
         else:
@@ -55,7 +54,6 @@ def run_dqm_process( messenger_socket, computation_process = dummy_computing ):
 
         # SEND
         try :
-            #            messenger_socket.sendall( "DQM_DONE:" + result_filename )
             messenger_socket.sendall( "NEW_DQM_PLOT:" + result_filename )
         except socket.error:
             #Send failed
@@ -64,5 +62,5 @@ def run_dqm_process( messenger_socket, computation_process = dummy_computing ):
 
 if __name__ == '__main__':
     host = "localhost"
-    socket_to_messenger = make_client( host, 38765 )
+    socket_to_messenger = make_client( host, 1987 )
     run_dqm_process( socket_to_messenger )

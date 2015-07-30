@@ -4,13 +4,14 @@
 # Based on https://github.com/forthommel/pps-tbrc/src/FileReader.cpp C++ version by L. Forthomme
 
 import os, string, sys, posix, tokenize, array, getopt, struct, ast
+import matplotlib
+matplotlib.use("Agg")
 import numpy as np
 import pylab as P
 import matplotlib as mpl
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
 
-#def main(argv):
 class DQMReader:
     def __init__(self,input):
         #########################
@@ -21,8 +22,8 @@ class DQMReader:
         self.inputbinaryfile = input
         self.outputplotfile = self.inputbinaryfile.split('.')[0] + '_dqm_report.svg'
         self.outputtextfile = self.inputbinaryfile.split('.')[0] + '_dqm_report.txt'
-        self.nchannels = 64
-        self.ngroups = 16
+        self.nchannels = 32
+        self.ngroups = 4
         self.verbose = 0
         
         ###################                                                                                                                                            
@@ -84,6 +85,12 @@ class DQMReader:
 
     def SetOutputFileFormat(self,extension):
         self.outputplotfile = self.outputplotfile.split('.')[0] + '.' + str(extension)
+
+    def SetInputFilename(self,infname):
+        self.inputbinaryfile = infname
+
+    def SetOutputFilename(self,outfname):
+        self.outputplotfile = outfname
 
     def GetOutputFilename(self):
         return self.outputplotfile
