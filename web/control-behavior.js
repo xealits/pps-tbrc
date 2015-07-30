@@ -53,14 +53,14 @@ function parse_message(event) {
           break;
     case "ACQUISITION_STARTED":
           append_to_console( "<p>Acquisition process successfully launched!</p>" );
-          alert("Acquisition process successfully launched!");
+          // alert("Acquisition process successfully launched!");
           $( "#start_acquisition_button" ).removeClass().unbind();
           $( "#stop_acquisition_button" ).attr( "class", "enabled" ).click( stop_acquisition ) ;
           acquisition_started = true;
           break;
     case "ACQUISITION_STOPPED":
           append_to_console( "<p>Acquisition process terminated!</p>" );
-          alert("Acquisition process terminated!");
+          // alert("Acquisition process terminated!");
           $( "#stop_acquisition_button" ).removeClass().unbind();
           $( "#start_acquisition_button" ).attr( "class", "enabled" ).click( start_acquisition ) ;
           acquisition_started = false;
@@ -69,8 +69,12 @@ function parse_message(event) {
           append_to_console( "<p>" + d + "</p>" );
           break;
     case "MASTER_DISCONNECT":
-          alert("ALERT:\nMaster disconnected!");
+          // alert("ALERT:\nMaster disconnected!");
+          append_to_console( "<p>ALERT:\nMaster disconnected!</p>" );
           // restore_init_state();
+          break;
+    default:
+          append_to_console( "<p>Received unknown message:" + d + "</p>" );
           break;
   }
 }
@@ -221,7 +225,7 @@ function start_acquisition() {
 }
 
 function stop_acquisition() {
-  connection.send("STOP_ACQUISITION:"+listener_id);
+  send_message(connection, "STOP_ACQUISITION:" + listener_id );
 }
 
 
@@ -245,7 +249,7 @@ function setup_connection(connection) {
       //   return;
       // }
       // unbind_socket();
-      alert("connection onerror");
+      alert("connection onerror"); // Parse error, write error message to console
       // connection.close();
       connection = undefined;
       alert( connection );
