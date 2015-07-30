@@ -41,6 +41,7 @@ class Client : public Socket
     }
     /// Receive a socket message from the master
     void Receive();
+    SocketMessage Receive(const MessageKey& key);
     
     /// Parse a SocketMessage received from the master
     virtual void ParseMessage(const SocketMessage& m) {;}

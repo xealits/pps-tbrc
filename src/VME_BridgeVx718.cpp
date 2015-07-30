@@ -2,7 +2,7 @@
 
 namespace VME
 {
-  BridgeVx718::BridgeVx718(const char *device, BridgeType type) :
+  BridgeVx718::BridgeVx718(const char* device, BridgeType type) :
     GenericBoard<CVRegisters,cvA32_U_DATA>(0, 0x0)
   {
     int dev = atoi(device);
@@ -19,7 +19,13 @@ namespace VME
 
     switch (type) {
       case CAEN_V1718: tp = cvV1718; break;
-      case CAEN_V2718: tp = cvV2718; break;
+      case CAEN_V2718:
+        tp = cvV2718;
+        try { CheckPCIInterface(device); } catch (Exception& e) {
+          e.Dump();
+          throw Exception(__PRETTY_FUNCTION__, "Failed to initialize the PCI/VME interface card!", Fatal);
+        }
+        break;
       default:
         o.str("");
         o << "Invalid VME bridge type: " << type;
@@ -47,12 +53,26 @@ namespace VME
     
     CheckConfiguration();
 
-    SetIRQ(IRQ1|IRQ2|IRQ3|IRQ4|IRQ5|IRQ6|IRQ7, false);
+    //SetIRQ(IRQ1|IRQ2|IRQ3|IRQ4|IRQ5|IRQ6|IRQ7, false);
   }
 
   BridgeVx718::~BridgeVx718()
   {
     CAENVME_End(fHandle);
+  }
+
+  void
+  BridgeVx718::CheckPCIInterface(const char* device) const
+  {
+    try {
+      PCIInterfaceA2818 pci(device);
+      std::ostringstream os;
+      os << "PCI/VME interface card information:" << "\n\t"
+         << "  FW version: " << pci.GetFWRevision();
+      PrintInfo(os.str()); 
+    } catch (Exception& e) {
+      throw e;
+    }
   }
 
   void

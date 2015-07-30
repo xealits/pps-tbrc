@@ -1,0 +1,130 @@
+body
+{
+  font-size: 11pt;
+  background-color: #fff;
+}
+
+h1
+{
+  font-size: 16pt;
+  display: inline-block;
+  height: 10px;
+  margin: 5px 0px;
+}
+
+input
+{
+  border: 1px lightgray solid;
+}
+
+textarea
+{
+  display: inline;
+}
+
+#output
+{
+  display: inline-block;
+  vertical-align: top;
+}
+
+.socket_block
+{
+  width: 100px;
+  border: 1px lightgray solid;
+  display: inline-block;
+  margin: 3px;
+  padding: 5px;
+}
+
+.socket_block_title
+{
+  font-weight: bold;
+  font-size: 10pt;
+  padding: 2px;
+  text-align: center;
+}
+
+.socket_block_logger
+{
+  font-size: 9pt;
+  width: 9em;
+  height: 2em;
+}
+
+#upper_fields
+{
+  display: block;
+  margin: 4px 0px;;
+  border: 1px lightgray solid;
+  width: 1057px;
+}
+
+#time_field
+{
+  font-size: 9pt;
+  display: inline-block;
+  float: right;
+}
+
+#exception_block
+{
+  background-color: beige;
+  display: inline-block;
+  border: 1px lightgray solid;
+  margin: 0px;
+  height: 520px;
+  width: 250px;
+  vertical-align: top;
+  /*float: left;*/
+}
+
+#dqm_block
+{
+  background-color: white;
+  display: inline-block;
+  border: 1px lightgray solid;
+  margin: 0px;
+  height: 520px;
+  width: 800px;
+  vertical-align: top;
+  /*float: right;*/
+}
+
+.block_master
+{
+  background-color: cornflowerblue;
+}
+
+.block_websocket
+{
+  background-color: yellow;
+}
+
+.block_regularsocket
+{
+  background-color: lightgreen;
+}
+
+.block_detsocket
+{
+  background-color: lightblue;
+}
+
+.block_dqmsocket
+{
+  background-color: salmon;
+}
+
+.block_othersocket
+{
+  background-color: white;
+}
+
+.legend
+{
+  border: 1px solid #aaa;
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+}

@@ -12,7 +12,8 @@
 #include "VME_TDCEvent.h"
 #include "VME_TDCV1x90Opcodes.h"
 
-#define TDC_ACQ_STOP 20000
+#define TDC_ACQ_START 20000
+#define TDC_ACQ_STOP 20001
 
 namespace VME
 {
@@ -370,6 +371,9 @@ namespace VME
       std::string pair_width_res[16];
 
   };
+
+  /// Mapper from physical VME addresses to pointers to TDC objects
+  typedef std::map<uint32_t,VME::TDCV1x90*> TDCCollection;
 }
 
 #endif

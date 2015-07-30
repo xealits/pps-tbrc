@@ -21,6 +21,7 @@
 class FileReader
 {
   public:
+    inline FileReader() {;}
     /**
      * \brief Class constructor
      * \param[in] name Path to the file to read
@@ -28,9 +29,15 @@ class FileReader
      */
     FileReader(std::string name);
     ~FileReader();
+    
+    void Open(std::string name);
+    inline bool IsOpen() const { return fFile.is_open(); }
+    inline void Clear() { fFile.clear(); fFile.seekg(sizeof(file_header_t), std::ios::beg); }
 
     void Dump() const;    
     inline unsigned int GetNumTDCs() const { return fHeader.num_hptdc; }
+    inline unsigned int GetRunId() const { return fHeader.run_id; }
+    inline unsigned int GetSpillId() const { return fHeader.spill_id; }
     
     unsigned long GetNumEvents() const { return fNumEvents; }
     bool GetNextEvent(VME::TDCEvent*);

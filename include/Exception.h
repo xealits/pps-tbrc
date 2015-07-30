@@ -2,6 +2,7 @@
 #define Exception_h
 
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <cstdlib> // exit()
 
@@ -79,7 +80,7 @@ class Exception
     }
     inline std::string OneLine() const {
       std::ostringstream os;
-      os << "[" << Type() << "] === " << From() << " === " << std::endl
+      os << "[" << Type() << "] === " << From() << " === "
          << Description();
       return os.str();
     }

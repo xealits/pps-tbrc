@@ -24,8 +24,8 @@ struct file_header_t {
   VME::DetectionMode det_mode;
 };
 
-/// Generate a random file name
-inline std::string GenerateFileName(const size_t len=5)
+/// Generate a random string of fixed length for file name
+inline std::string GenerateString(const size_t len=5)
 {
   std::string out;
   srand(time(NULL));
@@ -33,9 +33,8 @@ inline std::string GenerateFileName(const size_t len=5)
     "0123456789"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz";
-  out = "events_";
+  out = "";
   for (size_t i=0; i<len; i++) { out += az[rand()%(sizeof(az)-1)]; }
-  out += ".dat";
   return out;
 }
 

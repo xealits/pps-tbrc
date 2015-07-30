@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<fpga address="0x00ee0000">
+  <clock>
+    <source>internal</source>
+    <period>1</period>
+  </clock>
+  <trigger>
+    <source>internal</source>
+    <period>400000</period>
+  </trigger>
+  <signal>
+    <source>internal</source>
+    <poi>4294967295</poi>
+  </signal>
+</fpga>
+<tdc address="0x00aa0000">
+  <verbosity>1</verbosity>
+  <acq_mode>trigger</acq_mode>
+  <det_mode>trailead</det_mode>
+  <dll>PLL_High_Resolution</dll>
+  <ettt/>
+  <trigger_window>
+    <width>4000</width>
+    <offset>-2000</offset>
+  </trigger_window>
+</tdc>
+<tdc address="0x00bb0000">
+  <verbosity>1</verbosity>
+  <acq_mode>trigger</acq_mode>
+  <det_mode>trailead</det_mode>
+  <dll>PLL_High_Resolution</dll>
+  <ettt/>
+  <trigger_window>
+    <width>4000</width>
+    <offset>-2000</offset>
+  </trigger_window>
+</tdc>
+<cfd address="0x00070000">
+  <poi>1</poi>
+  <output_width>
+    <group0>0</group0>
+    <group1>0</group1>
+  </output_width>
+  <dead_time>
+    <group0>0</group0>
+    <group1>0</group1>
+  </dead_time>
+  <threshold>
+    <channel id=0>10</channel>
+    <channel id=15>10</channel>
+  </threshold>
+</cfd>
