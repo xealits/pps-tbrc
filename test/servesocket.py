@@ -12,8 +12,12 @@ def hello(websocket, path):
         # print(message, type(message))
         print("< {}".format(message))
 
-        if "ADD_CLIENT:1" in message:
+        if "ADD_CLIENT:1" == message:
             reply = "SET_CLIENT_ID:9"
+        elif "START_ACQUISITION" in message:
+            reply = "ACQUISITION_STARTED"
+        elif "STOP_ACQUISITION" in message:
+            reply = "ACQUISITION_STOPPED"
         else:
             reply = "Hello {}!".format(message)
 

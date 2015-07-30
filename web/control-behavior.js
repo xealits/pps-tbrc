@@ -2,14 +2,14 @@ var port = 1987;
 var listener_id;
 var connection = undefined;
 var upper_fields;
-var bind_button, unbind_button, refresh_button, acquisition_button, time_field;
+var bind_button, unbind_button, refresh_button, start_acquisition_button, time_field;
 var socket_id, console_log;
 var built_clients;
 var acquisition_started;
 
 
 function parse_handshake_message(event) {
-  var d = event.data //.slice(0,-1); // CHECK: is slice needed?
+  var d = event.data; //.slice(0,-1); // CHECK: is slice needed?
   m = d.split(":");
   switch (m[0]) {
     case "SET_CLIENT_ID":
@@ -27,7 +27,7 @@ function parse_handshake_message(event) {
 
 
 function parse_message(event) {
-  var d = event.data.slice(0,-1);
+  var d = event.data; // .slice(0,-1);
   m = d.split(":");
   switch (m[0]) {
     case "SET_CLIENT_ID":
@@ -54,15 +54,15 @@ function parse_message(event) {
     case "ACQUISITION_STARTED":
           append_to_console( "<p>Acquisition process successfully launched!</p>" );
           alert("Acquisition process successfully launched!");
-          $( "#acquisition_button" ).html( "Stop acquisition" );
-          $( "#acquisition_button" ).click( stop_acquisition) ;
+          $( "#start_acquisition_button" ).removeClass().unbind();
+          $( "#stop_acquisition_button" ).attr( "class", "enabled" ).click( stop_acquisition ) ;
           acquisition_started = true;
           break;
     case "ACQUISITION_STOPPED":
           append_to_console( "<p>Acquisition process terminated!</p>" );
           alert("Acquisition process terminated!");
-          $("#acquisition_button").html( "Start acquisition" );
-          $("#acquisition_button").click( start_acquisition );
+          $( "#stop_acquisition_button" ).removeClass().unbind();
+          $( "#start_acquisition_button" ).attr( "class", "enabled" ).click( start_acquisition ) ;
           acquisition_started = false;
           break;
     case "EXCEPTION":
@@ -117,13 +117,13 @@ function parse_message_old(event) {
       built_clients.splice(built_clients.indexOf(difference[i]), 1);
     }
     if (num_det===0) { // no detector process has been found
-      acquisition_button.innerHTML = "Start acquisition";
-      acquisition_button.setAttribute('onClick', 'start_acquisition()');
+      start_acquisition_button.innerHTML = "Start acquisition";
+      start_acquisition_button.setAttribute('onClick', 'start_acquisition()');
       acquisition_started = false;
     }
     else {
-      acquisition_button.innerHTML = "Stop acquisition";
-      acquisition_button.setAttribute('onClick', 'stop_acquisition()');
+      start_acquisition_button.innerHTML = "Stop acquisition";
+      start_acquisition_button.setAttribute('onClick', 'stop_acquisition()');
       acquisition_started = true;
     }
   }
@@ -144,14 +144,14 @@ function parse_message_old(event) {
   }
   else if (d.indexOf("ACQUISITION_STARTED")>-1) {
     alert("Acquisition process successfully launched!");
-    acquisition_button.innerHTML = "Stop acquisition";
-    acquisition_button.setAttribute('onClick', 'stop_acquisition()');
+    start_acquisition_button.innerHTML = "Stop acquisition";
+    start_acquisition_button.setAttribute('onClick', 'stop_acquisition()');
     acquisition_started = true;
   }
   else if (d.indexOf("ACQUISITION_STOPPED")>-1) {
     alert("Acquisition process terminated!");
-    acquisition_button.innerHTML = "Start acquisition";
-    acquisition_button.setAttribute('onClick', 'start_acquisition()');
+    start_acquisition_button.innerHTML = "Start acquisition";
+    start_acquisition_button.setAttribute('onClick', 'start_acquisition()');
     acquisition_started = false;
   }
   else if (d.indexOf("EXCEPTION")>-1) {
@@ -331,23 +331,25 @@ function bind_socket() {
 
 function interface_on() {
       // disable bind button
-      $( "#bind_button" ).unbind();
+      $( "#bind_button" ).unbind().removeClass();
       // enable interface to the ppsFetch process
       $( "#unbind_button" ).click( unbind_socket );
       $( "#refresh_button" ).click( socket_refresh );
-      $( "#acquisition_button" ).click( start_acquisition );
+      $( "#start_acquisition_button" ).click( start_acquisition );
+      $( "#stop_acquisition_button" ).unbind();
       $( "input#connection_uri" ).prop("disabled", true);
-      $( "#bind_button, #unbind_button, #refresh_button, #acquisition_button" ).toggleClass( "enabled" );
+      $( "#unbind_button, #refresh_button, #start_acquisition_button" ).attr( "class", "enabled" );//toggleClass( "enabled" );
+      $( "#stop_acquisition_button" ).removeClass();
 }
 
 function interface_off() {
       // enable bind button
-      $( "#bind_button" ).click( bind_socket );
+      $( "#bind_button" ).click( bind_socket ).attr( "class", "enabled" );
       // disable interface to ppsFetch process
-      $("#acquisition_button").html( "Start acquisition" ); // reset acquisition button
-      $( "#unbind_button, #refresh_button, #acquisition_button" ).unbind();
+      // $("#start_acquisition_button").html( "Start acquisition" ); // reset acquisition button
+      $( "#unbind_button, #refresh_button, #start_acquisition_button, #stop_acquisition_button" ).unbind();
       $( "input#connection_uri" ).prop("disabled", false);
-      $( "#bind_button, #unbind_button, #refresh_button, #acquisition_button" ).toggleClass( "enabled" );
+      $( "#unbind_button, #refresh_button, #start_acquisition_button, #stop_acquisition_button" ).removeClass();
 }
 
 
