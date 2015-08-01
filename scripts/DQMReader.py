@@ -19,9 +19,12 @@ class DQMReader:
         #########################
 
         # Input filename obtined from the server communication. Output file has the same name except for extension
+        if(input.find(".dat") == -1):
+            print "File sent to DQM is not in .dat format - exiting"
+            return
         self.inputbinaryfile = input
-        self.outputplotfile = self.inputbinaryfile.split('.')[0] + '_dqm_report.svg'
-        self.outputtextfile = self.inputbinaryfile.split('.')[0] + '_dqm_report.txt'
+        self.outputplotfile = self.inputbinaryfile.split('.dat')[0] + '_dqm_report.svg'
+        self.outputtextfile = self.inputbinaryfile.split('.dat')[0] + '_dqm_report.txt'
         self.nchannels = 32
         self.ngroups = 4
         self.verbose = 0
