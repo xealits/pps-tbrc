@@ -38,4 +38,34 @@ inline std::string GenerateString(const size_t len=5)
   return out;
 }
 
+/**
+ * \brief Redirect outputs to another output stream
+ */
+class Logger
+{
+  public:
+    inline Logger(std::ostream& lhs, std::ostream& rhs=std::cout) : fStream(rhs), fBuffer(fStream.rdbuf()) {
+      fStream.rdbuf(lhs.rdbuf());
+    }
+    inline ~Logger() { fStream.rdbuf(fBuffer); }
+
+  private:
+    std::ostream& fStream;
+    std::streambuf* const fBuffer;
+};
+
+/**
+ * \brief Redirect output stream to a string
+ */
+class LogRedirector
+{
+  public:
+    inline LogRedirector(std::ostream& stm=std::cout) : fSS(), fRedirect(fSS, stm) {;}
+    inline std::string contents() const { return fSS.str(); }
+
+  private:
+    std::ostringstream fSS;
+    const Logger fRedirect;
+};
+
 #endif

@@ -24,6 +24,10 @@ void CtrlC(int aSig) {
 
 int main(int argc, char *argv[]) {
   signal(SIGINT, CtrlC);
+  
+  // Where to put the logs
+  ofstream err_log("log.err", ios::binary);
+  const Logger lr(err_log, cerr);
  
   string xml_config;
   if (argc<2) {
@@ -48,7 +52,7 @@ int main(int argc, char *argv[]) {
   fh.acq_mode = acq_mode;
   fh.det_mode = det_mode;
   
-  std::time_t t_beg;
+  time_t t_beg;
   for (unsigned int i=0; i<num_tdc; i++) num_events[i] = 0;
   unsigned long num_triggers = 0, num_all_triggers = 0, num_files = 0;
 
@@ -72,7 +76,7 @@ int main(int argc, char *argv[]) {
     unsigned int num_events[num_tdc];
     int num_triggers_in_files;
 
-    t_beg = std::time(0);
+    t_beg = time(0);
 
     // Initial dump of the acquisition parameters before writing the files
     cerr << endl << "*** Ready for acquisition! ***" << endl;
@@ -98,17 +102,18 @@ int main(int argc, char *argv[]) {
          << "Detection mode: ";
     for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << detmode[i]; }
     cerr << endl 
-         << "Local time: " << asctime(std::localtime(&t_beg));
+         << "Local time: " << asctime(localtime(&t_beg));
       
 
     // Change outputs file once a minimal amount of triggers is hit
     do {
       // TDC output files configuration
       i = 0;
+      fh.spill_id += 1;
+      time_t start = time(0);
       for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
         VME::TDCV1x90* tdc = atdc->second;
         
-        fh.spill_id += 1;
         fh.acq_mode = tdc->GetAcquisitionMode();
         fh.det_mode = tdc->GetDetectionMode();
 
@@ -116,10 +121,9 @@ int main(int argc, char *argv[]) {
         filename << PATH << "/events_board" << i
                  << "_" << fh.run_id
                  << "_" << fh.spill_id
-                 << "_" << std::time(0)
+                 << "_" << start
                  //<< "_" GenerateString(4)
                  << ".dat";
-        //filename << GenerateString(5);
         vme->SetOutputFile(atdc->first, filename.str());
         out_file[i].open(vme->GetOutputFile(atdc->first).c_str(), fstream::out | ios::binary);
         if (!out_file[i].is_open()) {
@@ -153,7 +157,7 @@ int main(int argc, char *argv[]) {
           }
           num_events[i] += ec.size();
         }
-        if (use_fpga and tm%1000==0) {
+        if (use_fpga) {
           num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
           num_triggers_in_files = num_triggers-num_all_triggers;
           if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
@@ -181,10 +185,10 @@ int main(int argc, char *argv[]) {
           vme->SendOutputFile(atdc->first);
         }
   
-        std::time_t t_end = std::time(0);
+        time_t t_end = time(0);
         double nsec_tot = difftime(t_end, t_beg), nsec = fmod(nsec_tot,60), nmin = (nsec_tot-nsec)/60.;
         cerr << endl << "*** Acquisition stopped! ***" << endl
-             << "Local time: " << asctime(std::localtime(&t_end))
+             << "Local time: " << asctime(localtime(&t_end))
              << "Total acquisition time: " << difftime(t_end, t_beg) << " seconds"
              << " (" << nmin << " min " << nsec << " sec)"
              << endl;

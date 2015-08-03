@@ -1,7 +1,9 @@
 #include "Messenger.h"
 #include "Client.h"
+#include "FileConstants.h"
 
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -26,6 +28,10 @@ void CtrlC(int aSig) {
 int main(int argc, char* argv[])
 {
   signal(SIGINT, CtrlC);
+
+  // Where to put the logs
+  ofstream err_log("master.err", ios::binary);
+  const Logger lr(err_log, cerr);
 
   m = new Messenger(1987);
   if (!m->Connect()) {

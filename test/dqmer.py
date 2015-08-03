@@ -64,5 +64,6 @@ def run_dqm_process( messenger_socket, computation_process = dummy_computing ):
 
 if __name__ == '__main__':
     host = "localhost"
-    socket_to_messenger = make_client( host, 38765 )
+    socket_to_messenger = make_client( host, 1987 )
+#    socket_to_messenger = make_client( host, 38765 )
     run_dqm_process( socket_to_messenger )
