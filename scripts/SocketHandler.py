@@ -54,8 +54,8 @@ class SocketHandler:
       raise ReceivingError
     if ':' not in recv:
       raise InvalidMessage
-    (key, value) = recv.split(':')
-    return (key, value)
+    out = recv.split(':')
+    return (out[0], ':'.join(out[1:]))
 
   def Send(self, key, value):
     try:

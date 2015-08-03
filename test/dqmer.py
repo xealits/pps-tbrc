@@ -20,12 +20,18 @@ def run_dqm_process( messenger_socket, computation_process = dummy_computing ):
         incoming_message = messenger_socket.Receive(4096)
 
         # COMPUTE
-        if len(incoming_message) != 2:
+        if len(incoming_message)!=2:
             print "Got wrong message:\n%s" % incoming_message # OR send error to the messenger?
             # MAYBE add 1 more message -- "KILL_DQM" -- and stop DQM process with it?
             continue
         if incoming_message[0] == "NEW_FILENAME":
-            result_filename = computation_process(incoming_message[1])
+            try:
+                (tdc_addr, filename) = incoming_message[1].split(':')
+            except ValueError:
+                print "Got invalid 'NEW_FILENAME' message value: %s" % (incoming_message[1])
+                continue
+            print incoming_message[1], tdc_addr, filename
+            result_filename = computation_process( filename )
 
         # SEND
         try:

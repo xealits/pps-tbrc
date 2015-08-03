@@ -262,6 +262,7 @@ void
 Messenger::StartAcquisition()
 {
   fPID = fork();
+  std::ostringstream os; int ret;
 
   try {
     switch (fPID) {
@@ -269,9 +270,12 @@ Messenger::StartAcquisition()
         throw Exception(__PRETTY_FUNCTION__, "Failed to fork the current process!", JustWarning);
       case 0:
         PrintInfo("Launching the daughter acquisition process");
-        execl("ppsFetch", "", (char*)NULL);
-        //close(fStdoutPipe[1]);
-        throw Exception(__PRETTY_FUNCTION__, "Failed to launch the daughter process!", JustWarning);
+        ret = execl("ppsFetch", "", (char*)NULL);
+        os.str("");
+        os << "Failed to launch the daughter process!" << "\n\t"
+           << "Return value: " << ret << "\n\t"
+           << "Errno: " << errno;
+        throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
       default:
         break;
     }
