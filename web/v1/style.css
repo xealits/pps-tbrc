@@ -8,7 +8,7 @@ h1
 {
   font-size: 16pt;
   display: inline-block;
-  height: 10px;
+  height: 25px;
   margin: 5px 0px;
 }
 
@@ -26,23 +26,27 @@ textarea
 {
   display: inline-block;
   vertical-align: top;
+  width: 55%;
 }
 
 .socket_block
 {
-  width: 100px;
+  width: 150px;
   border: 1px lightgray solid;
   display: inline-block;
   margin: 3px;
-  padding: 5px;
+  padding: 3px;
+  text-align: right;
 }
 
 .socket_block_title
 {
-  font-weight: bold;
-  font-size: 10pt;
+  font-weight: normal;
+  font-size: 9pt;
   padding: 2px;
+  margin-right: 10px;
   text-align: center;
+  display: inline-block;
 }
 
 .socket_block_logger

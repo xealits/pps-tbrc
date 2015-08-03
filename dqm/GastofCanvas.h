@@ -89,7 +89,7 @@ namespace DQM
           fLabel2->SetTextSize(22);
           fLabel2->Draw();
           fLabel3 = new TPaveText(.5, .0, .98, .05, "NDC");
-          fLabel3->AddText(Form("Board %d, Run %d - Spill %d - %s", fBoardId, fRunId, fSpillId, fRunDate.Data()));
+          fLabel3->AddText(Form("Board %x, Run %d - Spill %d - %s", fBoardId>>16, fRunId, fSpillId, fRunDate.Data()));
           fLabel3->SetMargin(0.);
           fLabel3->SetFillColor(kWhite);
           fLabel3->SetLineColor(kWhite);

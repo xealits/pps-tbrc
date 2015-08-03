@@ -121,7 +121,7 @@ Messenger::Send(const Message& m, int sid) const
   try {
     Message tosend = (IsWebSocket(sid)) ? HTTPMessage(fWS, m, EncodeMessage) : m;
     //std::cout << "sending to " << sid << " --> web socket? " << IsWebSocket(sid) << std::endl;
-    if (IsWebSocket(sid)) usleep(500000);
+    if (IsWebSocket(sid)) usleep(100000);
     SendMessage(tosend, sid);
   } catch (Exception& e) { e.Dump(); }
 }

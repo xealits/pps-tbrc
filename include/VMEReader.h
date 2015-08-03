@@ -128,7 +128,7 @@ class VMEReader : public Client
       return it->second;
     }
     /// Send the path to the output file through the socket
-    void SendOutputFile(uint32_t tdc_address) const;
+    void SendOutputFile(uint32_t tdc_address, unsigned int spill_id) const;
 
     inline bool UseSocket() const { return fOnSocket; }
     /// Abort data collection for all modules on the bus handled by the bridge

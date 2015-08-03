@@ -130,6 +130,8 @@ namespace DQM
         fLegend->SetTextSize(14);
     
         fHist = new TH2D(Form("hist_%s", TCanvas::GetName()), "", 5, 0.5, 4.5, 4, 0.5, 3.5);
+        for (unsigned int i=1; i<=5; i++) fHist->GetXaxis()->SetBinLabel(i, Form("%d", i));
+        for (unsigned int i=1; i<=4; i++) fHist->GetYaxis()->SetBinLabel(i, Form("%d", i));
       }
       inline void DrawGrid() {
         TCanvas::cd();

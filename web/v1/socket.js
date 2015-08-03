@@ -237,7 +237,7 @@ function parse_message(event) {
     message.className = "exception-message";
     switch (parseInt(extr[1])) {
       case  0: message.style.color = "darkorange"; break; // Info
-      case  1: message.style.color = "dodgeblue"; break;  // JustWarning
+      case  1: message.style.color = "dodgerblue"; break; // JustWarning
       case  2: message.style.color = "red"; break;        // Fatal
       case -1: default: message.style.color = "black"; break; // Undefined
     }

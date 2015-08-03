@@ -1,15 +1,11 @@
 #include "FileReader.h"
-#include "Client.h"
+#include "DQMProcess.h"
 #include "GastofCanvas.h"
-#include "Exception.h"
-#include <iostream>
-
-#define DQM_OUTPUT_DIR "/tmp/"
 
 using namespace std;
 
 bool
-RunGastofDQM(unsigned int address, string filename, vector<string>* outputs)
+GastofDQM(unsigned int address, string filename, vector<string>* outputs)
 {
   FileReader reader;
   try { reader.Open(filename); } catch (Exception& e) { throw e; }
@@ -78,51 +74,7 @@ RunGastofDQM(unsigned int address, string filename, vector<string>* outputs)
 int
 main(int argc, char* argv[])
 {
-  Client client(1987);
-  try {
-    client.Connect(Socket::DQM);
-  } catch (Exception& e) { e.Dump(); }
-
-  bool status;
-  try {
-    SocketMessage msg;
-    while (true) {
-      msg = client.Receive(NEW_FILENAME);
-      if (msg.GetKey()!=NEW_FILENAME) { continue;
-        //ostringstream os; os << "Invalid message key retrieved: " << MessageKeyToString(msg.GetKey());
-        //throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
-      }
-      if (msg.GetValue()=="") {
-        ostringstream os; os << "Invalid output file path received through the NEW_FILENAME message: " << msg.GetValue();
-        throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
-      }
-      vector<string> outputs; string value = msg.GetValue();
-      
-      size_t end; uint32_t board_address; string filename;
-      if ((end=value.find(':'))==std::string::npos) {
-        ostringstream s; s << "Invalid filename message built! (\"" << value << "\")";
-        throw Exception(__PRETTY_FUNCTION__, s.str().c_str(), JustWarning);
-      }
-      board_address = atoi(value.substr(0, end).c_str());
-      filename = value.substr(end+1);
-      //cout << "Board address 0x" << hex << board_address << " has output file " << filename << endl;
-
-      try {
-        status = RunGastofDQM(board_address, filename, &outputs);
-      } catch (Exception& e) { client.Send(e); continue; }
-      if (status) {
-        cout << "Produced " << outputs.size() << " plot(s) for board with address 0x" << hex << board_address << endl;
-        for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
-          sleep(1);
-          client.Send(SocketMessage(NEW_DQM_PLOT, *nm));
-          /*ostringstream s; s << "New DQM plot: " << *nm;
-          client.Send(Exception(__PRETTY_FUNCTION__, s.str(), Info));*/
-        }
-      }
-    }
-  } catch (Exception& e) {
-    e.Dump();
-    client.Send(e);
-  }
+  DQM::DQMProcess dqm(1987);
+  dqm.Run(GastofDQM);
   return 0;
 }

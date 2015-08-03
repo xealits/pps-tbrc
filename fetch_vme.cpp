@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
           }
           num_events[i] += ec.size();
         }
-        if (use_fpga) {
+        if (use_fpga and tm>10000) {
           num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
           num_triggers_in_files = num_triggers-num_all_triggers;
           if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
@@ -166,6 +166,7 @@ int main(int argc, char *argv[]) {
             num_all_triggers = num_triggers;
             break; // break the infinite loop to write and close the current file
           }
+          tm = 0;
         }
       }
       num_files += 1;
@@ -173,7 +174,7 @@ int main(int argc, char *argv[]) {
       unsigned int i = 0;
       for (VME::TDCCollection::const_iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
         if (out_file[i].is_open()) out_file[i].close();
-        vme->SendOutputFile(atdc->first);
+        vme->SendOutputFile(atdc->first, fh.spill_id);
       }
     } while (true);
   } catch (Exception& e) {
@@ -183,7 +184,7 @@ int main(int argc, char *argv[]) {
         VME::TDCCollection tdcs = vme->GetTDCCollection();
         for (VME::TDCCollection::const_iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
           if (out_file[i].is_open()) out_file[i].close();
-          vme->SendOutputFile(atdc->first);
+          vme->SendOutputFile(atdc->first, fh.spill_id);
         }
   
         time_t t_end = time(0);
