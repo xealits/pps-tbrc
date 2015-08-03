@@ -17,7 +17,7 @@ signal.signal(signal.SIGINT, handle_sigint)
 
 
 HOST = 'localhost'   # Symbolic name meaning all available interfaces
-PORT = 38765 # Arbitrary non-privileged port
+PORT = 2976 # Arbitrary non-privileged port
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print 'Socket created'
@@ -45,15 +45,19 @@ def clientthread(conn):
          
         #Receiving from client
         data = conn.recv(1024)
-        print data
+        message = data.strip()
+        print message
+        if message == "ADD_CLIENT:1":
+            reply = "SET_CLIENT_ID:9"
+        else: reply = message
         # reply = 'Simon says...' + data
         # if not data: 
             # break
      
         # broadcast the reply to everybody
-        for c in connections:
-            c.sendall(data)
-        # conn.sendall(reply)
+        # for c in connections:
+            # c.sendall(reply)
+        conn.sendall(reply)
      
     #came out of loop
     conn.close()
