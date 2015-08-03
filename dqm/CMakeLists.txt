@@ -1,3 +1,4 @@
+project(DQM CXX)
 # DQM modules needing a ROOT instance
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/share/root/cmake)
 find_package(ROOT)
@@ -15,7 +16,7 @@ if (ROOT_FOUND)
 endif()
 
 function(ADD_DQM exec)
-  add_executable(${exec} ${PROJECT_SOURCE_DIR}/dqm/${exec}.cpp $<TARGET_OBJECTS:reader_lib> $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
+  add_executable(${exec} ${PROJECT_SOURCE_DIR}/${exec}.cpp $<TARGET_OBJECTS:reader_lib> $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
   target_link_libraries(${exec} ${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRARIES})
   #set_property(TARGET ${exec} PROPERTY EXCLUDE_FROM_ALL true)
 endfunction()
@@ -23,5 +24,6 @@ endfunction()
 if (ROOT_FOUND)
   add_dqm(gastof)
   add_dqm(quartic)
+  add_dqm(daq)
 endif()
 

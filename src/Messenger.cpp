@@ -217,8 +217,13 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     try { StopAcquisition(); } catch (Exception& e) { e.Dump(); SendAll(WEBSOCKET_CLIENT, e); }
   }
   else if (m.GetKey()==GET_RUN_NUMBER) {
+    int last_run = 0;
     try {
-      Send(SocketMessage(RUN_NUMBER, static_cast<int>(time(NULL))), sid);
+      RunFileHandler ri("run_info.dat");
+      last_run = ri.GetLastRun();
+    } catch (Exception& e) { last_run = 0; }
+    try {
+      Send(SocketMessage(RUN_NUMBER, last_run+1), sid);
     } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==SET_NEW_FILENAME) {
@@ -227,7 +232,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
       SendAll(DQM, SocketMessage(NEW_FILENAME, m.GetValue().c_str()));
     } catch (Exception& e) { e.Dump(); }
   }
-  else if (m.GetKey()==NEW_DQM_PLOT) {
+  else if (m.GetKey()==NEW_DQM_PLOT or m.GetKey()==UPDATED_DQM_PLOT) {
     try {
       m.Dump();
       SendAll(WEBSOCKET_CLIENT, m);

@@ -89,7 +89,7 @@ function bind_socket() {
 
   connection.onerror = function (event) {
     if (event.originalTarget===undefined || event.originalTarget.readyState!==1) {
-      console_log.value = "Server not ready for connection!";
+      console_log.value = "Server OOS!";
       socket_id.style.backgroundColor = "red";
       socket_id.value = -1;
       disable_connected_buttons();
@@ -218,16 +218,18 @@ function parse_message(event) {
     acquisition_started = false;
   }
   else if (d.has_key("NEW_DQM_PLOT")) {
-    var img = document.createElement("img");
-    img.setAttribute('src', 'file:///tmp/'+d.value()+".png");
-    img.setAttribute('alt', d.value());
-    img.setAttribute('width', "200");
-    var link = document.createElement("a");
-    link.setAttribute('href', 'file:///tmp/'+d.value()+".png");
-    link.setAttribute('target', "_blank");
-    link.appendChild(img);
-    dqm_block.insertBefore(link, dqm_block.childNodes[0]);
-    console.log(d.value());
+    add_dqm_plot(d.value());
+  }
+  else if (d.has_key("UPDATED_DQM_PLOT")) {
+    var existing_img = document.getElementById(d.value());
+    if (existing_img===null) add_dqm_plot(d.value());
+    else {
+      var img = existing_img.getElementByTagName("img");
+alert(img.src);
+      img.setAttribute('src', 'file:///tmp/'+d.value()+".png?"+new Date().getTime());
+      //img.src = 'file:///tmp/'+d.value()+".png?"+new Date().getTime();
+alert(img.src);
+    }
   }
   else if (d.has_key("EXCEPTION")) {
     var rx = /^\[(.*)\] === (.*)\ === (.*)/g;
@@ -267,6 +269,20 @@ function socket_refresh() {
 
   time_field.style.color = "black";
   time_field.innerHTML = new Date;
+}
+
+function add_dqm_plot(value) {
+  var img = document.createElement("img");
+  img.setAttribute('src', 'file:///tmp/'+value+".png");
+  img.setAttribute('alt', value);
+  img.setAttribute('width', "200");
+  var link = document.createElement("a");
+  link.setAttribute('href', 'file:///tmp/'+value+".png");
+  link.setAttribute('target', "_blank");
+  link.setAttribute('id', value);
+  link.appendChild(img);
+  dqm_block.insertBefore(link, dqm_block.childNodes[0]);
+  console.log(d.value());
 }
 
 function create_block(obj) {  

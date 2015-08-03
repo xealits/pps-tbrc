@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string>
+#include <map>
+#include <fstream>
 
 #include "VME_TDCEvent.h"
 
@@ -56,6 +58,8 @@ class Logger
 
 /**
  * \brief Redirect output stream to a string
+ * \author Laurent Forthomme <laurent.forthomme@cern.ch>
+ * \date 3 Aug 2015
  */
 class LogRedirector
 {

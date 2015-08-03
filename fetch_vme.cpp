@@ -8,7 +8,7 @@
 #include <ctime>
 #include <signal.h>
 
-#define NUM_TRIG_BEFORE_FILE_CHANGE 1000
+#define NUM_TRIG_BEFORE_FILE_CHANGE 100
 #define PATH "."
 
 using namespace std;
@@ -38,8 +38,11 @@ int main(int argc, char *argv[]) {
 
   const unsigned int num_tdc = 1;
 
-  fstream out_file[num_tdc];
-  unsigned int num_events[num_tdc];
+  // Handle the run info file
+  ofstream out_file[num_tdc];
+  ofstream run_info("run_info.dat", fstream::app);
+  //
+  unsigned int num_events[num_tdc];  
 
   VME::TDCEventCollection ec;
 
@@ -111,6 +114,7 @@ int main(int argc, char *argv[]) {
       i = 0;
       fh.spill_id += 1;
       time_t start = time(0);
+      run_info << fh.run_id << "\t" << fh.spill_id << "\t" << start << endl;
       for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
         VME::TDCV1x90* tdc = atdc->second;
         
@@ -158,7 +162,7 @@ int main(int argc, char *argv[]) {
           }
           num_events[i] += ec.size();
         }
-        if (use_fpga and tm>10000) {
+        if (use_fpga and tm>100000) {
           num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
           num_triggers_in_files = num_triggers-num_all_triggers;
           if (num_triggers>0 and num_triggers%1000==0) cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
@@ -209,12 +213,15 @@ int main(int argc, char *argv[]) {
       
         delete vme;
       } catch (Exception& e) { e.Dump(); }
+      run_info.close();
       return 0;
     }
     e.Dump();
     if (vme->UseSocket()) vme->Send(e);
+    run_info.close();
     return -1;
   }
     
+  run_info.close();
   return 0;
 }

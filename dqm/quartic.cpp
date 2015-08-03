@@ -74,7 +74,7 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
 int
 main(int argc, char* argv[])
 {
-  DQM::DQMProcess dqm(1987);
+  DQM::DQMProcess dqm(1987, 2);
   dqm.Run(QuarticDQM);
   return 0;
 }
