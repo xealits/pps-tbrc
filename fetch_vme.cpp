@@ -118,10 +118,11 @@ int main(int argc, char *argv[]) {
         fh.det_mode = tdc->GetDetectionMode();
 
         ostringstream filename;
-        filename << PATH << "/events_board" << i
+        filename << PATH << "/events"
                  << "_" << fh.run_id
                  << "_" << fh.spill_id
                  << "_" << start
+                 << "_board" << i
                  //<< "_" GenerateString(4)
                  << ".dat";
         vme->SetOutputFile(atdc->first, filename.str());
@@ -192,11 +193,19 @@ int main(int argc, char *argv[]) {
              << "Total acquisition time: " << difftime(t_end, t_beg) << " seconds"
              << " (" << nmin << " min " << nsec << " sec)"
              << endl;
-      
+
         cerr << endl << "Acquired ";
         for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << num_events[i]; }
         cerr << " words in " << num_files << " files for " << num_all_triggers << " triggers in this run" << endl;
     
+        ostringstream os;
+        os << "Acquired ";
+        for (unsigned int i=0; i<num_tdc; i++) { if (i>0) os << " / "; os << num_events[i]; }
+        os << " words in " << num_files << " files for " << num_all_triggers << " triggers in this run" << endl
+           << "Total acquisition time: " << difftime(t_end, t_beg) << " seconds"
+           << " (" << nmin << " min " << nsec << " sec)";
+        if (vme->UseSocket()) vme->Send(Exception(__PRETTY_FUNCTION__, os.str(), Info));
+      
         delete vme;
       } catch (Exception& e) { e.Dump(); }
       return 0;

@@ -74,7 +74,7 @@ textarea
   border: 1px lightgray solid;
   margin: 0px;
   height: 700px;
-  width: 25%;
+  width: 28%;
   vertical-align: top;
   /*float: left;*/
 }
@@ -86,9 +86,9 @@ textarea
   border: 1px lightgray solid;
   margin: 0px;
   height: 700px;
-  width: 74%;
+  width: 71%;
   vertical-align: top;
-  /*float: right;*/
+  overflow-y: auto;
 }
 
 .block_master
@@ -128,3 +128,27 @@ textarea
   height: 10px;
   display: inline-block;
 }
+
+.exception-message
+{
+  position: relative;
+}
+
+.exception-message .tooltip
+{
+  color: black;
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0px;
+  min-width: 100%;
+  background-color: #fff;
+  padding: 2px;
+  z-index: 10;
+}
+
+.exception-message:hover .tooltip
+{
+  display: block;
+}
+

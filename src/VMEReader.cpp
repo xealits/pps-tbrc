@@ -117,7 +117,7 @@ VMEReader::ReadXML(const char* filename)
       unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
       if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse CFD's base address", Fatal);
       try {
-        AddCFD(addr);
+        try { AddCFD(addr); } catch (Exception& e) { if (fOnSocket) Client::Send(e); }
         VME::CFDV812* cfd = GetCFD(addr);
         if (tinyxml2::XMLElement* poi=acfd->FirstChildElement("poi")) { cfd->SetPOI(atoi(poi->GetText())); }
         if (tinyxml2::XMLElement* ow=acfd->FirstChildElement("output_width")) {
@@ -184,6 +184,8 @@ VMEReader::AddCFD(uint32_t address)
     e.Dump();
     if (fOnSocket) Client::Send(e);
   }
+  std::ostringstream os; os << "CFD with base address 0x" << std::hex << address << " successfully built";
+  throw Exception(__PRETTY_FUNCTION__, os.str(), Info, TDC_ACQ_START);
 }
 
 void
@@ -196,6 +198,8 @@ VMEReader::AddIOModule(uint32_t address)
     e.Dump();
     if (fOnSocket) Client::Send(e);
   }
+  std::ostringstream os; os << "I/O module with base address 0x" << std::hex << address << " successfully built";
+  throw Exception(__PRETTY_FUNCTION__, os.str(), Info, TDC_ACQ_START);
 }
 
 void
@@ -209,6 +213,8 @@ VMEReader::AddFPGAUnit(uint32_t address)
     if (fOnSocket) Client::Send(e);
   }
   sleep(4); // wait for FW to be ready...
+  std::ostringstream os; os << "FPGA module with base address 0x" << std::hex << address << " successfully built";
+  throw Exception(__PRETTY_FUNCTION__, os.str(), Info, TDC_ACQ_START);
 }
 
 void
@@ -226,6 +232,10 @@ VMEReader::AddHVModule(uint32_t vme_address, uint16_t nim_address)
        << "through VME CAENET controller at address 0x" << std::hex << vme_address;
     throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
   }
+  std::ostringstream os;
+  os << "NIM HV module with address 0x" << std::hex << nim_address << "\n\t"
+     << " (through VME CAENET controller at base address 0x" << std::hex << vme_address << ") successfully built";
+  throw Exception(__PRETTY_FUNCTION__, os.str(), Info, TDC_ACQ_START);
 }
 
 void
@@ -258,5 +268,6 @@ VMEReader::SendOutputFile(uint32_t tdc_address) const
   if (it!=fOutputFiles.end()) {
     std::ostringstream os; os << tdc_address << ":" << it->second;
     Client::Send(SocketMessage(SET_NEW_FILENAME, os.str()));
+    Client::Send(Exception(__PRETTY_FUNCTION__, "New output file", Info));
   }
 }

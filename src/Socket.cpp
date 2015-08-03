@@ -137,8 +137,8 @@ void
 Socket::SendMessage(Message message, int id) const
 {
   if (id<0) id = fSocketId;
-  
   std::string message_s = message.GetString();
+  usleep(1000);
   if (send(id, message_s.c_str(), message_s.size(), MSG_NOSIGNAL)<=0) {
     throw Exception(__PRETTY_FUNCTION__, "Cannot send message!", JustWarning, SOCKET_ERROR(errno));
   }

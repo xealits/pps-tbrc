@@ -22,5 +22,6 @@ endfunction()
 
 if (ROOT_FOUND)
   add_dqm(gastof)
+  add_dqm(quartic)
 endif()
 

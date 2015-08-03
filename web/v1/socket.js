@@ -55,6 +55,9 @@ function restore_init_state() {
 function socket_init() {
   listener_id = -1;
   connection = 0;
+  
+  if (!window.WebSocket) alert("Your browser does not support WebSockets!");
+
   upper_fields = document.getElementById("upper_fields");
   bind_button = document.getElementById("bind_button");
   unbind_button = document.getElementById("unbind_button");
@@ -92,23 +95,24 @@ function bind_socket() {
       disable_connected_buttons();
       return;
     }
-    unbind_socket();
+    //unbind_socket();
   }
-  connection.onopen = function () {};
+  connection.onopen = function () { };
   connection.onmessage = function(event) { parse_message(event); };
-  connection.onclose = function() { connection = 0; bind_socket(); };
+  connection.onclose = function() {
+    connection = 0;
+    bind_socket();
+  };
 }
   
-function unbind_socket() {
-  if (connection===0) return;
-  connection.send("REMOVE_CLIENT:"+listener_id);
-  connection.onmessage = function(event) { parse_message(event); }
-}
-
 function ask_socket_removal(id) {
   if (connection===0) return;
   connection.send("REMOVE_CLIENT:"+id);
   connection.onmessage = function(event) { parse_message(event); }  
+}
+
+function unbind_socket() {
+  ask_socket_removal(listener_id);
 }
 
 function ask_socket_ping(id) {
@@ -119,9 +123,10 @@ function ask_socket_ping(id) {
 
 function socket_close() {
   if (connection===0) return;
-  console_log.value = "close() invoked";
   unbind_socket();
-  connection.onclose = function (event) {};
+  connection.onclose = function (event) {
+    console_log.value = "Connection to ppsRun successfully closed";
+  };
   connection.close();
   //bind_socket();
 }
@@ -201,13 +206,13 @@ function parse_message(event) {
     console_log.value += d+'\n';
   }
   else if (d.has_key("ACQUISITION_STARTED")) {
-    alert("Acquisition process successfully launched!");
+    //alert("Acquisition process successfully launched!");
     acquisition_button.innerHTML = "Stop acquisition";
     acquisition_button.setAttribute('onClick', 'stop_acquisition()');
     acquisition_started = true;
   }
   else if (d.has_key("ACQUISITION_STOPPED")) {
-    alert("Acquisition process terminated!");
+    //alert("Acquisition process terminated!");
     acquisition_button.innerHTML = "Start acquisition";
     acquisition_button.setAttribute('onClick', 'start_acquisition()');
     acquisition_started = false;
@@ -221,11 +226,28 @@ function parse_message(event) {
     link.setAttribute('href', 'file:///tmp/'+d.value()+".png");
     link.setAttribute('target', "_blank");
     link.appendChild(img);
-    dqm_block.appendChild(link);
+    dqm_block.insertBefore(link, dqm_block.childNodes[0]);
     console.log(d.value());
   }
   else if (d.has_key("EXCEPTION")) {
-    exception_block.innerHTML += d.value()+"<br />";
+    var rx = /^\[(.*)\] === (.*)\ === (.*)/g;
+    var extr = rx.exec(d.value());
+    exception_block.innerHTML += "<small>"+(new Date).toLocaleTimeString()+"</small>&nbsp;";
+    var message = document.createElement("small");
+    message.className = "exception-message";
+    switch (parseInt(extr[1])) {
+      case  0: message.style.color = "darkorange"; break; // Info
+      case  1: message.style.color = "dodgeblue"; break;  // JustWarning
+      case  2: message.style.color = "red"; break;        // Fatal
+      case -1: default: message.style.color = "black"; break; // Undefined
+    }
+    message.innerHTML += extr[3];
+    var tooltip = document.createElement("div");
+    tooltip.className = "tooltip";
+    tooltip.innerHTML = "<b>"+extr[2]+"</b>";
+    message.appendChild(tooltip);
+    exception_block.appendChild(message);
+    exception_block.innerHTML += "<br />";
     console.log(d);
   }
   else if (d.has_key("MASTER_DISCONNECT")) {
@@ -263,27 +285,21 @@ function create_block(obj) {
   button_close.innerHTML = "Close";
   block.appendChild(button_close);
   
-  var button_ping = document.createElement("button");
+  /*var button_ping = document.createElement("button");
   button_ping.setAttribute('id', 'ping_socket_'+obj.id);
   button_ping.setAttribute('onclick', 'ask_socket_ping('+obj.id+')');
   button_ping.innerHTML = "Ping";
-  block.appendChild(button_ping);
-  
-  /*var logger = document.createElement("textarea");
-  logger.className = "socket_block_logger";
-  logger.setAttribute('id', 'logger_'+obj.id);
-  logger.disabled = true;
-  block.appendChild(logger);*/
+  block.appendChild(button_ping);*/
   
   switch (obj.type) {
     case 0: // master socket
       block.className += ' block_master';
       button_close.disabled = true;
-      button_ping.disabled = true;
+      //button_ping.disabled = true;
       break;
     case 1: // web socket
       block.className += ' block_websocket';
-      button_ping.disabled = true;
+      //button_ping.disabled = true;
       break;
     case 2: // regular socket
       block.className += ' block_regularsocket';
@@ -291,7 +307,7 @@ function create_block(obj) {
     case 3: // detector socket
       block.className += ' block_detsocket';
       button_close.disabled = true;
-      button_ping.disabled = true;
+      //button_ping.disabled = true;
       acquisition_button.innerHTML = "Stop acquisition";
       acquisition_button.setAttribute('onClick', 'stop_acquisition()');
       acquisition_started = true;

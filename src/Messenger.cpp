@@ -23,7 +23,7 @@ Messenger::Connect()
   try {
     Start();
     Bind();
-    Listen(20);
+    Listen(50);
   } catch (Exception& e) {
     e.Dump();
     return false;
@@ -121,6 +121,7 @@ Messenger::Send(const Message& m, int sid) const
   try {
     Message tosend = (IsWebSocket(sid)) ? HTTPMessage(fWS, m, EncodeMessage) : m;
     //std::cout << "sending to " << sid << " --> web socket? " << IsWebSocket(sid) << std::endl;
+    if (IsWebSocket(sid)) usleep(500000);
     SendMessage(tosend, sid);
   } catch (Exception& e) { e.Dump(); }
 }
@@ -149,6 +150,7 @@ Messenger::Receive()
     
     // Handle data from a client
     try { msg = FetchMessage(s->first); } catch (Exception& e) {
+      //std::cout << "exception found..." << e.OneLine() << ", "<< e.ErrorNumber() << std::endl;
       e.Dump();
       if (e.ErrorNumber()==11000) { DisconnectClient(s->first, THIS_CLIENT_DELETED); return; }
     }
@@ -209,10 +211,10 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     try { Send(SocketMessage(CLIENTS_LIST, os.str()), sid); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==START_ACQUISITION) {
-    try { StartAcquisition(); } catch (Exception& e) { e.Dump(); }
+    try { StartAcquisition(); } catch (Exception& e) { e.Dump(); SendAll(WEBSOCKET_CLIENT, e); }
   }
   else if (m.GetKey()==STOP_ACQUISITION) {
-    try { StopAcquisition(); } catch (Exception& e) { e.Dump(); }
+    try { StopAcquisition(); } catch (Exception& e) { e.Dump(); SendAll(WEBSOCKET_CLIENT, e); }
   }
   else if (m.GetKey()==GET_RUN_NUMBER) {
     try {

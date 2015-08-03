@@ -52,6 +52,11 @@ class Messenger : public Socket
         if (it->second==type) Send(m, it->first);
       }
     }
+    inline void SendAll(const Socket::SocketType& type, const Exception& e) const {
+      for (SocketCollection::const_iterator it=fSocketsConnected.begin(); it!=fSocketsConnected.end(); it++) {
+        if (it->second==type) Send(SocketMessage(EXCEPTION, e.OneLine()), it->first);
+      }
+    }
     /// Handle a message reception from a client
     void Receive();
     /**

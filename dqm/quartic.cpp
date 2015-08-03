@@ -1,6 +1,6 @@
 #include "FileReader.h"
 #include "Client.h"
-#include "GastofCanvas.h"
+#include "QuarticCanvas.h"
 #include "Exception.h"
 #include <iostream>
 
@@ -16,7 +16,7 @@ RunGastofDQM(unsigned int address, string filename, vector<string>* outputs)
   if (!reader.IsOpen()) throw Exception(__PRETTY_FUNCTION__, "Failed to build FileReader", JustWarning);
   cout << "Spill Id = " << reader.GetSpillId() << endl;
 
-  const unsigned int num_channels = 32;
+  const unsigned int num_channels = 20;
   double mean_num_events[num_channels], mean_tot[num_channels];
   int trigger_td;
   unsigned int num_events[num_channels];
@@ -28,10 +28,10 @@ RunGastofDQM(unsigned int address, string filename, vector<string>* outputs)
     kNumPlots
   };
   const unsigned short num_plots = kNumPlots;
-  DQM::GastofCanvas* canv[num_plots];
-  canv[kDensity] = new DQM::GastofCanvas(Form("gastof_channels_density_%d_%d", reader.GetSpillId(), address), "Channels density");
-  canv[kMeanToT] = new DQM::GastofCanvas(Form("gastof_mean_tot_%d_%d", reader.GetSpillId(), address), "Mean ToT (ns)");
-  canv[kTriggerTimeDiff] = new DQM::GastofCanvas(Form("gastof_trigger_time_difference_%d_%d", reader.GetSpillId(), address), "Time btw. each trigger (ns)");
+  DQM::QuarticCanvas* canv[num_plots];
+  canv[kDensity] = new DQM::QuarticCanvas(Form("quartic_channels_density_%d_%d", reader.GetSpillId(), address), "Channels density");
+  canv[kMeanToT] = new DQM::QuarticCanvas(Form("quartic_mean_tot_%d_%d", reader.GetSpillId(), address), "Mean ToT (ns)");
+  canv[kTriggerTimeDiff] = new DQM::QuarticCanvas(Form("quartic_trigger_time_difference_%d_%d", reader.GetSpillId(), address), "Time btw. each trigger (ns)");
 
   VME::TDCMeasurement m;
   for (unsigned int i=0; i<num_channels; i++) {
