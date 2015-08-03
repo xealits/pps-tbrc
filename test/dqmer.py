@@ -1,7 +1,7 @@
 #Socket client example in python
  
 import sys  #for exit
-sys.path.append("../scripts")
+sys.path.append("/home/ppstb/pps-tbrc/scripts")
 import SocketHandler
 import DQMReader
 
@@ -21,7 +21,7 @@ def run_dqm_process( messenger_socket, computation_process = dummy_computing ):
 
         # COMPUTE
         if len(incoming_message) != 2:
-            print "Got wrong message:\n%s" % incomming_message # OR send error to the messenger?
+            print "Got wrong message:\n%s" % incoming_message # OR send error to the messenger?
             # MAYBE add 1 more message -- "KILL_DQM" -- and stop DQM process with it?
             continue
         if incoming_message[0] == "NEW_FILENAME":
