@@ -1,5 +1,6 @@
 #include "VMEReader.h"
 #include "FileConstants.h"
+#include "RunFile.h"
 
 #include <iostream>
 #include <fstream>
@@ -27,7 +28,7 @@ int main(int argc, char *argv[]) {
   
   // Where to put the logs
   ofstream err_log("log.err", ios::binary);
-  const Logger lr(err_log, cerr);
+  //const Logger lr(err_log, cerr);
  
   string xml_config;
   if (argc<2) {
@@ -38,10 +39,7 @@ int main(int argc, char *argv[]) {
 
   const unsigned int num_tdc = 1;
 
-  // Handle the run info file
   ofstream out_file[num_tdc];
-  ofstream run_info("run_info.dat", fstream::app);
-  //
   unsigned int num_events[num_tdc];  
 
   VME::TDCEventCollection ec;
@@ -62,6 +60,7 @@ int main(int argc, char *argv[]) {
   try {
     bool with_socket = true;
 
+    RunFileHandler("run_infos.db").NewRun();
     // Initialize the configuration one single time
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
     try { vme->ReadXML(xml_config); } catch (Exception& e) {
@@ -114,7 +113,7 @@ int main(int argc, char *argv[]) {
       i = 0;
       fh.spill_id += 1;
       time_t start = time(0);
-      run_info << fh.run_id << "\t" << fh.spill_id << "\t" << start << endl;
+      RunFileHandler("run_infos.db").NewBurst();
       for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
         VME::TDCV1x90* tdc = atdc->second;
         
@@ -213,15 +212,12 @@ int main(int argc, char *argv[]) {
       
         delete vme;
       } catch (Exception& e) { e.Dump(); }
-      run_info.close();
       return 0;
     }
     e.Dump();
     if (vme->UseSocket()) vme->Send(e);
-    run_info.close();
     return -1;
   }
     
-  run_info.close();
   return 0;
 }

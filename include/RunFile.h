@@ -27,7 +27,7 @@ static int callback(void* unused, int argc, char* argv[], char* azcolname[])
 class RunFileHandler
 {
   public:
-    inline RunFileHandler(std::string path="./run_info.dat") {
+    inline RunFileHandler(std::string path="./run_infos.db") {
       int rc;
       bool build_tables;
       std::ifstream test(path.c_str());
@@ -83,8 +83,13 @@ class RunFileHandler
       std::ostringstream os;
       os << "SELECT burst_id FROM burst WHERE run_id=" << run << " ORDER BY burst_id DESC LIMIT 1";
       std::vector< std::vector<int> > out = Select<int>(os.str());
-      if (out.size()==0) return -1;
+      if (out.size()==0) {
+        std::ostringstream os;
+        os << "Trying to read the last burst of a non-existant run: " << run;
+        throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+      }
       else if (out.size()==1) return out[0][0];
+      return -1;
     }
 
     typedef std::map<unsigned int, unsigned int> BurstInfos;
@@ -182,7 +187,7 @@ class RunFileHandler
       while (sqlite3_column_value(stmt, 0)) {
         std::vector<T> line; line.clear();
         if (num_fields<1) num_fields = sqlite3_column_count(stmt);
-        for (unsigned int i=0; i<num_fields; i++) {
+        for (int i=0; i<num_fields; i++) {
           std::stringstream data; data.str("");
           switch (sqlite3_column_type(stmt, i)) {
             case 1: data << (int)sqlite3_column_int(stmt, i); break;
