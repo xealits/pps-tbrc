@@ -2,6 +2,7 @@
 #define VMEReader_h
 
 #include "Client.h"
+#include "OnlineDBHandler.h"
 
 #include "VME_BridgeVx718.h"
 #include "VME_FPGAUnitV1495.h"

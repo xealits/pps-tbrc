@@ -25,6 +25,7 @@ namespace VME
        << "Geo address: 0x" << std::hex << GetGeoAddress();
     PrintInfo(os.str());
     GetControl();
+    DumpFWInformation();
   }
 
   FPGAUnitV1495::~FPGAUnitV1495()

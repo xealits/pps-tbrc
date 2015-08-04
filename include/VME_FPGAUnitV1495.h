@@ -89,6 +89,10 @@ namespace VME
       inline SignalSource GetSignalSource(unsigned short map_id) const { return static_cast<SignalSource>(GetBit(4+map_id)); }
       inline void SetSignalSource(unsigned short map_id, const SignalSource& s) { SetBit(4+map_id, s); }
 
+      enum TriggeringMode { ContinuousStorage=0x0, TriggerMatching=0x1 };
+      inline TriggeringMode GetTriggeringMode() const { return static_cast<TriggeringMode>(GetBit(6)); }
+      inline void SetTriggeringMode(const TriggeringMode& tm) { SetBit(6, tm); }
+
     private:
       inline bool GetBit(unsigned short id) const { return static_cast<bool>((fWord>>id)&0x1); }
       inline void SetBit(unsigned short id, unsigned short value=0x1) {

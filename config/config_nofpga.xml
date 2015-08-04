@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
+<triggering mode="continuous_storage" />
 <tdc address="0x00aa0000">
+  <detector>quartic_1</detector>
   <verbosity>2</verbosity>
-  <acq_mode>trigger</acq_mode>
   <det_mode>trailead</det_mode>
   <dll>PLL_High_Resolution</dll>
   <ettt/>
@@ -11,8 +12,8 @@
   </trigger_window>
 </tdc>
 <tdc address="0x00bb0000">
+  <detector>quartic_2</detector>
   <verbosity>1</verbosity>
-  <acq_mode>trigger</acq_mode>
   <det_mode>trailead</det_mode>
   <dll>PLL_High_Resolution</dll>
   <ettt/>

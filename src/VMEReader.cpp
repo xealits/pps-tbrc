@@ -40,6 +40,13 @@ VMEReader::ReadXML(const char* filename)
        << doc.GetErrorStr1();
     throw Exception(__PRETTY_FUNCTION__, os.str(), Fatal);
   }
+  bool is_trigger_matching = false;
+  if (tinyxml2::XMLElement* fpga=doc.FirstChildElement("triggering")) {
+    if (const char* mode=fpga->Attribute("mode")) {
+      if (!strcmp(mode,"trigger_matching")) is_trigger_matching = true; 
+      if (!strcmp(mode,"continuous_storage")) is_trigger_matching = false;
+    }
+  }
   if (tinyxml2::XMLElement* fpga=doc.FirstChildElement("fpga")) {
     if (const char* address=fpga->Attribute("address")) {
       unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
@@ -67,14 +74,18 @@ VMEReader::ReadXML(const char* filename)
         }
         if (tinyxml2::XMLElement* sig=fpga->FirstChildElement("signal")) {
           if (tinyxml2::XMLElement* source=sig->FirstChildElement("source")) {
-            if (!strcmp(source->GetText(),"internal")) for (unsigned int i=0; i<4; i++) control.SetSignalSource(i, VME::FPGAUnitV1495Control::InternalSignal);
-            if (!strcmp(source->GetText(),"external")) for (unsigned int i=0; i<4; i++) control.SetSignalSource(i, VME::FPGAUnitV1495Control::ExternalSignal);
+            if (!strcmp(source->GetText(),"internal")) for (unsigned int i=0; i<2; i++) control.SetSignalSource(i, VME::FPGAUnitV1495Control::InternalSignal);
+            if (!strcmp(source->GetText(),"external")) for (unsigned int i=0; i<2; i++) control.SetSignalSource(i, VME::FPGAUnitV1495Control::ExternalSignal);
           }
           if (tinyxml2::XMLElement* poi=sig->FirstChildElement("poi")) {
             fFPGA->SetOutputPulserPOI(atoi(poi->GetText()));
           }
         }
-      } catch (Exception& e) { e.Dump();throw e; }
+        if (is_trigger_matching) control.SetTriggeringMode(VME::FPGAUnitV1495Control::TriggerMatching);
+        else                     control.SetTriggeringMode(VME::FPGAUnitV1495Control::ContinuousStorage);
+        control.Dump();
+        fFPGA->SetControl(control);
+      } catch (Exception& e) { e.Dump(); if (fOnSocket) Client::Send(e); throw e; }
     }
     else throw Exception(__PRETTY_FUNCTION__, "Failed to extract FPGA's base address", Fatal);
   }
@@ -85,13 +96,14 @@ VMEReader::ReadXML(const char* filename)
       try {
         try { AddTDC(addr); } catch (Exception& e) { if (fOnSocket) Client::Send(e); }
         VME::TDCV1x90* tdc = GetTDC(addr);
+        if (is_trigger_matching) tdc->SetAcquisitionMode(VME::TRIG_MATCH);
+        else                     tdc->SetAcquisitionMode(VME::CONT_STORAGE);
         if (tinyxml2::XMLElement* verb=atdc->FirstChildElement("verbosity")) {
           tdc->SetVerboseLevel(atoi(verb->GetText()));
         }
-        if (tinyxml2::XMLElement* acq=atdc->FirstChildElement("acq_mode")) {
-          if (!strcmp(acq->GetText(),"trigger")) tdc->SetAcquisitionMode(VME::TRIG_MATCH);
-          if (!strcmp(acq->GetText(),"continuous")) tdc->SetAcquisitionMode(VME::CONT_STORAGE);
-	}
+        if (tinyxml2::XMLElement* det=atdc->FirstChildElement("detector")) {
+          OnlineDBHandler("run_infos.db").SetDetectorType(addr, det->GetText());
+        }
 	if (tinyxml2::XMLElement* det=atdc->FirstChildElement("det_mode")) {
 	  if (!strcmp(det->GetText(),"trailead")) tdc->SetDetectionMode(VME::TRAILEAD);
 	  if (!strcmp(det->GetText(),"leading")) tdc->SetDetectionMode(VME::OLEADING);
