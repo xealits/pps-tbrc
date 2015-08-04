@@ -40,11 +40,14 @@ VMEReader::ReadXML(const char* filename)
        << doc.GetErrorStr1();
     throw Exception(__PRETTY_FUNCTION__, os.str(), Fatal);
   }
-  bool is_trigger_matching = false;
+  int triggering_mode = 0;
   if (tinyxml2::XMLElement* fpga=doc.FirstChildElement("triggering")) {
     if (const char* mode=fpga->Attribute("mode")) {
-      if (!strcmp(mode,"trigger_matching")) is_trigger_matching = true; 
-      if (!strcmp(mode,"continuous_storage")) is_trigger_matching = false;
+      std::ostringstream os; os << "Triggering mode: ";
+      if (!strcmp(mode,"continuous_storage")) { triggering_mode = 0; os << "Continuous storage (manual)"; }
+      if (!strcmp(mode,"trigger_start"))      { triggering_mode = 1; os << "Continuous storage (trigger on start)"; }
+      if (!strcmp(mode,"trigger_matching"))   { triggering_mode = 2; os << "Trigger matching"; }
+      if (fOnSocket) Client::Send(Exception(__PRETTY_FUNCTION__, os.str(), Info));
     }
   }
   if (tinyxml2::XMLElement* fpga=doc.FirstChildElement("fpga")) {
@@ -81,28 +84,41 @@ VMEReader::ReadXML(const char* filename)
             fFPGA->SetOutputPulserPOI(atoi(poi->GetText()));
           }
         }
-        if (is_trigger_matching) control.SetTriggeringMode(VME::FPGAUnitV1495Control::TriggerMatching);
-        else                     control.SetTriggeringMode(VME::FPGAUnitV1495Control::ContinuousStorage);
-        control.Dump();
+        switch (triggering_mode) {
+          case 0:
+            control.SetTriggeringMode(VME::FPGAUnitV1495Control::ContinuousStorage); break;
+            control.SetTriggerSource(VME::FPGAUnitV1495Control::ExternalTrigger); break;
+          case 1:
+            control.SetTriggeringMode(VME::FPGAUnitV1495Control::ContinuousStorage); break;
+          case 2:
+            control.SetTriggeringMode(VME::FPGAUnitV1495Control::TriggerMatching); break;
+        }
         fFPGA->SetControl(control);
       } catch (Exception& e) { e.Dump(); if (fOnSocket) Client::Send(e); throw e; }
     }
     else throw Exception(__PRETTY_FUNCTION__, "Failed to extract FPGA's base address", Fatal);
   }
-  for (tinyxml2::XMLElement* atdc=doc.FirstChildElement("tdc"); atdc!=NULL; atdc=atdc->NextSiblingElement("tdc")) {
+  unsigned int tdc_id = 0;
+  for (tinyxml2::XMLElement* atdc=doc.FirstChildElement("tdc"); atdc!=NULL; atdc=atdc->NextSiblingElement("tdc"), tdc_id++) {
     if (const char* address=atdc->Attribute("address")) {
       unsigned long addr = static_cast<unsigned long>(strtol(address, NULL, 0));
       if (!addr) throw Exception(__PRETTY_FUNCTION__, "Failed to parse TDC's base address", Fatal);
       try {
         try { AddTDC(addr); } catch (Exception& e) { if (fOnSocket) Client::Send(e); }
         VME::TDCV1x90* tdc = GetTDC(addr);
-        if (is_trigger_matching) tdc->SetAcquisitionMode(VME::TRIG_MATCH);
-        else                     tdc->SetAcquisitionMode(VME::CONT_STORAGE);
+        std::string detector_name = "unknown";
+        switch (triggering_mode) {
+          case 0:
+          case 1:
+            tdc->SetAcquisitionMode(VME::CONT_STORAGE); break;
+          case 2:
+            tdc->SetAcquisitionMode(VME::TRIG_MATCH); break;
+        }
         if (tinyxml2::XMLElement* verb=atdc->FirstChildElement("verbosity")) {
           tdc->SetVerboseLevel(atoi(verb->GetText()));
         }
         if (tinyxml2::XMLElement* det=atdc->FirstChildElement("detector")) {
-          OnlineDBHandler("run_infos.db").SetDetectorType(addr, det->GetText());
+          detector_name = det->GetText();
         }
 	if (tinyxml2::XMLElement* det=atdc->FirstChildElement("det_mode")) {
 	  if (!strcmp(det->GetText(),"trailead")) tdc->SetDetectionMode(VME::TRAILEAD);
@@ -121,6 +137,7 @@ VMEReader::ReadXML(const char* filename)
           if (tinyxml2::XMLElement* width=wind->FirstChildElement("width")) { tdc->SetWindowWidth(atoi(width->GetText())); }
           if (tinyxml2::XMLElement* offset=wind->FirstChildElement("offset")) { tdc->SetWindowOffset(atoi(offset->GetText())); }
         }
+        OnlineDBHandler("run_infos.db").SetTDCConditions(tdc_id, addr, tdc->GetAcquisitionMode(), tdc->GetDetectionMode(), detector_name);
       } catch (Exception& e) { throw e; }
     }
   }
@@ -179,7 +196,8 @@ VMEReader::AddTDC(uint32_t address)
     e.Dump();
     if (fOnSocket) Client::Send(e);
   }
-  std::ostringstream os; os << "TDC with base address 0x" << std::hex << address << " successfully built";
+  std::ostringstream os;
+  os << "TDC with base address 0x" << std::hex << address << " successfully built";
   throw Exception(__PRETTY_FUNCTION__, os.str(), Info, TDC_ACQ_START);
 }
 

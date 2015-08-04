@@ -6,7 +6,7 @@
     <period>1</period>
   </clock>
   <trigger>
-    <source>internal</source>
+    <source>external</source>
     <period>400000</period>
   </trigger>
   <signal>

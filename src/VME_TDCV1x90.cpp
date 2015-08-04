@@ -29,10 +29,9 @@ namespace VME
  
     SetAcquisitionMode(fAcquisitionMode);
     SetDetectionMode(fDetectionMode);
-   std::cout << "prout prout prout"  << std::endl;
     SetLSBTraileadEdge(r25ps);
-    //SetRCAdjust(0,0);
-    //SetRCAdjust(1,0);
+    SetRCAdjust(0,0);
+    SetRCAdjust(1,0);
 
     GlobalOffset offs; offs.fine = 0x0; offs.coarse = 0x0;
     SetGlobalOffset(offs); // coarse and fine set

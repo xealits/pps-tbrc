@@ -8,7 +8,7 @@
 #include <ctime>
 #include <signal.h>
 
-#define NUM_TRIG_BEFORE_FILE_CHANGE 100
+#define NUM_TRIG_BEFORE_FILE_CHANGE 10
 #define PATH "."
 
 using namespace std;
@@ -26,8 +26,8 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, CtrlC);
   
   // Where to put the logs
-  ofstream err_log("log.err", ios::binary);
-  //const Logger lr(err_log, cerr);
+  ofstream err_log("daq.err", ios::binary);
+  const Logger lr(err_log, cerr);
  
   string xml_config;
   if (argc<2) {

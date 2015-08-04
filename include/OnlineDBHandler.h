@@ -78,15 +78,17 @@ class OnlineDBHandler
       }
     }
 
-    inline void SetDetectorType(uint32_t address, const char* type) {
-      std::cout << address << " => " << type << std::endl;
-    }
-
     /// Retrieve the last run acquired
     inline unsigned int GetLastRun() {
       std::vector< std::vector<int> > out = Select<int>("SELECT id FROM run ORDER BY id DESC LIMIT 1");
-      if (out.size()!=1) return 0;
-      return out[0][0];
+      if (out.size()==1) return out[0][0];
+      if (out.size()==0) {
+        throw Exception(__PRETTY_FUNCTION__, "Trying to read the last run of an empty database", JustWarning, 60200);
+      }
+      if (out.size()>1) {
+        throw Exception(__PRETTY_FUNCTION__, "Corrupted database", JustWarning, 60010);
+      }
+      return 0;
     }
 
     inline int GetLastBurst(unsigned int run) {
@@ -102,7 +104,11 @@ class OnlineDBHandler
       return -1;
     }
 
-    typedef std::map<unsigned int, unsigned int> BurstInfos;
+    struct BurstInfo {
+      unsigned int burst_id;
+      unsigned int time_start;
+    };
+    typedef std::vector<BurstInfo> BurstInfos;
     /// Retrieve information on a given run (spill IDs / timestamp)
     inline BurstInfos GetRunInfo(unsigned int run) {
       std::ostringstream os;
@@ -110,11 +116,51 @@ class OnlineDBHandler
       os << "SELECT burst_id,start FROM burst WHERE run_id=" << run << " ORDER BY burst_id";
       std::vector< std::vector<int> > out = Select<int>(os.str());
       for (std::vector< std::vector<int> >::iterator it=out.begin(); it!=out.end(); it++) {
-        ret.insert(std::pair<unsigned int, unsigned int>(it->at(0), it->at(1)));
+        BurstInfo bi;
+        bi.burst_id = it->at(0);
+        bi.time_start = it->at(1);
+        ret.push_back(bi);
       }
       return ret;
     }
     
+    inline void SetTDCConditions(unsigned short tdc_id, unsigned long tdc_address, unsigned short tdc_acq_mode, unsigned short tdc_det_mode, std::string detector) {
+      char* err = 0;
+      std::ostringstream req;
+      unsigned int current_run = GetLastRun();
+      req << "INSERT INTO tdc_conditions (id, run_id, tdc_id, tdc_address, tdc_acq_mode, tdc_det_mode, detector) VALUES (NULL, "
+          << current_run << ", "
+          << tdc_id << ", "
+          << tdc_address << ", "
+          << tdc_acq_mode << ", "
+          << tdc_det_mode << ", \""
+          << detector << "\");";
+      int rc = sqlite3_exec(fDB, req.str().c_str(), callback, 0, &err);
+      if (rc!=SQLITE_OK) {
+        std::ostringstream os;
+        os << "Error while trying to add a new TDC condition" << "\n\t"
+           << "SQLite error: " << err;
+        throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, 60110);
+      }
+    }
+
+    inline void SetHVConditions(unsigned short channel_id, unsigned int vmax, unsigned imax) {
+      char* err = 0;
+      std::ostringstream req;
+      unsigned int current_run = GetLastRun();
+      req << "INSERT INTO hv_conditions (id, run_id, channel, v, i) VALUES (NULL, "
+          << current_run << ", "
+          << channel_id << ", " << vmax << ", " << imax << ");";
+      int rc = sqlite3_exec(fDB, req.str().c_str(), callback, 0, &err);
+      if (rc!=SQLITE_OK) {
+        std::ostringstream os;
+        os << "Error while trying to add a new HV condition" << "\n\t"
+           << "SQLite error: " << err;
+        throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, 60120);
+      }
+
+    }
+
   private:
     inline void BuildTables() {
       int rc; char* err = 0;
@@ -163,7 +209,7 @@ class OnlineDBHandler
         throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, 60003);
       }
       // HV conditions table
-      req = "CREATE TABLE hv(" \
+      req = "CREATE TABLE hv_conditions(" \
             "id         INTEGER PRIMARY KEY AUTOINCREMENT," \
             "time       INTEGER DEFAULT (CAST(strftime('%s', 'now') AS INT))," \
             "run_id     INTEGER NOT NULL," \

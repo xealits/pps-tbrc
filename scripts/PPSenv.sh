@@ -6,6 +6,7 @@ function ppsRun() {
 }
 
 function ppsDQM() {
+  declare -a proc=("gastof" "quartic" "daq")
   function start_proc() {
     cd $PPS_PATH;
     $PPS_PATH/dqm/"$1" > /dev/null 2>&1 &
@@ -25,18 +26,18 @@ function ppsDQM() {
   cd $PPS_PATH;
   if [ "$1" == "start" ] ; then
     echo "Starting DQM processes..."
-    start_proc gastof;
-    start_proc quartic;
-    start_proc daq;
+    for i in "${proc[@]}" ; do
+       start_proc $i;
+    done
   elif [ "$1" == "stop" ] ; then
     echo "Stopping DQM processes..."
-    stop_proc gastof;
-    stop_proc quartic;
-    stop_proc daq;
+    for i in "${proc[@]}" ; do
+       stop_proc $i;
+    done
   elif [ "$1" == "status" ] ; then
     echo "List of DQM threads:";
-    status_proc gastof;
-    status_proc quartic;
-    status_proc daq;
+    for i in "${proc[@]}" ; do
+       status_proc $i;
+    done
   fi
 }
