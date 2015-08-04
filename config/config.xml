@@ -8,14 +8,13 @@
   <trigger>
     <source>internal</source>
     <period>400000</period>
-    <!--<mode>trigger_matching</mode>-->
   </trigger>
   <signal>
     <source>internal</source>
     <poi>4294967295</poi>
   </signal>
 </fpga>
-<!--<tdc address="0x00aa0000">
+<tdc address="0x00aa0000">
   <detector>quartic_1</detector>
   <verbosity>1</verbosity>
   <det_mode>trailead</det_mode>
@@ -25,7 +24,7 @@
     <width>4000</width>
     <offset>-2000</offset>
   </trigger_window>
-</tdc>-->
+</tdc>
 <tdc address="0x00bb0000">
   <detector>quartic_2</detector>
   <verbosity>1</verbosity>
