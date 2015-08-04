@@ -220,7 +220,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   }
   else if (m.GetKey()==GET_RUN_NUMBER) {
     int last_run = 0;
-    try { last_run = OnlineDBHandler("run_info.dat").GetLastRun(); } catch (Exception& e) { last_run = -1; }
+    try { last_run = OnlineDBHandler("run_infos.db").GetLastRun(); } catch (Exception& e) { last_run = -1; }
     try { Send(SocketMessage(RUN_NUMBER, last_run), sid); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==SET_NEW_FILENAME) {

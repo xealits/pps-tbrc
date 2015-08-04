@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>
 #include <sqlite3.h>
+#include <stdint.h>
 
 #include "Exception.h"
 
@@ -61,9 +62,13 @@ class OnlineDBHandler
       char* err = 0;
       std::ostringstream req;
       unsigned int current_run = GetLastRun();
+      int last_burst = 0;
+      try { last_burst = GetLastBurst(current_run); } catch (Exception& e) {
+        if (e.ErrorNumber()==60103) last_burst = -1;
+      }
       req << "INSERT INTO burst (id, run_id, burst_id) VALUES (NULL, "
           << current_run << ", "
-          << GetLastBurst(current_run)+1 << ")";
+          << last_burst+1 << ");";
       int rc = sqlite3_exec(fDB, req.str().c_str(), callback, 0, &err);
       if (rc!=SQLITE_OK) {
         std::ostringstream os;
@@ -72,6 +77,11 @@ class OnlineDBHandler
         throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, 60101);
       }
     }
+
+    inline void SetDetectorType(uint32_t address, const char* type) {
+      std::cout << address << " => " << type << std::endl;
+    }
+
     /// Retrieve the last run acquired
     inline unsigned int GetLastRun() {
       std::vector< std::vector<int> > out = Select<int>("SELECT id FROM run ORDER BY id DESC LIMIT 1");
@@ -86,7 +96,7 @@ class OnlineDBHandler
       if (out.size()==0) {
         std::ostringstream os;
         os << "Trying to read the last burst of a non-existant run: " << run;
-        throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+        throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, 60103);
       }
       else if (out.size()==1) return out[0][0];
       return -1;
@@ -135,21 +145,20 @@ class OnlineDBHandler
            << "SQLite error: " << err;
         throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, 60002);
       }
-      // Detector conditions table
-      req = "CREATE TABLE detectors(" \
-            "id     INTEGER PRIMARY KEY AUTOINCREMENT," \
-            "run_id INTEGER NOT NULL," \
-            "start  INTEGER DEFAULT (CAST(strftime('%s', 'now') AS INT))," \
-            "tdc1   CHAR(50)," \
-            "tdc2   CHAR(50)," \
-            "tdc3   CHAR(50)," \
-            "tdc4   CHAR(50)," \
-            "tdc5   CHAR(50)" \
+      // TDC run conditions table
+      req = "CREATE TABLE tdc_conditions(" \
+            "id           INTEGER PRIMARY KEY AUTOINCREMENT," \
+            "run_id       INTEGER NON NULL," \
+            "tdc_id       INTEGER NON NULL," \
+            "tdc_address  INTEGER NON NULL," \
+            "tdc_acq_mode INTEGER NON NULL," \
+            "tdc_det_mode INTEGER NON NULL," \
+            "detector     CHAR(50)" \
             ");";
       rc = sqlite3_exec(fDB, req.c_str(), callback, 0, &err);
       if (rc!=SQLITE_OK) {
         std::ostringstream os;
-        os << "Error while trying to build the detectors conditions table" << "\n\t"
+        os << "Error while trying to build the TDC/detectors conditions table" << "\n\t"
            << "SQLite error: " << err;
         throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, 60003);
       }

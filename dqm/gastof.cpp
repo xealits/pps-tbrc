@@ -7,6 +7,7 @@ using namespace std;
 bool
 GastofDQM(unsigned int address, string filename, vector<string>* outputs)
 {
+cout << "filename: " << filename << endl;
   FileReader reader;
   try { reader.Open(filename); } catch (Exception& e) { throw e; }
   if (!reader.IsOpen()) throw Exception(__PRETTY_FUNCTION__, "Failed to build FileReader", JustWarning);
@@ -60,6 +61,7 @@ GastofDQM(unsigned int address, string filename, vector<string>* outputs)
            << "mean tot: " << mean_tot[i] << endl;
       reader.Clear();
     } catch (Exception& e) {
+      e.Dump();
       if (e.ErrorNumber()<41000) throw e;
     }
   }

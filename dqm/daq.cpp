@@ -1,5 +1,5 @@
 #include "DQMProcess.h"
-#include "RunFile.h"
+#include "OnlineDBHandler.h"
 #include "PPSCanvas.h"
 
 #include <fstream>
@@ -13,16 +13,16 @@ bool
 DAQDQM(vector<string>* outputs)
 {
   try {
-    RunFileHandler ri("run_info.dat");
+    OnlineDBHandler ri("run_infos.db");
     unsigned int last_run = ri.GetLastRun();
-    RunFileHandler::SpillInfos si = ri.GetRunInfo(last_run);
+    OnlineDBHandler::BurstInfos si = ri.GetRunInfo(last_run);
 
-    DQM::PPSCanvas* c_spills = new DQM::PPSCanvas("daq_spills_time", "Spills arrival time");
+    DQM::PPSCanvas* c_spills = new DQM::PPSCanvas("daq_triggers_time", "Trigger arrival time");
     c_spills->SetRunInfo(last_run, "");
 
     TGraph* gr_spills = new TGraph;
     unsigned int i = 0;
-    for (RunFileHandler::SpillInfos::iterator s=si.begin(); s!=si.end(); s++, i++) {
+    for (OnlineDBHandler::BurstInfos::iterator s=si.begin(); s!=si.end(); s++, i++) {
       gr_spills->SetPoint(i, s->second, s->first);
     }
     c_spills->Grid()->SetGrid(1, 1);

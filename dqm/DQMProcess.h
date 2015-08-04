@@ -28,7 +28,7 @@ namespace DQM
         try {
           while (true) {
             outputs.clear();
-            ParseMessage(&board_address, &filename);
+	    if (!ParseMessage(&board_address, &filename)) continue;
             try { status = fcn(board_address, filename, &outputs); } catch (Exception& e) { Client::Send(e); continue; }
             if (status) {
               cout << "Produced " << outputs.size() << " plot(s) for board with address 0x" << hex << board_address << endl;
@@ -53,7 +53,7 @@ namespace DQM
         try {
           while (true) {
             outputs.clear();
-            ParseMessage(&board_address, &filename);
+            if (!ParseMessage(&board_address, &filename)) continue;
             try { status = fcn(&outputs); } catch (Exception& e) { Client::Send(e); continue; }
             if (status) {
               cout << "Produced " << outputs.size() << " plot(s)" << endl;
@@ -71,8 +71,8 @@ namespace DQM
         } catch (Exception& e) { Client::Send(e); e.Dump(); }
       }
     private:
-      void ParseMessage(uint32_t* board_address, std::string* filename) {
-        SocketMessage msg = Client::Receive(NEW_FILENAME); if (msg.GetKey()!=NEW_FILENAME) { return; }
+      bool ParseMessage(uint32_t* board_address, std::string* filename) {
+        SocketMessage msg = Client::Receive(NEW_FILENAME); if (msg.GetKey()!=NEW_FILENAME) { return false; }
         if (msg.GetValue()=="") {
           std::ostringstream os; os << "Invalid output file path received through the NEW_FILENAME message: " << msg.GetValue();
           throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
@@ -85,6 +85,8 @@ namespace DQM
         }
         *board_address = atoi(value.substr(0, end).c_str());
         *filename = value.substr(end+1);
+        std::cout << "Board address: " << *board_address << ", filename: " << *filename << std::endl;
+        return true;
       }
       unsigned short fOrder;
   };
