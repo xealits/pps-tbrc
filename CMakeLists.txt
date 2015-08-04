@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 project(PPS_TB_RC)
 
 set(CAEN_LOCATION "/usr/lib")
-set(GCC_COMPILE_FLAGS "-Wall -fPIC -O2 -g")
+set(GCC_COMPILE_FLAGS "-Wall -fPIC -O2 -g -lsqlite3")
+set(GCC_LINK_FLAGS "-lsqlite3")
 add_definitions(${GCC_COMPILE_FLAGS})
 
 file(GLOB vme_sources ${PROJECT_SOURCE_DIR}/src/VME*.cpp)
@@ -18,6 +19,7 @@ list(REMOVE_ITEM sources ${vme_sources})
 list(REMOVE_ITEM sources ${nim_sources})
 list(REMOVE_ITEM sources ${reader_sources})
 add_library(src_lib OBJECT ${sources})
+set_property(TARGET src_lib PROPERTY LINK_FLAGS "-lsqlite3")
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
@@ -26,7 +28,9 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/external)
 include_directories("${PROJECT_SOURCE_DIR}/external")
 
 add_executable(ppsRun main.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
+set_property(TARGET ppsRun PROPERTY LINK_FLAGS "-lsqlite3")
 add_executable(listener listener.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
+set_property(TARGET listener PROPERTY LINK_FLAGS "-lsqlite3")
 
 # Here have tests
 add_subdirectory(test EXCLUDE_FROM_ALL)
@@ -48,4 +52,4 @@ set(CMAKE_CXX_FLAGS "-DLINUX")
 
 add_executable(ppsFetch fetch_vme.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:det_lib> $<TARGET_OBJECTS:ws_lib>)
 target_link_libraries(ppsFetch caen)
-set_property(TARGET ppsFetch PROPERTY LINK_FLAGS "-lCAENVME -ltinyxml2")
+set_property(TARGET ppsFetch PROPERTY LINK_FLAGS "-lCAENVME -ltinyxml2 -lsqlite3")

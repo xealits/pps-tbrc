@@ -28,3 +28,6 @@ if (ROOT_FOUND)
   #add_test(reader_2boards)
 endif()
 
+add_test(db)
+set_property(TARGET db PROPERTY LINK_FLAGS "-lsqlite3")
+
