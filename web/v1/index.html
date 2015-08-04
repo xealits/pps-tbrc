@@ -8,7 +8,7 @@
   
   window.addEventListener("load", socket_init, false);
   window.addEventListener("beforeunload", socket_close, false);
-  window.setInterval(socket_refresh, 500);
+  window.setInterval(socket_refresh, 1000);
 
 </script>
 
@@ -21,7 +21,7 @@
     <button onClick="unbind_socket()" id="unbind_button">Unbind</button>
     <input type="text" id="socket_id" size=2 disabled />
     <button onClick="socket_refresh()" id="refresh_button">Refresh</button><br />
-    <button onClick="start_acquisition()" id="acquisition_button">Launch acquisition</button>
+    <button onClick="start_acquisition()" id="acquisition_button">Start acquisition</button>
     Run Id: <input type="text" id="run_id", size=2 disabled />
   </div>
   <textarea id="console_log" cols=40 rows=4 disabled></textarea>

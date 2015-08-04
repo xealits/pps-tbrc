@@ -19,6 +19,10 @@ String.prototype.value = function() {
   return this.substr(this.indexOf(":")+1);
 }
 
+function log(text) {
+  console_log.value = new Date().toLocaleTimeString()+" - "+text+"\n"+console_log.value;
+}
+
 function enable_connected_buttons() {
   console.log("Connected");
   socket_id.style.backgroundColor = "lightgreen";
@@ -26,7 +30,6 @@ function enable_connected_buttons() {
   unbind_button.disabled = false;
   refresh_button.disabled = false;
   acquisition_button.disabled = false;
-  console_log.value = "";
 }
 
 function disable_connected_buttons() {
@@ -51,6 +54,20 @@ function restore_init_state() {
     delete connection;
     connection = 0;
   }
+}
+
+function set_acquisition_started() {
+  acquisition_button.innerHTML = "Stop acquisition";
+  acquisition_button.setAttribute('onClick', 'stop_acquisition()');
+  acquisition_button.disabled = false;
+  acquisition_started = true;
+}
+
+function set_acquisition_stopped() {
+  acquisition_button.innerHTML = "Start acquisition";
+  acquisition_button.setAttribute('onClick', 'start_acquisition()');
+  acquisition_button.disabled = false;
+  acquisition_started = false;
 }
 
 function socket_init() {
@@ -91,7 +108,7 @@ function bind_socket() {
 
   connection.onerror = function (event) {
     if (event.originalTarget===undefined || event.originalTarget.readyState!==1) {
-      console_log.value = "Server OOS!";
+      log("Server OOS!");
       socket_id.style.backgroundColor = "red";
       socket_id.value = -1;
       disable_connected_buttons();
@@ -99,7 +116,11 @@ function bind_socket() {
     }
     //unbind_socket();
   }
-  connection.onopen = function () { };
+  connection.onopen = function () {
+    get_run_id();
+  if (connection===0) return;
+  if (connection===0) return;
+  };
   connection.onmessage = function(event) { parse_message(event); };
   connection.onclose = function() {
     connection = 0;
@@ -127,7 +148,7 @@ function socket_close() {
   if (connection===0) return;
   unbind_socket();
   connection.onclose = function (event) {
-    console_log.value = "Connection to ppsRun successfully closed";
+    log("Connection to ppsRun successfully closed");
   };
   connection.close();
   //bind_socket();
@@ -142,13 +163,32 @@ function get_run_id() {
 function start_acquisition() {
   if (connection===0) return;
   get_run_id();
-  connection.send("START_ACQUISITION:"+listener_id);
-  connection.onmessage = function(event) { parse_message(event); }
+  setTimeout(function() {
+    if (acquisition_started) return;
+    acquisition_button.disabled = true;
+    connection.send("START_ACQUISITION:"+listener_id);
+    connection.onmessage = function(event) {
+      var d = event.data.replace('\0', '');
+      if (d.has_key("ACQUISITION_STARTED")) return;
+      parse_message(event);
+    }
+  }, 1000);
+  log("Acquisition started");
 }
 
 function stop_acquisition() {
-  connection.send("STOP_ACQUISITION:"+listener_id);
-  connection.onmessage = function(event) { parse_message(event); }  
+  if (connection===0) return;
+  setTimeout(function() {
+    if (!acquisition_started) return;
+    acquisition_button.disabled = true;
+    connection.send("STOP_ACQUISITION:"+listener_id);
+    connection.onmessage = function(event) {
+      var d = event.data.replace('\0', '');
+      if (d.has_key("ACQUISITION_STOPPED")) return;
+      parse_message(event);
+    }
+  }, 1000);
+  log("Acquisition stopped");
 }
 
 function parse_message(event) {
@@ -159,7 +199,7 @@ function parse_message(event) {
     socket_id.value = listener_id;
     enable_connected_buttons();
     socket_refresh();
-    console_log.value += d+'\n';
+    //log(d);
   }
   else if (d.has_key("CLIENTS_LIST")) {
     var listeners = d.value();
@@ -174,6 +214,7 @@ function parse_message(event) {
       if (id===listener_id) continue;
       var name = fields[1];
       var socket_type = parseInt(fields[2]);
+      if (socket_type===1) ask_socket_removal(id); // disconnect all other websocket instances
       retrieved.push({'id': id, 'name': name, 'type': socket_type});
       retrieved_ids.push(id);
       if (socket_type===3) num_det += 1;
@@ -208,26 +249,23 @@ function parse_message(event) {
     var id = parseInt(d.value());
     if (id===listener_id) { restore_init_state(); unbind_socket(); }
     else console.log("Socket "+id+" successfully deleted!");
-    console_log.value += d+'\n';
+    log(d);
   }
   else if (d.has_key("PING_ANSWER")) {
     alert(d.value());
-    console_log.value += d+'\n';
+    log(d);
   }
   else if (d.has_key("ACQUISITION_STARTED")) {
-    //alert("Acquisition process successfully launched!");
-    acquisition_button.innerHTML = "Stop acquisition";
-    acquisition_button.setAttribute('onClick', 'stop_acquisition()');
-    acquisition_started = true;
+    set_acquisition_started();
+    log(d);
   }
   else if (d.has_key("ACQUISITION_STOPPED")) {
-    //alert("Acquisition process terminated!");
-    acquisition_button.innerHTML = "Start acquisition";
-    acquisition_button.setAttribute('onClick', 'start_acquisition()');
-    acquisition_started = false;
+    set_acquisition_stopped();
+    log(d);
   }
   else if (d.has_key("NEW_DQM_PLOT")) {
     add_dqm_plot(d.value());
+    log(d);
   }
   else if (d.has_key("UPDATED_DQM_PLOT")) {
     var existing_img = document.getElementById(d.value());
@@ -239,6 +277,7 @@ alert(img.src);
       //img.src = 'file:///tmp/'+d.value()+".png?"+new Date().getTime();
 alert(img.src);
     }
+    log(d);
   }
   else if (d.has_key("RUN_NUMBER")) {
     run_id.value = parseInt(d.value());
@@ -262,7 +301,7 @@ alert(img.src);
     message.appendChild(tooltip);
     exception_block.appendChild(message);
     exception_block.innerHTML += "<br />";
-    console.log(d);
+    //log(d);
   }
   else if (d.has_key("MASTER_DISCONNECT")) {
     alert("ALERT:\nMaster disconnected!");

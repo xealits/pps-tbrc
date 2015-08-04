@@ -119,10 +119,12 @@ void
 Messenger::Send(const Message& m, int sid) const
 {
   try {
-    Message tosend = (IsWebSocket(sid)) ? HTTPMessage(fWS, m, EncodeMessage) : m;
-    //std::cout << "sending to " << sid << " --> web socket? " << IsWebSocket(sid) << std::endl;
-    if (IsWebSocket(sid)) usleep(100000);
-    SendMessage(tosend, sid);
+    if (IsWebSocket(sid)) {
+      usleep(100000);
+      SendMessage(HTTPMessage(fWS, m, EncodeMessage), sid);
+      usleep(100000);
+    }
+    else SendMessage(m, sid);
   } catch (Exception& e) { e.Dump(); }
 }
 
@@ -218,13 +220,8 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   }
   else if (m.GetKey()==GET_RUN_NUMBER) {
     int last_run = 0;
-    try {
-      RunFileHandler ri("run_info.dat");
-      last_run = ri.GetLastRun();
-    } catch (Exception& e) { last_run = 0; }
-    try {
-      Send(SocketMessage(RUN_NUMBER, last_run+1), sid);
-    } catch (Exception& e) { e.Dump(); }
+    try { last_run = RunFileHandler("run_info.dat").GetLastRun(); } catch (Exception& e) { last_run = 0; }
+    try { Send(SocketMessage(RUN_NUMBER, last_run+1), sid); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==SET_NEW_FILENAME) {
     try {
@@ -241,7 +238,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   else if (m.GetKey()==EXCEPTION) {
     try {
       SendAll(WEBSOCKET_CLIENT, m);
-      std::cout << "------> " << m.GetValue() << std::endl;
+      std::cout << "--> " << m.GetValue() << std::endl;
     } catch (Exception& e) { e.Dump(); }
   }
   /*else {
