@@ -1,6 +1,6 @@
 #include "VMEReader.h"
 #include "FileConstants.h"
-#include "RunFile.h"
+#include "OnlineDBHandler.h"
 
 #include <iostream>
 #include <fstream>
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
   try {
     bool with_socket = true;
 
-    RunFileHandler("run_infos.db").NewRun();
+    OnlineDBHandler("run_infos.db").NewRun();
     // Initialize the configuration one single time
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
     try { vme->ReadXML(xml_config); } catch (Exception& e) {
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
       i = 0;
       fh.spill_id += 1;
       time_t start = time(0);
-      RunFileHandler("run_infos.db").NewBurst();
+      OnlineDBHandler("run_infos.db").NewBurst();
       for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
         VME::TDCV1x90* tdc = atdc->second;
         

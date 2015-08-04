@@ -1,5 +1,5 @@
-#ifndef RunFile_h
-#define RunFile_h
+#ifndef OnlineDBHandler_h
+#define OnlineDBHandler_h
 
 #include <string>
 #include <vector>
@@ -20,14 +20,14 @@ static int callback(void* unused, int argc, char* argv[], char* azcolname[])
 }
 
 /**
- * \brief Handler for the run information file reader
+ * \brief Handler for the run information online database
  * \author Laurent Forthomme <laurent.forthomme@cern.ch>
  * \date 3 Aug 2015
  */
-class RunFileHandler
+class OnlineDBHandler
 {
   public:
-    inline RunFileHandler(std::string path="./run_infos.db") {
+    inline OnlineDBHandler(std::string path="./run_infos.db") {
       int rc;
       bool build_tables;
       std::ifstream test(path.c_str());
@@ -43,7 +43,7 @@ class RunFileHandler
       if (build_tables) BuildTables();
     }
 
-    inline ~RunFileHandler() { sqlite3_close(fDB); }
+    inline ~OnlineDBHandler() { sqlite3_close(fDB); }
 
     inline void NewRun() {
       char* err = 0;
