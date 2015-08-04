@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+<triggering mode="continuous_storage" />
 <fpga address="0x00ee0000">
   <clock>
     <source>internal</source>
@@ -7,15 +8,16 @@
   <trigger>
     <source>internal</source>
     <period>400000</period>
+    <!--<mode>trigger_matching</mode>-->
   </trigger>
   <signal>
     <source>internal</source>
     <poi>4294967295</poi>
   </signal>
 </fpga>
-<tdc address="0x00aa0000">
+<!--<tdc address="0x00aa0000">
+  <detector>quartic_1</detector>
   <verbosity>1</verbosity>
-  <acq_mode>trigger</acq_mode>
   <det_mode>trailead</det_mode>
   <dll>PLL_High_Resolution</dll>
   <ettt/>
@@ -23,10 +25,10 @@
     <width>4000</width>
     <offset>-2000</offset>
   </trigger_window>
-</tdc>
+</tdc>-->
 <tdc address="0x00bb0000">
+  <detector>quartic_2</detector>
   <verbosity>1</verbosity>
-  <acq_mode>trigger</acq_mode>
   <det_mode>trailead</det_mode>
   <dll>PLL_High_Resolution</dll>
   <ettt/>

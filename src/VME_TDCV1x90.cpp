@@ -6,9 +6,6 @@ namespace VME
     GenericBoard<TDCV1x90Register,cvA32_U_DATA>(bhandle, baseaddr),
     fVerb(1), fAcquisitionMode(TRIG_MATCH), fDetectionMode(TRAILEAD) 
   {
-    //event_nb = 0;
-    //event_max = 1024;
-
     fBuffer = (uint32_t*)malloc(32*1024*1024); // 32MB of buffer!
     if (fBuffer==NULL) {
       throw Exception(__PRETTY_FUNCTION__, "Output buffer has not been allocated!", Fatal);
@@ -22,7 +19,6 @@ namespace VME
       e.Dump();
       throw Exception(__PRETTY_FUNCTION__, "Wrong configuration!", Fatal);
     }
-    
     SoftwareReset();
     //SoftwareClear();
    
@@ -33,9 +29,10 @@ namespace VME
  
     SetAcquisitionMode(fAcquisitionMode);
     SetDetectionMode(fDetectionMode);
+   std::cout << "prout prout prout"  << std::endl;
     SetLSBTraileadEdge(r25ps);
-    SetRCAdjust(0,0);
-    SetRCAdjust(1,0);
+    //SetRCAdjust(0,0);
+    //SetRCAdjust(1,0);
 
     GlobalOffset offs; offs.fine = 0x0; offs.coarse = 0x0;
     SetGlobalOffset(offs); // coarse and fine set
