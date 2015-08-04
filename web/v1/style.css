@@ -81,6 +81,7 @@ textarea
   width: 28%;
   vertical-align: top;
   /*float: left;*/
+  overflow-y: auto;
 }
 
 #dqm_block

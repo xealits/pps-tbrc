@@ -43,7 +43,7 @@ namespace DQM
               }
             }
           }
-        } catch (Exception& e) { Client::Send(e); e.Dump(); }
+        } catch (Exception& e) { /*Client::Send(e);*/ e.Dump(); }
       }
       /// Run a DQM plotter without any information on the board/output filename
       inline void Run(bool (*fcn)(vector<std::string>* outputs), const Action& act=NewPlot) {

@@ -2,7 +2,7 @@ var port = 1987;
 var listener_id, connection;
 var upper_fields;
 var bind_button, unbind_button, refresh_button, acquisition_button, time_field;
-var socket_id, console_log, dqm_block;
+var socket_id, run_id, console_log, dqm_block;
 var built_clients;
 var acquisition_started;
 
@@ -41,6 +41,7 @@ function disable_connected_buttons() {
 
 function restore_init_state() {
   socket_id.value = "###";
+  run_id.value = "###";
   socket_id.style.backgroundColor = "yellow";
   disable_connected_buttons();
   listener_id = -1;
@@ -64,6 +65,7 @@ function socket_init() {
   refresh_button = document.getElementById("refresh_button");
   acquisition_button = document.getElementById("acquisition_button");
   socket_id = document.getElementById("socket_id");
+  run_id = document.getElementById("run_id");
   console_log = document.getElementById("console_log");
   time_field = document.getElementById("time_field");
   exception_block = document.getElementById("exception_block");
@@ -131,8 +133,15 @@ function socket_close() {
   //bind_socket();
 }
 
+function get_run_id() {
+  if (connection===0) return;
+  connection.send("GET_RUN_NUMBER:"+listener_id);
+  connection.onmessage = function(event) { parse_message(event); };
+}
+
 function start_acquisition() {
   if (connection===0) return;
+  get_run_id();
   connection.send("START_ACQUISITION:"+listener_id);
   connection.onmessage = function(event) { parse_message(event); }
 }
@@ -230,6 +239,9 @@ alert(img.src);
       //img.src = 'file:///tmp/'+d.value()+".png?"+new Date().getTime();
 alert(img.src);
     }
+  }
+  else if (d.has_key("RUN_NUMBER")) {
+    run_id.value = parseInt(d.value());
   }
   else if (d.has_key("EXCEPTION")) {
     var rx = /^\[(.*)\] === (.*)\ === (.*)/g;
