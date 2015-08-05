@@ -249,7 +249,7 @@ class OnlineDBHandler
             case 2: data << (double)sqlite3_column_double(stmt, i); break;
             case 3: data << (char*)sqlite3_column_text(stmt, i); break;
             case 4: data << (char*)sqlite3_column_blob(stmt, i); break;
-            case 5: data << (char*)sqlite3_column_bytes(stmt, i); break;
+            //case 5: data << (char*)sqlite3_column_bytes(stmt, i); break;
             default: break;
           }
           T value; data >> value; line.push_back(value);
