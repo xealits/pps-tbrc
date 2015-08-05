@@ -39,6 +39,11 @@ function parse_message(event) {
           var listeners = m[1].split(';');
           // TODO: do something
           break;
+    case "DQM_READY":
+          // the filename of new DQM plot is in m[1]
+          $( "#output1" ).attr( "src", m[1] + "?" + d.getTime() );
+          $( "#output1" ).panzoom("reset");
+          break;
     case "THIS_CLIENT_DELETED":
           unbind_socket();
           break;
@@ -81,97 +86,6 @@ function parse_message(event) {
 
 
 
-function parse_message_old(event) {
-  var d = event.data.slice(0,-1);
-  // console_log.value = d;
-  // append_to_console( "<p>" + d + "</p>" );
-  
-  if (d.indexOf("SET_CLIENT_ID")>-1) {
-    listener_id = parseInt(d.substr(d.indexOf(":")+1));
-    socket_id.value = listener_id;
-    enable_connected_buttons();
-    socket_refresh();
-  }
-  else if (d.indexOf("CLIENTS_LIST")>-1) {
-    var listeners = d.substr(d.indexOf(":")+1);
-    var list = listeners.split(';');
-    var retrieved = [];
-    var retrieved_ids = [];
-    var num_det = 0;
-    for (var i=0; i<list.length; i++) {
-      var fields = list[i].split(',');
-      if (fields.length<3) continue;
-      var id = parseInt(fields[0]);
-      if (id===listener_id) continue;
-      var name = fields[1];
-      var socket_type = parseInt(fields[2]);
-      retrieved.push({'id': id, 'name': name, 'type': socket_type});
-      retrieved_ids.push(id);
-      if (socket_type===3) num_det += 1;
-    }
-    var difference = retrieved_ids.diff(built_clients);
-    for (var i=0; i<difference.length; i++) {
-      var idx = retrieved_ids.indexOf(difference[i]);
-      output.appendChild(create_block(retrieved[idx]));
-      built_clients.push(retrieved_ids[idx]);
-    }
-    difference = built_clients.diff(retrieved_ids);
-    for (var i=0; i<difference.length; i++) {
-      remove_block(difference[i]);
-      built_clients.splice(built_clients.indexOf(difference[i]), 1);
-    }
-    if (num_det===0) { // no detector process has been found
-      start_acquisition_button.innerHTML = "Start acquisition";
-      start_acquisition_button.setAttribute('onClick', 'start_acquisition()');
-      acquisition_started = false;
-    }
-    else {
-      start_acquisition_button.innerHTML = "Stop acquisition";
-      start_acquisition_button.setAttribute('onClick', 'stop_acquisition()');
-      acquisition_started = true;
-    }
-  }
-  else if (d.indexOf("THIS_CLIENT_DELETED")>-1) {
-    restore_init_state();
-    unbind_socket();
-  }
-  else if (d.indexOf("OTHER_CLIENT_DELETED")>-1) {
-    var id = parseInt(d.substr(d.indexOf(":")+1));
-    if (id===listener_id) {
-      restore_init_state();
-      unbind_socket();
-    }
-    else console.log("Socket "+id+" successfully deleted!");
-  }
-  else if (d.indexOf("PING_ANSWER")>-1) {
-    alert(d.substr(d.indexOf(":")+1));
-  }
-  else if (d.indexOf("ACQUISITION_STARTED")>-1) {
-    alert("Acquisition process successfully launched!");
-    start_acquisition_button.innerHTML = "Stop acquisition";
-    start_acquisition_button.setAttribute('onClick', 'stop_acquisition()');
-    acquisition_started = true;
-  }
-  else if (d.indexOf("ACQUISITION_STOPPED")>-1) {
-    alert("Acquisition process terminated!");
-    start_acquisition_button.innerHTML = "Start acquisition";
-    start_acquisition_button.setAttribute('onClick', 'start_acquisition()');
-    acquisition_started = false;
-  }
-  else if (d.indexOf("EXCEPTION")>-1) {
-    console_log.innerHTML = d;
-    console.log(d);
-  }
-  else if (d.indexOf("MASTER_DISCONNECT")>-1) {
-    alert("ALERT:\nMaster disconnected!");
-    restore_init_state();
-    return;
-  }  
-};
-
-
-
-
 
 function append_to_console( html ) {
   $( "#console_log" ).append( html );
@@ -190,16 +104,13 @@ function send_message( con, message ){
 function unbind_socket() {
   window.clearInterval( image_changer );
   if (connection==undefined) return;
+
   send_message(connection, "REMOVE_CLIENT:" + listener_id);
-  // connection.send("REMOVE_CLIENT:"+listener_id);
+
   connection.close();
   connection = undefined;
 
-  // interface_off();
-  // alert( "UNBOUNDED!" );
   append_to_console( '<p>UNBOUNDED!<\p>' );
-  // connection = undefined;
-  // connection.onmessage = function(event) { parse_message(event); }
 }
 
 
@@ -207,21 +118,14 @@ function socket_refresh() {
   if (connection===0 || connection===undefined) return;
   if (listener_id<0) return;
   
-  // connection.send("WEB_GET_CLIENTS:"+listener_id);
   send_message(connection, "WEB_GET_CLIENTS:" + listener_id);
-  // connection.onmessage = function(event) {
-    // parse_message(event);
-  // };
   bind_time.style.color = "black";
   bind_time.innerHTML = new Date();
 }
 
 
 function start_acquisition() {
-  // if (connection===0) alert("no connection initiated");
   send_message(connection, "START_ACQUISITION:" + listener_id );
-  // connection.send("START_ACQUISITION:"+listener_id);
-  // connection.onmessage = function(event) { parse_message(event); } // CHECK: why use it? we set the handler on creation of the connection
 }
 
 function stop_acquisition() {
