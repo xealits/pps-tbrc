@@ -41,6 +41,7 @@ function parse_message(event) {
           break;
     case "DQM_READY":
           // the filename of new DQM plot is in m[1]
+          d = new Date();
           $( "#output1" ).attr( "src", m[1] + "?" + d.getTime() );
           $( "#output1" ).panzoom("reset");
           break;
