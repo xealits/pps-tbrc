@@ -37,7 +37,9 @@ class FileReader
     void Dump() const;    
     inline unsigned int GetNumTDCs() const { return fHeader.num_hptdc; }
     inline unsigned int GetRunId() const { return fHeader.run_id; }
-    inline unsigned int GetSpillId() const { return fHeader.spill_id; }
+    inline unsigned int GetBurstId() const { return fHeader.spill_id; }
+    inline unsigned int GetAcquisitionMode() const { return fHeader.acq_mode; }
+    inline unsigned int GetDetectionMode() const { return fHeader.det_mode; }
     
     unsigned long GetNumEvents() const { return fNumEvents; }
     bool GetNextEvent(VME::TDCEvent*);

@@ -33,6 +33,9 @@ main(int argc, char* argv[])
   TH1D* hist_numevts = new TH1D("nevts", "", 100, -.5, 99.5);
   
   FileReader f(argv[1]);
+  cout << "Run/burst id: " << f.GetRunId() << " / " << f.GetBurstId() << endl;
+  cout << "Acquisition mode: " << f.GetAcquisitionMode() << endl;
+  cout << "Detection mode: " << f.GetDetectionMode() << endl;
   //cout << f.GetNumTDCs() << " TDCs recorded" << endl;
   num_triggers = num_events = 0;
   while (true) {

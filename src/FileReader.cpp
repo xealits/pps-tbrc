@@ -93,6 +93,7 @@ FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* mc)
     bool has_lead = false, has_trail = false, has_error = false;
     while (true) {
       if (!GetNextEvent(&ev)) return false;
+      ev.Dump();
       if (ev.GetChannelId()!=channel_id) { continue; }
 
       ec.push_back(ev);

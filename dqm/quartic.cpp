@@ -10,7 +10,7 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
   FileReader reader;
   try { reader.Open(filename); } catch (Exception& e) { throw e; }
   if (!reader.IsOpen()) throw Exception(__PRETTY_FUNCTION__, "Failed to build FileReader", JustWarning);
-  cout << "Spill Id = " << reader.GetSpillId() << endl;
+  cout << "Run/Burst Id = " << reader.GetRunId() << " / " << reader.GetBurstId() << endl;
 
   const unsigned int num_channels = 20;
   double mean_num_events[num_channels], mean_tot[num_channels];
@@ -25,9 +25,9 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
   };
   const unsigned short num_plots = kNumPlots;
   DQM::QuarticCanvas* canv[num_plots];
-  canv[kDensity] = new DQM::QuarticCanvas(Form("quartic_channels_density_%d_%d", reader.GetSpillId(), address), "Channels density");
-  canv[kMeanToT] = new DQM::QuarticCanvas(Form("quartic_mean_tot_%d_%d", reader.GetSpillId(), address), "Mean ToT (ns)");
-  canv[kTriggerTimeDiff] = new DQM::QuarticCanvas(Form("quartic_trigger_time_difference_%d_%d", reader.GetSpillId(), address), "Time btw. each trigger (ns)");
+  canv[kDensity] = new DQM::QuarticCanvas(Form("quartic_channels_density_%d_%d_%d", reader.GetRunId(), reader.GetBurstId(), address), "Channels density");
+  canv[kMeanToT] = new DQM::QuarticCanvas(Form("quartic_mean_tot_%d_%d_%d", reader.GetRunId(), reader.GetBurstId(), address), "Mean ToT (ns)");
+  canv[kTriggerTimeDiff] = new DQM::QuarticCanvas(Form("quartic_trigger_time_difference_%d_%d_%d", reader.GetRunId(), reader.GetBurstId(), address), "Time btw. each trigger (ns)");
 
   VME::TDCMeasurement m;
   for (unsigned int i=0; i<num_channels; i++) {
@@ -60,11 +60,12 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
            << "mean tot: " << mean_tot[i] << endl;
       reader.Clear();
     } catch (Exception& e) {
+      e.Dump();
       if (e.ErrorNumber()<41000) throw e;
     }
   }
   for (unsigned int i=0; i<num_plots; i++) {
-    canv[i]->SetRunInfo(address, reader.GetRunId(), reader.GetSpillId(), "now()");
+    canv[i]->SetRunInfo(address, reader.GetRunId(), reader.GetBurstId(), TDatime().AsString());
     canv[i]->Save("png", DQM_OUTPUT_DIR);
     outputs->push_back(canv[i]->GetName());
   }

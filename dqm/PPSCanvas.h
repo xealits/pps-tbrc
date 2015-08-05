@@ -95,7 +95,7 @@ namespace DQM
           fLabelsDrawn = true;
         }
         TCanvas::SaveAs(Form("%s/%s.%s", path.Data(), TCanvas::GetName(), ext.Data()));
-        c1->SetLogz();
+        c1->SetLogy();
         TCanvas::SaveAs(Form("%s/%s_logscale.%s", path.Data(), TCanvas::GetName(), ext.Data()));
       }
 

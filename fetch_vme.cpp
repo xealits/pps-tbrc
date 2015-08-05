@@ -8,7 +8,7 @@
 #include <ctime>
 #include <signal.h>
 
-#define NUM_TRIG_BEFORE_FILE_CHANGE 10
+#define NUM_TRIG_BEFORE_FILE_CHANGE 1000
 #define PATH "."
 
 using namespace std;
@@ -107,7 +107,10 @@ int main(int argc, char *argv[]) {
     for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << detmode[i]; }
     cerr << endl 
          << "Local time: " << asctime(localtime(&t_beg));
-      
+    
+    if (use_fpga) {
+      fpga->StartScaler();
+    }
 
     // Change outputs file once a minimal amount of triggers is hit
     while (true) {
@@ -146,7 +149,6 @@ int main(int argc, char *argv[]) {
       // Pulse to set a common starting time for both TDC boards
       if (use_fpga) {
         fpga->PulseTDCBits(VME::FPGAUnitV1495::kReset|VME::FPGAUnitV1495::kClear); // send a RST+CLR signal from FPGA to TDCs
-        fpga->StartScaler();
       }
       
       // Data readout from the two TDC boards
@@ -186,6 +188,7 @@ int main(int argc, char *argv[]) {
       }
     }
   } catch (Exception& e) {
+    // If any TDC::FetchEvent method throws an "acquisition stop" message
     if (e.ErrorNumber()==TDC_ACQ_STOP) {
       unsigned int i = 0;
       try {

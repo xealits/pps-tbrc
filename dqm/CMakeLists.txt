@@ -26,5 +26,6 @@ if (ROOT_FOUND)
   add_dqm(gastof)
   add_dqm(quartic)
   add_dqm(daq)
+  add_dqm(db)
 endif()
 
