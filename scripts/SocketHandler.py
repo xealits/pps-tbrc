@@ -2,6 +2,7 @@
 
 import socket
 import sys
+import os, re
 
 class SocketHandler:
   class SocketError(Exception):
@@ -27,16 +28,20 @@ class SocketHandler:
 
     # connect to remote server
     infos = (remote_ip, port)
-    self.socket.connect(infos)
+    try:
+      self.socket.connect(infos)
+    except socket.error:
+      raise self.SocketError
 
   def Handshake(self, client_type):
     try:
       self.Send('ADD_CLIENT', client_type)
-    except SocketHandler.SendingError:
+    except SendingError:
       print "Impossible to send client type. Exiting"
+      raise self.SocketError
       sys.exit()
     try:
-      msg = self.Receive(4096)
+      msg = self.Receive()
     except ReceivingError:
       print "Socket receiving error during handshake. Exiting"
       sys.exit()
@@ -47,18 +52,29 @@ class SocketHandler:
       self.client_id = msg[1]
       print 'Client id='+ self.client_id
 
-  def Receive(self, size):
+  def GetClientId(self): return self.client_id
+
+  def Disconnect(self):
     try:
-      recv = self.socket.recv(size)
+      self.Send('REMOVE_CLIENT', self.client_id)
+    except SendingError:
+      print "Failed to disconnect the GUI from master. Exiting roughly..."
+      sys.exit()
+
+  def Receive(self):
+    try:
+      recv = self.socket.recv(4096)
     except socket.error:
-      raise ReceivingError
+      raise self.ReceivingError
     if ':' not in recv:
-      raise InvalidMessage
+      raise self.InvalidMessage
     out = recv.split(':')
-    return (out[0], ':'.join(out[1:]))
+    _split = re.compile(r'[\0%s]' % re.escape(''.join([os.path.sep, os.path.altsep or ''])))
+    return (out[0], _split.sub('', ':'.join(out[1:])))
 
   def Send(self, key, value):
     try:
       self.socket.sendall(key+':'+str(value))
     except socket.error:
-      raise SendingError
+      raise self.SendingError
+

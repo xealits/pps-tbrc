@@ -17,7 +17,7 @@ def run_dqm_process( messenger_socket, computation_process = dummy_computing ):
         result_filename = ""
 
         # RECEIVE
-        incoming_message = messenger_socket.Receive(4096)
+        incoming_message = messenger_socket.Receive()
 
         # COMPUTE
         if len(incoming_message)!=2:
