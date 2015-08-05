@@ -78,6 +78,19 @@ class OnlineDBHandler
       }
     }
 
+    typedef std::map<unsigned int, unsigned int> RunCollection;
+    inline RunCollection GetRuns() {
+      std::vector< std::vector<int> > out = Select<int>("SELECT id,start FROM run ORDER BY id");
+      if (out.size()==0) {
+        throw Exception(__PRETTY_FUNCTION__, "Trying to read runs in an empty database", JustWarning, 60200);
+      }
+      RunCollection ret;
+      for (std::vector< std::vector<int> >::iterator it=out.begin(); it!=out.end(); it++) {
+        ret.insert(std::pair<unsigned int, unsigned int>(it->at(0), it->at(1)));
+      }
+      return ret;
+    }
+
     /// Retrieve the last run acquired
     inline unsigned int GetLastRun() {
       std::vector< std::vector<int> > out = Select<int>("SELECT id FROM run ORDER BY id DESC LIMIT 1");
@@ -142,6 +155,55 @@ class OnlineDBHandler
            << "SQLite error: " << err;
         throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, 60110);
       }
+    }
+    
+    struct TDCConditions {
+      unsigned int run_id;
+      unsigned short tdc_id; unsigned long tdc_address;
+      unsigned short tdc_acq_mode; unsigned short tdc_det_mode;
+      std::string detector;
+    };
+    typedef std::vector<TDCConditions> TDCConditionsCollection;
+    inline TDCConditionsCollection GetTDCConditions(unsigned int run_id) {
+      std::ostringstream os;
+      os << "SELECT tdc_id,tdc_address,tdc_acq_mode,tdc_det_mode FROM tdc_conditions"
+         << " WHERE run_id=" << run_id;
+      std::vector< std::vector<int> > out = Select<int>(os.str());
+      if (out.size()==0) {
+        std::ostringstream s;
+        s << "No TDC conditions found in run " << run_id;
+        throw Exception(__PRETTY_FUNCTION__, s.str(), JustWarning);
+      }
+
+      TDCConditionsCollection ret;
+      for (std::vector< std::vector<int> >::iterator tdc=out.begin(); tdc!=out.end(); tdc++) {
+        TDCConditions cond;
+        cond.run_id = run_id;
+        cond.tdc_id = tdc->at(0);
+        cond.tdc_address = tdc->at(1);
+        cond.tdc_acq_mode = tdc->at(2);
+        cond.tdc_det_mode = tdc->at(3);
+
+        // Retrieve the dector name      
+        try {
+          std::ostringstream s;
+          s << "SELECT detector FROM tdc_conditions"
+            << " WHERE tdc_id=" << cond.tdc_id
+            << " AND run_id=" << cond.run_id;
+          std::vector< std::vector<std::string> > ad = Select<std::string>(s.str());
+          if (ad.size()==1) cond.detector = (char*)ad[0][0].c_str();
+          else throw Exception(__PRETTY_FUNCTION__, "");
+        } catch (Exception& e) {
+          std::ostringstream s;
+          s << "Failed to retrieve the detector name in run " << run_id
+            << " for TDC with base address 0x" << std::hex << cond.tdc_address;
+          throw Exception(__PRETTY_FUNCTION__, s.str(), JustWarning);
+        }
+
+        ret.push_back(cond);
+      }
+
+      return ret;
     }
 
     inline void SetHVConditions(unsigned short channel_id, unsigned int vmax, unsigned imax) {
