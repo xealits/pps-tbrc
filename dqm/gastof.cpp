@@ -76,7 +76,7 @@ cout << "filename: " << filename << endl;
 int
 main(int argc, char* argv[])
 {
-  DQM::DQMProcess dqm(1987, 1);
+  DQM::DQMProcess dqm(1987, 1, "gastof");
   dqm.Run(GastofDQM);
   return 0;
 }

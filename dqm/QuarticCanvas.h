@@ -53,7 +53,7 @@ namespace DQM
         fUpperLabel->Draw();
       }
 
-      inline void FillChannel(unsigned short nino_id, unsigned short channel_id, double content) {
+      inline void FillChannel(unsigned short channel_id, double content) {
         const Coord c = GetCoordinates(channel_id);
         fHist->Fill(c.x-0.5, c.y-0.5, content);
       }
@@ -129,7 +129,7 @@ namespace DQM
         fLegend->SetTextFont(43);
         fLegend->SetTextSize(14);
     
-        fHist = new TH2D(Form("hist_%s", TCanvas::GetName()), "", 5, 0.5, 4.5, 4, 0.5, 3.5);
+        fHist = new TH2D(Form("hist_%s", TCanvas::GetName()), "", 5, -0.5, 4.5, 4, -0.5, 3.5);
         for (unsigned int i=1; i<=5; i++) fHist->GetXaxis()->SetBinLabel(i, Form("%d", i));
         for (unsigned int i=1; i<=4; i++) fHist->GetYaxis()->SetBinLabel(i, Form("%d", i));
       }
@@ -169,26 +169,28 @@ namespace DQM
         Coord out;
         out.x = out.y = 0;
 	switch (channel_id) {
-          case 0:  out.x = 5, out.y = 1; break;
-          case 1:  out.x = 4, out.y = 1; break;
-          case 2:  out.x = 3, out.y = 1; break;
-          case 3:  out.x = 2, out.y = 1; break;
-          case 4:  out.x = 1, out.y = 1; break;
-          case 5:  out.x = 5, out.y = 2; break;
-          case 6:  out.x = 4, out.y = 2; break;
-          case 7:  out.x = 3, out.y = 2; break;
-          case 8:  out.x = 2, out.y = 2; break;
-          case 9:  out.x = 1, out.y = 2; break;
-          case 10: out.x = 5, out.y = 3; break;
-          case 11: out.x = 4, out.y = 3; break;
-          case 12: out.x = 3, out.y = 3; break;
-          case 13: out.x = 2, out.y = 3; break;
-          case 14: out.x = 1, out.y = 3; break;
-          case 15: out.x = 5, out.y = 4; break;
-          case 16: out.x = 4, out.y = 4; break;
+          case 0:  out.x = 5, out.y = 2; break;
+          case 1:  out.x = 5, out.y = 4; break;
+          case 4:  out.x = 5, out.y = 1; break;
+          case 5:  out.x = 5, out.y = 3; break;
+          case 8:  out.x = 4, out.y = 2; break;
+          case 9:  out.x = 4, out.y = 4; break;
+          case 12: out.x = 4, out.y = 1; break;
+          case 13: out.x = 4, out.y = 3; break;
+          case 16: out.x = 3, out.y = 2; break;
           case 17: out.x = 3, out.y = 4; break;
-          case 18: out.x = 2, out.y = 4; break;
-          case 19: out.x = 1, out.y = 4; break;
+          case 20: out.x = 3, out.y = 1; break;
+          case 21: out.x = 3, out.y = 3; break;
+          case 24: out.x = 2, out.y = 2; break;
+          case 25: out.x = 2, out.y = 4; break;
+          case 26: out.x = 2, out.y = 1; break;
+          case 27: out.x = 2, out.y = 3; break;
+          case 28: out.x = 1, out.y = 2; break;
+          case 29: out.x = 1, out.y = 4; break;
+          case 30: out.x = 1, out.y = 1; break;
+          case 31: out.x = 1, out.y = 3; break;
+          //default:
+            //std::cout << "unrecognized channel id: " << channel_id << std::endl; break;
 	}
         return out;
       }

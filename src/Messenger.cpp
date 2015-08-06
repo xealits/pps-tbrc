@@ -220,7 +220,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   }
   else if (m.GetKey()==GET_RUN_NUMBER) {
     int last_run = 0;
-    try { last_run = OnlineDBHandler("run_infos.db").GetLastRun(); } catch (Exception& e) { last_run = -1; }
+    try { last_run = OnlineDBHandler().GetLastRun(); } catch (Exception& e) { last_run = -1; }
     try { Send(SocketMessage(RUN_NUMBER, last_run), sid); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==SET_NEW_FILENAME) {
@@ -284,6 +284,12 @@ Messenger::StartAcquisition()
         break;
     }
     SendAll(WEBSOCKET_CLIENT, SocketMessage(ACQUISITION_STARTED));
+    
+    // Send the run number to DQMonitors
+    int last_run = -1;
+    try { last_run = OnlineDBHandler().GetLastRun(); } catch (Exception& e) { last_run = -1; }
+    try { SendAll(DQM, SocketMessage(RUN_NUMBER, last_run)); } catch (Exception& e) { e.Dump(); }
+
     throw Exception(__PRETTY_FUNCTION__, "Acquisition started!", Info, 30000);
   } catch (Exception& e) { e.Dump(); }
 }
@@ -300,5 +306,5 @@ Messenger::StopAcquisition()
     throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
   }
   SendAll(WEBSOCKET_CLIENT, SocketMessage(ACQUISITION_STOPPED));
-  throw Exception(__PRETTY_FUNCTION__, "Acquisition stopped!", Info, 30001);
+  throw Exception(__PRETTY_FUNCTION__, "Acquisition stop signal sent!", Info, 30001);
 }

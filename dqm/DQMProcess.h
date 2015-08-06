@@ -1,5 +1,6 @@
 #include "Client.h"
 #include "Exception.h"
+#include "OnlineDBHandler.h"
 
 #define DQM_OUTPUT_DIR "/tmp/"
 
@@ -13,8 +14,12 @@ namespace DQM
   class DQMProcess : public Client
   {
     public:
-      inline DQMProcess(int port, unsigned short order=0) : Client(port), fOrder(order) {
+      inline DQMProcess(int port, unsigned short order=0, const char* det_type="") :
+        Client(port), fOrder(order), fDetectorType(det_type) {
         Client::Connect(Socket::DQM);
+        SocketMessage run_msg = Client::SendAndReceive(GET_RUN_NUMBER, RUN_NUMBER);
+        std::cout << "Current run number is: " << run_msg.GetIntValue() << std::endl;
+        IsInRun(run_msg.GetIntValue());
       }
       inline ~DQMProcess() { Client::Disconnect(); }
 
@@ -28,18 +33,20 @@ namespace DQM
         try {
           while (true) {
             outputs.clear();
-	    if (!ParseMessage(&board_address, &filename)) continue;
-            try { status = fcn(board_address, filename, &outputs); } catch (Exception& e) { Client::Send(e); continue; }
-            if (status) {
-              cout << "Produced " << outputs.size() << " plot(s) for board with address 0x" << hex << board_address << endl;
-              MessageKey key;
-              switch (act) {
-                case NewPlot: key = NEW_DQM_PLOT; break;
-                case UpdatedPlot: key = UPDATED_DQM_PLOT; break;
-              }
-              sleep(3*fOrder);
-              for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
-                Client::Send(SocketMessage(key, *nm)); sleep(1);
+	    int ret = ParseMessage(&board_address, &filename);
+            if (ret==1) { // new raw file to process
+              try { status = fcn(board_address, filename, &outputs); } catch (Exception& e) { Client::Send(e); continue; }
+              if (status) {
+                cout << "Produced " << outputs.size() << " plot(s) for board with address 0x" << hex << board_address << endl;
+                MessageKey key = INVALID_KEY;
+                switch (act) {
+                  case NewPlot: key = NEW_DQM_PLOT; break;
+                  case UpdatedPlot: key = UPDATED_DQM_PLOT; break;
+                }
+                sleep(3*fOrder);
+                for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
+                  Client::Send(SocketMessage(key, *nm)); sleep(1);
+                }
               }
             }
           }
@@ -53,45 +60,88 @@ namespace DQM
         try {
           while (true) {
             outputs.clear();
-            if (!ParseMessage(&board_address, &filename)) continue;
-            try { status = fcn(&outputs); } catch (Exception& e) { Client::Send(e); continue; }
-            if (status) {
-              cout << "Produced " << outputs.size() << " plot(s)" << endl;
-              MessageKey key;
-              switch (act) {
-                case NewPlot: key = NEW_DQM_PLOT; break;
-                case UpdatedPlot: key = UPDATED_DQM_PLOT; break;
-              }
-              sleep(3*fOrder);
-              for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
-                Client::Send(SocketMessage(key, *nm)); sleep(1);
+            int ret =  ParseMessage(&board_address, &filename);
+            if (ret==1) { // new raw file to process
+              try { status = fcn(&outputs); } catch (Exception& e) { Client::Send(e); continue; }
+              if (status) {
+                cout << "Produced " << outputs.size() << " plot(s)" << endl;
+                MessageKey key = INVALID_KEY;
+                switch (act) {
+                  case NewPlot: key = NEW_DQM_PLOT; break;
+                  case UpdatedPlot: key = UPDATED_DQM_PLOT; break;
+                }
+                sleep(3*fOrder);
+                for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
+                  Client::Send(SocketMessage(key, *nm)); sleep(1);
+                }
               }
             }
-          }
+          } // end of infinite loop to fetch messages
         } catch (Exception& e) { Client::Send(e); e.Dump(); }
       }
     private:
-      bool ParseMessage(uint32_t* board_address, std::string* filename) {
+      int ParseMessage(uint32_t* board_address, std::string* filename) {
         SocketMessage msg = Client::Receive(NEW_FILENAME);
-        if (msg.GetKey()!=NEW_FILENAME) {
+        if (msg.GetKey()==NEW_FILENAME) {
+          if (msg.GetValue()=="") {
+            std::ostringstream os; os << "Invalid output file path received through the NEW_FILENAME message: " << msg.GetValue();
+            throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
+          }
+          std::string value = msg.GetValue();
+          size_t end = value.find(':');
+          if (end==std::string::npos) {
+            std::ostringstream s; s << "Invalid filename message built! (\"" << value << "\")";
+            throw Exception(__PRETTY_FUNCTION__, s.str().c_str(), JustWarning);
+          }
+          *board_address = atoi(value.substr(0, end).c_str());
+          *filename = value.substr(end+1);
+          if (fDetectorType=="") return 1;
+          if (fAddressesCanProcess.find(*board_address)==fAddressesCanProcess.end()) {
+            std::cout << "board address " << *board_address << " is not in run" << std::endl;
+            return 0;
+          }
+          
+          std::cout << "Board address: " << *board_address << ", filename: " << *filename << std::endl;
+          return 1;
+        }
+        else if (msg.GetKey()==RUN_NUMBER) {
+          unsigned int run_id;
+          try { run_id = msg.GetIntValue(); } catch (Exception& e) {
+            std::cout << "Invalid Run number received: " << msg.GetValue() << std::endl;
+            return -2;
+          }
+          if (IsInRun(msg.GetIntValue())) return 0;
+          else return -3;
+        }
+        else {
           std::cout << "Invalid message received: " << MessageKeyToString(msg.GetKey()) << std::endl;
+          return -1;
+        }
+        return -1;
+      }
+      inline bool IsInRun(unsigned int run_id) {
+        if (fDetectorType=="") return true; // no particular reason to leave it outside run
+        fAddressesCanProcess.clear();
+        std::string type = "";
+        try {
+          OnlineDBHandler::TDCConditionsCollection cc = OnlineDBHandler().GetTDCConditions(run_id);
+          for (OnlineDBHandler::TDCConditionsCollection::const_iterator c=cc.begin(); c!=cc.end(); c++) {
+            if (c->detector.find(fDetectorType)!=std::string::npos) {
+              std::cout << "Detectors of type \"" << fDetectorType << "\" are present in the run!"
+                        << " Let's process them in a (near) future!" << std::endl;
+              fAddressesCanProcess.insert(std::pair<unsigned long, std::string>(c->tdc_address, c->detector));
+            }
+          }
+          if (fAddressesCanProcess.size()!=0) return true;
+          std::cout << "Detector not in conditions... leaving this DQM (" << fDetectorType << ") hanging." << std::endl;
+          return false;
+        } catch (Exception& e) {
+          std::cout << "Failed to retrieve online TDC conditions. Aborting" << std::endl;
           return false;
         }
-        if (msg.GetValue()=="") {
-          std::ostringstream os; os << "Invalid output file path received through the NEW_FILENAME message: " << msg.GetValue();
-          throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
-        }
-        std::string value = msg.GetValue();
-        size_t end = value.find(':');
-        if (end==std::string::npos) {
-          std::ostringstream s; s << "Invalid filename message built! (\"" << value << "\")";
-          throw Exception(__PRETTY_FUNCTION__, s.str().c_str(), JustWarning);
-        }
-        *board_address = atoi(value.substr(0, end).c_str());
-        *filename = value.substr(end+1);
-        std::cout << "Board address: " << *board_address << ", filename: " << *filename << std::endl;
-        return true;
       }
       unsigned short fOrder;
+      std::string fDetectorType;
+      std::map<unsigned long, std::string> fAddressesCanProcess;
   };
 }

@@ -8,8 +8,8 @@
 #include <ctime>
 #include <signal.h>
 
-#define NUM_TRIG_BEFORE_FILE_CHANGE 1000
-#define PATH "."
+#define NUM_TRIG_BEFORE_FILE_CHANGE 100
+#define PATH "/home/ppstb/timing_data/"
 
 using namespace std;
 
@@ -60,8 +60,8 @@ int main(int argc, char *argv[]) {
     bool with_socket = true;
 
     // Declare a new run to the online database
-    OnlineDBHandler("run_infos.db").NewRun();
-    unsigned int run_id = OnlineDBHandler("run_infos.db").GetLastRun();
+    OnlineDBHandler().NewRun();
+    unsigned int run_id = OnlineDBHandler().GetLastRun();
 
     // Initialize the configuration one single time
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
@@ -119,8 +119,8 @@ int main(int argc, char *argv[]) {
       num_triggers_in_files = 0;
 
       // Declare a new burst to the online DB
-      OnlineDBHandler("run_infos.db").NewBurst();
-      fh.spill_id = OnlineDBHandler("run_infos.db").GetLastBurst(run_id);
+      OnlineDBHandler().NewBurst();
+      fh.spill_id = OnlineDBHandler().GetLastBurst(run_id);
 
       // TDC output files configuration
       for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
@@ -170,7 +170,6 @@ int main(int argc, char *argv[]) {
         if (use_fpga and tm>10000) { // probe the scaler value every N data readouts
           num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
           num_triggers_in_files = num_triggers-num_all_triggers;
-          //if (num_triggers>0 and num_triggers%1000==0)
             cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
           if (num_triggers_in_files>0 and num_triggers_in_files>=NUM_TRIG_BEFORE_FILE_CHANGE) {
             num_all_triggers = num_triggers;
@@ -184,8 +183,10 @@ int main(int argc, char *argv[]) {
       unsigned int i = 0;
       for (VME::TDCCollection::const_iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
         if (out_file[i].is_open()) out_file[i].close();
-        vme->SendOutputFile(atdc->first, fh.spill_id);
+        cout << "Sent output from TDC 0x" << hex << atdc->first << dec << " in spill id " << fh.spill_id << endl;
+        vme->SendOutputFile(atdc->first); usleep(10000);
       }
+      vme->BroadcastNewBurst(fh.spill_id);
     }
   } catch (Exception& e) {
     // If any TDC::FetchEvent method throws an "acquisition stop" message
@@ -195,7 +196,7 @@ int main(int argc, char *argv[]) {
         VME::TDCCollection tdcs = vme->GetTDCCollection();
         for (VME::TDCCollection::const_iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
           if (out_file[i].is_open()) out_file[i].close();
-          vme->SendOutputFile(atdc->first, fh.spill_id);
+          vme->SendOutputFile(atdc->first); usleep(10000);
         }
   
         time_t t_end = time(0);

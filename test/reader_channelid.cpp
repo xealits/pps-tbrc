@@ -21,12 +21,12 @@ main(int argc, char* argv[])
   TDCMeasurement m;
   int num_events;
   
-  const unsigned int num_channels = 16;
+  const unsigned int num_channels = 32;
 
   TH1D* h[num_channels];
 
   for (unsigned int i=0; i<num_channels; i++) {
-    h[i] = new TH1D(Form("tot_%i",i), "", 100, 24., 26.);
+    h[i] = new TH1D(Form("tot_%i",i), "", 100, 0., 200.);
     FileReader f(argv[1]);
     num_events = 0;
     while (true) {
@@ -37,7 +37,7 @@ main(int argc, char* argv[])
           h[i]->Fill(m.GetToT(j)*25./1000.);
         }
         num_events += m.NumEvents();
-      } catch (Exception& e) { e.Dump(); }
+      } catch (Exception& e) { /*e.Dump();*/ }
     }
     cout << "number of events in channel " << i << ": " << num_events << endl;
   }

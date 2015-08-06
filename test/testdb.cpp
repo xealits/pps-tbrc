@@ -6,7 +6,8 @@ int
 main(int argc, char* argv[])
 {
   try {
-    OnlineDBHandler run("test.db");
+    //OnlineDBHandler run("test.db");
+    OnlineDBHandler run("run_infos.db"); //WARNING! change me!!!
     /*for (unsigned int i=0; i<2; i++) {
       run.NewRun();
       run.SetTDCConditions(0, 0x00aa0000, i, 1, "quartic_1");
@@ -22,12 +23,14 @@ main(int argc, char* argv[])
       for (OnlineDBHandler::BurstInfos::iterator b=bi.begin(); b!=bi.end(); b++) {
         cout << " burst id " << b->burst_id << " began at " << b->time_start << endl;
       }
-      OnlineDBHandler::TDCConditionsCollection cond = run.GetTDCConditions(it->first);
-      for (OnlineDBHandler::TDCConditionsCollection::iterator tdc=cond.begin(); tdc!=cond.end(); tdc++) {
-        cout << " tdc " << tdc->tdc_id << " has address 0x" << hex << tdc->tdc_address
-             << " and a " << tdc->detector << " on its back"
-             << endl;
-      }
+      try {
+        OnlineDBHandler::TDCConditionsCollection cond = run.GetTDCConditions(it->first);
+        for (OnlineDBHandler::TDCConditionsCollection::iterator tdc=cond.begin(); tdc!=cond.end(); tdc++) {
+          cout << " tdc " << tdc->tdc_id << " has address 0x" << hex << tdc->tdc_address << dec
+               << " and a " << tdc->detector << " on its back"
+               << endl;
+        }
+      } catch (Exception& e) { e.Dump(); }
     }
 
     

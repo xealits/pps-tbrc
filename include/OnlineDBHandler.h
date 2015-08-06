@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sqlite3.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "Exception.h"
 
@@ -28,7 +29,7 @@ static int callback(void* unused, int argc, char* argv[], char* azcolname[])
 class OnlineDBHandler
 {
   public:
-    inline OnlineDBHandler(std::string path="./run_infos.db") {
+    inline OnlineDBHandler(std::string path=std::string(std::getenv("PPS_PATH"))+"/run_infos.db") {
       int rc;
       bool build_tables;
       std::ifstream test(path.c_str());

@@ -12,7 +12,7 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
   if (!reader.IsOpen()) throw Exception(__PRETTY_FUNCTION__, "Failed to build FileReader", JustWarning);
   cout << "Run/Burst Id = " << reader.GetRunId() << " / " << reader.GetBurstId() << endl;
 
-  const unsigned int num_channels = 20;
+  const unsigned int num_channels = 32;
   double mean_num_events[num_channels], mean_tot[num_channels];
   int trigger_td;
   unsigned int num_events[num_channels];
@@ -31,16 +31,13 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
 
   VME::TDCMeasurement m;
   for (unsigned int i=0; i<num_channels; i++) {
-    unsigned short nino_board, ch_id;
     mean_num_events[i] = mean_tot[i] = 0.;
     num_events[i] = 0;
     trigger_td = 0;
     try {
-      if (i<32) { nino_board = 1; ch_id = i; }
-      else      { nino_board = 0; ch_id = i-32; }
       while (true) {
         if (!reader.GetNextMeasurement(i, &m)) break;
-        if (trigger_td!=0) { canv[kTriggerTimeDiff]->FillChannel(nino_board, ch_id, (m.GetLeadingTime(0)-trigger_td)*25./1.e3); }
+        if (trigger_td!=0) { canv[kTriggerTimeDiff]->FillChannel(i, (m.GetLeadingTime(0)-trigger_td)*25./1.e3); }
         trigger_td = m.GetLeadingTime(0);
         for (unsigned int j=0; j<m.NumEvents(); j++) {
           mean_tot[i] += m.GetToT(j)*25./1.e3/m.NumEvents();
@@ -52,8 +49,8 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
         mean_num_events[i] /= num_events[i];
         mean_tot[i] /= num_events[i];
       }
-      canv[kDensity]->FillChannel(nino_board, ch_id, mean_num_events[i]);
-      canv[kMeanToT]->FillChannel(nino_board, ch_id, mean_tot[i]);
+      canv[kDensity]->FillChannel(i, mean_num_events[i]);
+      canv[kMeanToT]->FillChannel(i, mean_tot[i]);
       cout << dec;
       cout << "Finished extracting channel " << i << ": " << num_events[i] << " measurements, "
            << "mean number of hits: " << mean_num_events[i] << ", "
@@ -75,7 +72,7 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
 int
 main(int argc, char* argv[])
 {
-  DQM::DQMProcess dqm(1987, 2);
+  DQM::DQMProcess dqm(1987, 2, "quartic");
   dqm.Run(QuarticDQM);
   return 0;
 }

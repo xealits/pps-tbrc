@@ -280,7 +280,7 @@ class DQMReader:
         plt.bar(range(0,self.nchannels),self.occupancy)
         plt.xlabel('HPTDC Channel',fontsize=6)
         plt.ylabel('Occupancy',fontsize=6)
-        plt.axis([0, self.nchannels, 0, 1.2],fontsize=6)
+        plt.axis([0, self.nchannels, 0, max(self.occupancy)*1.5],fontsize=6)
         plt.grid(True)
 
         plt.subplot(3, 3, 3)

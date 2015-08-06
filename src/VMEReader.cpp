@@ -160,6 +160,7 @@ VMEReader::ReadXML(const char* filename)
         if (tinyxml2::XMLElement* thr=acfd->FirstChildElement("threshold")) {
           for (tinyxml2::XMLElement* ch=thr->FirstChildElement("channel"); ch!=NULL; ch=ch->NextSiblingElement("channel")) {
             cfd->SetThreshold(atoi(ch->Attribute("id")), atoi(ch->GetText()));
+            std::cout << "Threshold for channel " << atoi(ch->Attribute("id")) << " set to " << ch->GetText() << std::endl;
           }
         }
       } catch (Exception& e) { throw e; }
@@ -291,15 +292,21 @@ VMEReader::SetOutputFile(uint32_t tdc_address, std::string filename)
 }
 
 void
-VMEReader::SendOutputFile(uint32_t tdc_address, unsigned int spill_id) const
+VMEReader::SendOutputFile(uint32_t tdc_address) const
 {
   if (!fOnSocket) return;
   OutputFiles::const_iterator it = fOutputFiles.find(tdc_address);
   if (it!=fOutputFiles.end()) {
     std::ostringstream os;
-    os.str(""); os << "New spill detected: " << spill_id;
-    Client::Send(Exception(__PRETTY_FUNCTION__, os.str(), JustWarning));
-    os.str(""); os << tdc_address << ":" << it->second;
+    os << tdc_address << ":" << it->second;
     Client::Send(SocketMessage(SET_NEW_FILENAME, os.str()));
   }
+}
+
+void
+VMEReader::BroadcastNewBurst(unsigned int spill_id) const
+{
+  if (!fOnSocket) return;
+  std::ostringstream os; os << "New spill detected: " << spill_id;
+  Client::Send(Exception(__PRETTY_FUNCTION__, os.str(), JustWarning));
 }

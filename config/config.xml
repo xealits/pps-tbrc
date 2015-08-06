@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<triggering mode="continuous_storage" />
+<!--<triggering mode="continuous_storage" />-->
+<triggering mode="trigger_start" />
+<!--<triggering mode="trigger_matching" />-->
 <fpga address="0x00ee0000">
   <clock>
     <source>internal</source>
@@ -7,7 +9,7 @@
   </clock>
   <trigger>
     <source>external</source>
-    <period>400000</period>
+    <period>1</period>
   </trigger>
   <signal>
     <source>internal</source>
@@ -36,3 +38,29 @@
     <offset>-2000</offset>
   </trigger_window>
 </tdc>
+<tdc address="0x00cc0000">
+  <detector>gastof</detector>
+  <verbosity>1</verbosity>
+  <det_mode>trailead</det_mode>
+  <dll>PLL_High_Resolution</dll>
+  <ettt/>
+  <trigger_window>
+    <width>4000</width>
+    <offset>-2000</offset>
+  </trigger_window>
+</tdc>
+<cfd address="0x00070000">
+  <poi>1</poi>
+  <output_width>
+    <group0>0</group0>
+    <group1>0</group1>
+  </output_width>
+  <dead_time>
+    <group0>0</group0>
+    <group1>0</group1>
+  </dead_time>
+  <threshold>
+    <channel id="0">250</channel>
+    <channel id="1">250</channel>
+  </threshold>
+</cfd>
