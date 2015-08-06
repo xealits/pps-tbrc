@@ -3,11 +3,13 @@
 from sys import argv
 import pygtk
 pygtk.require('2.0')
-import gtk, glib
+import gtk, glib, gobject
 import re
 from SocketHandler import SocketHandler
 
 class DAQgui:
+  exc_rgx = re.compile(r'/^\[(.*)\] === (.*)\ === (.*)/g')
+
   def __init__(self):
     self.socket_handler = None
     self.client_id = -1
@@ -96,8 +98,8 @@ class DAQgui:
 
     self.list_clients_frame = gtk.ScrolledWindow()
     self.list_clients_frame.set_size_request(-1, 150)
+    #self.list_clients = gtk.ListStore(int, int)
     self.list_clients = gtk.TextView()
-    self.clients = self.list_clients.get_buffer()
     top.pack_start(self.list_clients_frame, True)
     self.list_clients_frame.add(self.list_clients)
     self.list_clients_frame.show()
@@ -133,7 +135,6 @@ class DAQgui:
         self.run_id.set_markup('Run id: <b>%d</b>' % self.current_run_id)
 
       glib.timeout_add(1000, self.GetClients)
-      glib.timeout_add(1000, self.GetExceptions)
       self.Log('Client connected with id: %d' % self.client_id)
     except SocketHandler.SocketError:
       print "Failed to bind!"
@@ -158,18 +159,46 @@ class DAQgui:
   def GetClients(self):
     if not self.socket_handler: return False
     rgx = re.compile(r'(.*)\ \(type (.*)\)')
-    print "Getting clients..."
+    #print "Getting clients..."
     self.socket_handler.Send('GET_CLIENTS', self.socket_handler.GetClientId())
     rcv = self.socket_handler.Receive()
     if len(rcv)<2 or rcv[0]!='CLIENTS_LIST' or ';' not in rcv[1]:
       return True
+    clients_list = []
     for client in rcv[1].split(';'):
-      client_id, client_type = re.split(rgx, client)[1:3]
-      self.Log('Client: '+str(client_id))
-      print client_id, client_type
+      client_id, client_type = [int(v) for v in re.split(rgx, client)[1:3]]
+      clients_list.append({'id': client_id, 'type': client_type, 'me': (client_id==self.client_id), 'web': (client_type==2)})
+      if client_type==3: self.acquisition_started = True
+    self.UpdateClientsList(clients_list)
     return True
 
-  def GetExceptions(self):
+  def UpdateClientsList(self, clients_list):
+    #for client in clients_list:
+    #  self.list_clients.append([client['id'], client['type']])
+    #columns = ["Id", "Type"]
+    #view = gtk.TreeView(model=self.list_clients)
+    #idx = 0
+    #for c in columns:
+    #  col = gtk.TreeViewColumn(c, gtk.CellRendererText(), text=idx)
+    #  view.append_column(col)
+    #  idx += 1
+    out = ""
+    for c in clients_list:
+      out += "Client %d, type %d" % (c['id'], c['type'])+'\n'
+    text = gtk.TextBuffer()
+    text.set_text(out)
+    self.list_clients.set_buffer(text)
+
+  def GetDAQMessages(self):
+    if not self.socket_handler: return False
+    print "GetDAQMessages"
+    rcv = self.socket_handler.Receive()
+    if rcv==None or len(rcv)<2: return False
+    if rcv[0]=='EXCEPTION':
+      return 
+      print re.split(self.exc_rgx, rcv[1])
+      return True
+
     return False
 
   def StartAcquisition(self, widget, data=None):
@@ -177,6 +206,7 @@ class DAQgui:
     self.acquisition_started = True
     self.start_button.set_sensitive(not self.acquisition_started)
     self.stop_button.set_sensitive(self.acquisition_started)
+    glib.timeout_add(1000, self.GetDAQMessages)
 
   def StopAcquisition(self, widget, data=None):
     print "Requested to stop acquisition"
