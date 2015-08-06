@@ -868,6 +868,7 @@ namespace VME
         return ec;
       case CONT_STORAGE:
         for (int i=0; i<count; i++) {
+          if (fBuffer[i]==0) continue;
           TDCEvent ev(fBuffer[i]);
           if (ev.GetType()!=TDCEvent::Filler) ec.push_back(ev); // Filter out filler data
         }

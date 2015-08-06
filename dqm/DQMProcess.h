@@ -72,7 +72,11 @@ namespace DQM
       }
     private:
       bool ParseMessage(uint32_t* board_address, std::string* filename) {
-        SocketMessage msg = Client::Receive(NEW_FILENAME); if (msg.GetKey()!=NEW_FILENAME) { return false; }
+        SocketMessage msg = Client::Receive(NEW_FILENAME);
+        if (msg.GetKey()!=NEW_FILENAME) {
+          std::cout << "Invalid message received: " << MessageKeyToString(msg.GetKey()) << std::endl;
+          return false;
+        }
         if (msg.GetValue()=="") {
           std::ostringstream os; os << "Invalid output file path received through the NEW_FILENAME message: " << msg.GetValue();
           throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);

@@ -6,7 +6,7 @@ function ppsRun() {
 }
 
 function ppsDQM() {
-  declare -a proc=("gastof" "quartic" "daq")
+  declare -a proc=("gastof" "quartic" "daq" "db")
   function start_proc() {
     cd $PPS_PATH;
     $PPS_PATH/dqm/"$1" > /dev/null 2>&1 &
