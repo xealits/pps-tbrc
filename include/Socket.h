@@ -44,7 +44,7 @@ class Socket
     /**
      * \brief Type of actor playing a role on the socket
      */
-    typedef enum { INVALID=-1, MASTER=0, WEBSOCKET_CLIENT, CLIENT, DETECTOR, DQM } SocketType;
+    typedef enum { INVALID=-1, MASTER=0, WEBSOCKET_CLIENT, CLIENT, DETECTOR, DQM, DAQ } SocketType;
     typedef std::set< std::pair<int,SocketType> > SocketCollection;
   
   public:

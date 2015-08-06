@@ -115,7 +115,7 @@ class SocketMessage : public Message
       }
       key = MessageKeyToObject(fString.substr(0, end).c_str());
       value = fString.substr(end+1);
-      //std::cout << MessageKeyToString(key) << " -> " << value << std::endl;
+      std::cout << MessageKeyToString(key) << " -> " << value << std::endl;
       return make_pair(key, value);
     }
     inline std::string String() const {
