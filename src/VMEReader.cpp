@@ -170,7 +170,7 @@ VMEReader::ReadXML(const char* filename)
 }
 
 unsigned int
-VMEReader::GetRunNumber()
+VMEReader::GetRunNumber() const
 {
   if (!fOnSocket) return 0;
   SocketMessage msg;
@@ -284,6 +284,15 @@ VMEReader::Abort()
 }
 
 void
+VMEReader::NewRun() const
+{
+  if (!fOnSocket) return;
+  Client::Send(SocketMessage(NEW_RUN));  
+  std::ostringstream os; os << "New run detected: " << GetRunNumber();
+  Client::Send(Exception(__PRETTY_FUNCTION__, os.str(), JustWarning));  
+}
+
+void
 VMEReader::SetOutputFile(uint32_t tdc_address, std::string filename)
 {
   OutputFiles::iterator it = fOutputFiles.find(tdc_address);
@@ -304,9 +313,11 @@ VMEReader::SendOutputFile(uint32_t tdc_address) const
 }
 
 void
-VMEReader::BroadcastNewBurst(unsigned int spill_id) const
+VMEReader::BroadcastNewBurst(unsigned int spill_id, unsigned long num_triggers) const
 {
   if (!fOnSocket) return;
-  std::ostringstream os; os << "New spill detected: " << spill_id;
+  std::ostringstream os; os << "New output file detected: burst id " << spill_id << ", " << num_triggers << " triggers";
   Client::Send(Exception(__PRETTY_FUNCTION__, os.str(), JustWarning));
+  os.str(""); os << spill_id << ":" << num_triggers;
+  Client::Send(SocketMessage(NUM_TRIGGERS, os.str()));
 }

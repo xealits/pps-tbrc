@@ -213,10 +213,27 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
     try { Send(SocketMessage(CLIENTS_LIST, os.str()), sid); } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==START_ACQUISITION) {
-    try { StartAcquisition(); } catch (Exception& e) { e.Dump(); SendAll(WEBSOCKET_CLIENT, e); }
+    try { StartAcquisition(); } catch (Exception& e) {
+      e.Dump();
+      SendAll(WEBSOCKET_CLIENT, e);
+      SendAll(DAQ, e);
+    }
   }
   else if (m.GetKey()==STOP_ACQUISITION) {
-    try { StopAcquisition(); } catch (Exception& e) { e.Dump(); SendAll(WEBSOCKET_CLIENT, e); }
+    try { StopAcquisition(); } catch (Exception& e) {
+      e.Dump();
+      SendAll(WEBSOCKET_CLIENT, e);
+      SendAll(DAQ, e);
+    }
+  }
+  else if (m.GetKey()==NEW_RUN) {
+    try {
+      OnlineDBHandler().NewRun();
+      int last_run = OnlineDBHandler().GetLastRun();
+      SendAll(DQM, SocketMessage(RUN_NUMBER, last_run)); SendAll(DAQ, SocketMessage(RUN_NUMBER, last_run));
+    } catch (Exception& e) {
+      e.Dump();
+    }
   }
   else if (m.GetKey()==GET_RUN_NUMBER) {
     int last_run = 0;
@@ -229,15 +246,22 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
       SendAll(DQM, SocketMessage(NEW_FILENAME, m.GetValue().c_str()));
     } catch (Exception& e) { e.Dump(); }
   }
+  else if (m.GetKey()==NUM_TRIGGERS) {
+    try {
+      SendAll(DAQ, m);
+    } catch (Exception& e) { e.Dump(); }
+  }
   else if (m.GetKey()==NEW_DQM_PLOT or m.GetKey()==UPDATED_DQM_PLOT) {
     try {
       m.Dump();
+      SendAll(DAQ, m);
       SendAll(WEBSOCKET_CLIENT, m);
     } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==EXCEPTION) {
     try {
       SendAll(WEBSOCKET_CLIENT, m);
+      SendAll(DAQ, m);
       std::cout << "--> " << m.GetValue() << std::endl;
     } catch (Exception& e) { e.Dump(); }
   }
@@ -284,6 +308,7 @@ Messenger::StartAcquisition()
         break;
     }
     SendAll(WEBSOCKET_CLIENT, SocketMessage(ACQUISITION_STARTED));
+    SendAll(DAQ, SocketMessage(ACQUISITION_STARTED));
     
     // Send the run number to DQMonitors
     int last_run = -1;
@@ -306,5 +331,6 @@ Messenger::StopAcquisition()
     throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
   }
   SendAll(WEBSOCKET_CLIENT, SocketMessage(ACQUISITION_STOPPED));
+  SendAll(DAQ, SocketMessage(ACQUISITION_STOPPED));
   throw Exception(__PRETTY_FUNCTION__, "Acquisition stop signal sent!", Info, 30001);
 }

@@ -233,29 +233,32 @@ class DQMReader:
                     self.nerrors[0] = self.nerrors[0] + 1
 
                     if(((decode[0]) >> 12) & 0x1):
-                        eventsizelimiterrors[0] = eventsizelimiterrors[0] + 1
+                        self.eventsizelimiterrors[0] = self.eventsizelimiterrors[0] + 1
                     if(((decode[0]) >> 13) & 0x1):
-                        triggerfifooverflowerrors[0] = triggerfifooverflowerrors[0] + 1
+                        self.triggerfifooverflowerrors[0] = self.triggerfifooverflowerrors[0] + 1
                     if(((decode[0]) >> 14) & 0x1):
-                        internalchiperrors[0] = internalchiperrors[0] +1
+                        self.internalchiperrors[0] = self.internalchiperrors[0] +1
 
                     j = 0
                     while j < 4:
                         if(((decode[0]) >> (2+3*j)) & 0x1):
-                            grouperrors[j] = grouperrors[j] + 1
+                            self.grouperrors[j] = self.grouperrors[j] + 1
                         if(((decode[0]) >> (1+3*j)) & 0x1):
-                            l1bufferoverflowerrors[j] = l1bufferoverflowerrors[j] + 1
+                            self.l1bufferoverflowerrors[j] = self.l1bufferoverflowerrors[j] + 1
                         if(((decode[0]) >> (3*j)) & 0x1):
-                            readoutfifooverflowerrors[j] = readoutfifooverflowerrors[j] + 1
+                            self.readoutfifooverflowerrors[j] = self.readoutfifooverflowerrors[j] + 1
 
                     if(self.verbose == 1):
                         print "Error detected: " + str(errorflag)
 
+        print "closing binary file"
 
     ####################
     # Generate DQM plots
     ####################
     def ProducePlots(self):
+        print "producing plots"
+
         i = 0
         while i < self.nchannels:
             if(self.occupancy[i]>0):
@@ -364,3 +367,10 @@ class DQMReader:
         outputtextfilehandle.write(str(self.readoutfifooverflowerrors)+'\n')
         outputtextfilehandle.write(str(self.l1bufferoverflowerrors)+'\n')
         outputtextfilehandle.close()
+
+if __name__ == '__main__':
+    reader = DQMReader("../../timing_data/events_92_0_1438878487_board0.dat")
+    reader.SetVerbosity(1)
+    reader.ProcessBinaryFile()
+#    reader.ReadFile()
+

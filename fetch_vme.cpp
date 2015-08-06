@@ -59,16 +59,15 @@ int main(int argc, char *argv[]) {
   try {
     bool with_socket = true;
 
-    // Declare a new run to the online database
-    OnlineDBHandler().NewRun();
-    unsigned int run_id = OnlineDBHandler().GetLastRun();
-
     // Initialize the configuration one single time
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
     try { vme->ReadXML(xml_config); } catch (Exception& e) {
       if (vme->UseSocket()) vme->Send(e);
     }
  
+    // Declare a new run to the online database
+    vme->NewRun();
+
     fh.run_id = vme->GetRunNumber();
   
     static const unsigned int num_tdc = vme->GetNumTDC();
@@ -120,7 +119,7 @@ int main(int argc, char *argv[]) {
 
       // Declare a new burst to the online DB
       OnlineDBHandler().NewBurst();
-      fh.spill_id = OnlineDBHandler().GetLastBurst(run_id);
+      fh.spill_id = OnlineDBHandler().GetLastBurst(fh.run_id);
 
       // TDC output files configuration
       for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
@@ -186,7 +185,7 @@ int main(int argc, char *argv[]) {
         cout << "Sent output from TDC 0x" << hex << atdc->first << dec << " in spill id " << fh.spill_id << endl;
         vme->SendOutputFile(atdc->first); usleep(10000);
       }
-      vme->BroadcastNewBurst(fh.spill_id);
+      vme->BroadcastNewBurst(fh.spill_id, num_triggers_in_files);
     }
   } catch (Exception& e) {
     // If any TDC::FetchEvent method throws an "acquisition stop" message

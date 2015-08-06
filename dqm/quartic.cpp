@@ -49,7 +49,8 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
         mean_num_events[i] /= num_events[i];
         mean_tot[i] /= num_events[i];
       }
-      canv[kDensity]->FillChannel(i, mean_num_events[i]);
+      std::cout << i << " -> " << num_events[i] << std::endl;
+      canv[kDensity]->FillChannel(i, num_events[i]);
       canv[kMeanToT]->FillChannel(i, mean_tot[i]);
       cout << dec;
       cout << "Finished extracting channel " << i << ": " << num_events[i] << " measurements, "
@@ -72,7 +73,13 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
 int
 main(int argc, char* argv[])
 {
-  DQM::DQMProcess dqm(1987, 2, "quartic");
-  dqm.Run(QuarticDQM);
+  if (argc==1) {
+    DQM::DQMProcess dqm(1987, 2, "quartic");
+    dqm.Run(QuarticDQM);
+  }
+  else {
+    vector<string> out;
+    QuarticDQM(0, argv[1], &out);
+  }
   return 0;
 }

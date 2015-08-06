@@ -37,8 +37,12 @@ class SocketMessage : public Message
     inline SocketMessage(const MessageKey& key, const char* value) : Message() { SetKeyValue(key, value); }
     /// Construct a socket message out of a key and a string-type value
     inline SocketMessage(const MessageKey& key, std::string value) : Message() { SetKeyValue(key, value.c_str()); }
+    /// Construct a socket message out of a key and a short integer-type value
+    inline SocketMessage(const MessageKey& key, const short value) : Message() { SetKeyValue(key, value); }
     /// Construct a socket message out of a key and an integer-type value
     inline SocketMessage(const MessageKey& key, const int value) : Message() { SetKeyValue(key, value); }
+    /// Construct a socket message out of a key and a long integer-type value
+    inline SocketMessage(const MessageKey& key, const long value) : Message() { SetKeyValue(key, value); }
     /// Construct a socket message out of a key and a float-type value
     inline SocketMessage(const MessageKey& key, const float value) : Message() { SetKeyValue(key, value); }
     /// Construct a socket message out of a key and a double precision-type value
@@ -52,8 +56,18 @@ class SocketMessage : public Message
       fMessage = make_pair(key, std::string(value));
       fString = String();
     }
+    /// Send a short integer-valued message
+    inline void SetKeyValue(const MessageKey& key, short int_value) {
+      std::ostringstream ss; ss << int_value;
+      SetKeyValue(key, ss.str().c_str());
+    }
     /// Send an integer-valued message
     inline void SetKeyValue(const MessageKey& key, int int_value) {
+      std::ostringstream ss; ss << int_value;
+      SetKeyValue(key, ss.str().c_str());
+    }
+    /// Send a long integer-valued message
+    inline void SetKeyValue(const MessageKey& key, long int_value) {
       std::ostringstream ss; ss << int_value;
       SetKeyValue(key, ss.str().c_str());
     }

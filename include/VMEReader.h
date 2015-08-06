@@ -38,6 +38,8 @@ class VMEReader : public Client
     void ReadXML(const char* filename);
     inline void ReadXML(std::string filename) { ReadXML(filename.c_str()); }
 
+    void NewRun() const;
+
     /**
      * \brief Add a TDC to handle
      * \param[in] address 32-bit address of the TDC module on the VME bus
@@ -84,7 +86,7 @@ class VMEReader : public Client
     inline VME::FPGAUnitV1495* GetFPGAUnit() { return fFPGA; }
 
     /// Ask the socket master a run number
-    unsigned int GetRunNumber();
+    unsigned int GetRunNumber() const;
     
     /// Start the bridge's pulse generator [faulty]
     inline void StartPulser(double period, double width, unsigned int num_pulses=0) {
@@ -130,7 +132,7 @@ class VMEReader : public Client
     }
     /// Send the path to the output file through the socket
     void SendOutputFile(uint32_t tdc_address) const;
-    void BroadcastNewBurst(unsigned int burst_id) const;
+    void BroadcastNewBurst(unsigned int burst_id, unsigned long num_triggers) const;
 
     inline bool UseSocket() const { return fOnSocket; }
     /// Abort data collection for all modules on the bus handled by the bridge

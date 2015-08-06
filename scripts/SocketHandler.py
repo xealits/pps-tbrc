@@ -25,7 +25,6 @@ class AsyncClient(asyncore.dispatcher):
 
   def writable(self):
     return (len(self.write_buffer)>0)
-    return is_writable
     
   def handle_write(self):
     print 'handle_write()'
@@ -33,20 +32,27 @@ class AsyncClient(asyncore.dispatcher):
     self.write_buffer = self.write_buffer[sent:]
 
   def handle_read(self):
-    print 'handle_read()'
+    #print 'handle_read()'
     data = self.recv(8192)
     if data:
       self.read_buffer.write(data)
       raise asyncore.ExitNow('Message fetched!')
 
+  def fileno(self):
+    return self.socket.fileno()
+
   def serve_until_message(self):
     try:
-      asyncore.loop(timeout=1, count=1)
+      asyncore.loop(1, 5)
     except asyncore.ExitNow, e:
-      _split = re.compile(r'[\0%s]' % re.escape(''.join([os.path.sep, os.path.altsep or ''])))
-      out = self.read_buffer.getvalue().split(':')
+      #_split = re.compile(r'[\0%s]' % re.escape(''.join([os.path.sep, os.path.altsep or ''])))
+      msgs = []
+      for msg in self.read_buffer.getvalue().split('\0'):
+        out = msg.split(':')
+        msgs.append((out[0], ':'.join(out[1:]).replace('\0', '')))
       self.read_buffer = StringIO()
-      return (out[0], _split.sub('', ':'.join(out[1:])))
+      #return (out[0], _split.sub('', ':'.join(out[1:])))
+      return msgs
 
 class SocketHandler:
   class SocketError(Exception):
@@ -77,6 +83,9 @@ class SocketHandler:
       self.socket.connect(infos)
     except socket.error:
       raise self.SocketError
+
+  def fileno(self):
+    return self.socket.fileno()
 
   def Handshake(self, client_type):
     try:
@@ -109,8 +118,10 @@ class SocketHandler:
       num_trials += 1
       out = self.socket.serve_until_message()
       if not out: continue
-      if not key: return out
-      if len(out)>1 and out[0]==key: return out
+      if not key: return out[0] #FIXME what about the others?
+      print out
+      for msg in out:
+        if len(msg)>1 and msg[0]==key: return msg
       if num_trials>max_num_trials: return None
 
   def Send(self, key, value):
