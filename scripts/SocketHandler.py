@@ -61,14 +61,20 @@ class SocketHandler:
       print "Failed to disconnect the GUI from master. Exiting roughly..."
       sys.exit()
 
-  def Receive(self):
-    try:
-      recv = self.socket.recv(4096)
-    except socket.error:
-      raise self.ReceivingError
-    if ':' not in recv:
-      raise self.InvalidMessage
-    out = recv.split(':')
+  def Receive(self, key=None):
+    num_trials = 0
+    while True:
+      num_trials += 1
+      try:
+        recv = self.socket.recv(4096)
+      except socket.error:
+        raise self.ReceivingError
+      if ':' not in recv:
+        raise self.InvalidMessage
+      out = recv.split(':')
+      if key==None or out[0]==key: break
+      if num_trials>2: return None
+      
     _split = re.compile(r'[\0%s]' % re.escape(''.join([os.path.sep, os.path.altsep or ''])))
     return (out[0], _split.sub('', ':'.join(out[1:])))
 
