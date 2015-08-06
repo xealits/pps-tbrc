@@ -185,8 +185,8 @@ class DAQgui:
     self.stop_button.set_sensitive(self.acquisition_started)
 
   def Log(self, data=None):
-    #self.log.insert_at_cursor(data)
-    self.log.insert(self.log.get_end_iter(), data+'\n')
+    self.log.insert_at_cursor(data+'\n')
+    #self.log.insert(self.log.get_end_iter(), data+'\n')
     while gtk.events_pending():
       gtk.main_iteration()
 
