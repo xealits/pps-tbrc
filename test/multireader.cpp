@@ -1,5 +1,6 @@
 #include "FileReader.h"
 #include "PPSCanvas.h"
+#include "QuarticCanvas.h"
 
 #include <iostream>
 #include <fstream>
@@ -35,6 +36,7 @@ int main(int argc, char* argv[]) {
     try {
       FileReader fr(*f);
       h_num_words->Fill(fr.GetNumEvents());
+      
     } catch (Exception& e) {
       e.Dump();
     }
