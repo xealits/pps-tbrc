@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   
   // Where to put the logs
   ofstream err_log("daq.err", ios::binary);
-  const Logger lr(err_log, cerr);
+  //const Logger lr(err_log, cerr);
  
   string xml_config;
   if (argc<2) {
@@ -85,14 +85,14 @@ int main(int argc, char *argv[]) {
     cerr << endl << "*** Ready for acquisition! ***" << endl;
     VME::TDCCollection tdcs = vme->GetTDCCollection(); unsigned int i = 0;
     for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
-      switch (fh.acq_mode) {
+      switch (atdc->second->GetAcquisitionMode()) {
         case VME::CONT_STORAGE: acqmode[i] = "Continuous storage"; break;
         case VME::TRIG_MATCH: acqmode[i] = "Trigger matching"; break;
         default:
           acqmode[i] = "[Invalid mode]";
           throw Exception(__PRETTY_FUNCTION__, "Invalid acquisition mode!", Fatal);
       }
-      switch (fh.det_mode) {
+      switch (atdc->second->GetDetectionMode()) {
         case VME::PAIR: detmode[i] = "Pair measurement"; break;
         case VME::OLEADING: detmode[i] = "Leading edge only"; break;
         case VME::OTRAILING: detmode[i] = "Trailing edge only"; break;
@@ -161,8 +161,9 @@ int main(int argc, char *argv[]) {
           for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
             uint32_t word = e->GetWord();
             out_file[i].write((char*)&word, sizeof(uint32_t));
-            /*cout << hex << e->GetType() << endl;
-            if (e->GetType()==VME::TDCEvent::TDCMeasurement) cout << e->GetChannelId() << endl;*/
+            cout << dec << "board" << i << ": " << hex << e->GetType() << "\t";
+            if (e->GetType()==VME::TDCEvent::TDCMeasurement) cout << e->GetChannelId();
+            cout << endl;
           }
           num_events[i] += ec.size();
         }
@@ -185,7 +186,8 @@ int main(int argc, char *argv[]) {
         cout << "Sent output from TDC 0x" << hex << atdc->first << dec << " in spill id " << fh.spill_id << endl;
         vme->SendOutputFile(atdc->first); usleep(10000);
       }
-      vme->BroadcastNewBurst(fh.spill_id, num_triggers_in_files);
+      vme->BroadcastNewBurst(fh.spill_id);
+      vme->BroadcastTriggerRate(fh.spill_id, num_triggers);
     }
   } catch (Exception& e) {
     // If any TDC::FetchEvent method throws an "acquisition stop" message

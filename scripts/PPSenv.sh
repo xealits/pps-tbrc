@@ -5,6 +5,11 @@ function ppsRun() {
   $PPS_PATH"/ppsRun";
 }
 
+function ppsGUI() {
+  cd $PPS_PATH;
+  /usr/bin/python $PPS_PATH/../scripts/RunControl.py
+}
+
 function ppsDQM() {
   declare -a proc=("gastof" "quartic" "daq" "db")
   function start_proc() {

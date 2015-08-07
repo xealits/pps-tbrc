@@ -22,6 +22,8 @@ endfunction()
 
 if (ROOT_FOUND)
   add_test(reader)
+  add_test(multireader)
+  add_test(reader_raw)
   add_test(reader_channelid)
   add_test(reader_oneedge)
   add_test(errors)

@@ -105,9 +105,11 @@ class SocketHandler:
   def Disconnect(self):
     try:
       self.Send('REMOVE_CLIENT', self.client_id)
+      print 'REMOVE_CLIENT', self.client_id, 'sent'
+      return True
     except SendingError:
       print "Failed to disconnect the GUI from master. Exiting roughly..."
-      sys.exit()
+      return False
 
   def ReceiveAll(self):
     return self.socket.serve_until_message()
@@ -129,4 +131,5 @@ class SocketHandler:
       self.socket.sendall(key+':'+str(value))
     except socket.error:
       raise self.SendingError
+    return True
 

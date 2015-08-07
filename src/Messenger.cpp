@@ -253,7 +253,6 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   }
   else if (m.GetKey()==NEW_DQM_PLOT or m.GetKey()==UPDATED_DQM_PLOT) {
     try {
-      m.Dump();
       SendAll(DAQ, m);
       SendAll(WEBSOCKET_CLIENT, m);
     } catch (Exception& e) { e.Dump(); }

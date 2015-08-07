@@ -347,12 +347,12 @@ namespace VME
       c.SetScalerStatus(false);
       c.SetScalerReset(true);
       SetControl(c);
-      usleep(1000);
+      usleep(10000);
       // then we start the counter (removing the "reset" bit)
       c.SetScalerStatus(true);
       c.SetScalerReset(false);
       SetControl(c);
-      usleep(1000);
+      usleep(10000);
     } catch (Exception& e) { e.Dump(); }
   }
 

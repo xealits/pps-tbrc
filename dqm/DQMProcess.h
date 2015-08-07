@@ -15,11 +15,12 @@ namespace DQM
   {
     public:
       inline DQMProcess(int port, unsigned short order=0, const char* det_type="") :
-        Client(port), fOrder(order), fDetectorType(det_type) {
+        Client(port), fOrder(order), fRunNumber(0), fDetectorType(det_type) {
         Client::Connect(Socket::DQM);
         SocketMessage run_msg = Client::SendAndReceive(GET_RUN_NUMBER, RUN_NUMBER);
         std::cout << "Current run number is: " << run_msg.GetIntValue() << std::endl;
-        IsInRun(run_msg.GetIntValue());
+        fRunNumber = run_msg.GetIntValue();
+        IsInRun(fRunNumber);
       }
       inline ~DQMProcess() { Client::Disconnect(); }
 
@@ -34,20 +35,19 @@ namespace DQM
           while (true) {
             outputs.clear();
 	    int ret = ParseMessage(&board_address, &filename);
-            if (ret==1) { // new raw file to process
-              try { status = fcn(board_address, filename, &outputs); } catch (Exception& e) { Client::Send(e); continue; }
-              if (status) {
-                cout << "Produced " << outputs.size() << " plot(s) for board with address 0x" << hex << board_address << endl;
-                MessageKey key = INVALID_KEY;
-                switch (act) {
-                  case NewPlot: key = NEW_DQM_PLOT; break;
-                  case UpdatedPlot: key = UPDATED_DQM_PLOT; break;
-                }
-                sleep(3*fOrder);
-                for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
-                  Client::Send(SocketMessage(key, *nm)); sleep(1);
-                }
-              }
+            if (ret!=1) continue;
+            // new raw file to process
+            try { status = fcn(board_address, filename, &outputs); } catch (Exception& e) { Client::Send(e); continue; }
+            if (!status) continue; // failed to produce plots
+            cout << "Produced " << outputs.size() << " plot(s) for board with address 0x" << hex << board_address << endl;
+            MessageKey key = INVALID_KEY;
+            switch (act) {
+              case NewPlot: key = NEW_DQM_PLOT; break;
+              case UpdatedPlot: key = UPDATED_DQM_PLOT; break;
+            }
+            //sleep(fOrder);
+            for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
+              Client::Send(SocketMessage(key, *nm)); usleep(500);
             }
           }
         } catch (Exception& e) { /*Client::Send(e);*/ e.Dump(); }
@@ -61,20 +61,19 @@ namespace DQM
           while (true) {
             outputs.clear();
             int ret =  ParseMessage(&board_address, &filename);
-            if (ret==1) { // new raw file to process
-              try { status = fcn(&outputs); } catch (Exception& e) { Client::Send(e); continue; }
-              if (status) {
-                cout << "Produced " << outputs.size() << " plot(s)" << endl;
-                MessageKey key = INVALID_KEY;
-                switch (act) {
-                  case NewPlot: key = NEW_DQM_PLOT; break;
-                  case UpdatedPlot: key = UPDATED_DQM_PLOT; break;
-                }
-                sleep(3*fOrder);
-                for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
-                  Client::Send(SocketMessage(key, *nm)); sleep(1);
-                }
-              }
+            if (ret!=1) continue;
+            // new raw file to process
+            try { status = fcn(&outputs); } catch (Exception& e) { Client::Send(e); continue; }
+            if (!status) continue; // failed to produce plots
+            cout << "Produced " << outputs.size() << " plot(s)" << endl;
+            MessageKey key = INVALID_KEY;
+            switch (act) {
+              case NewPlot: key = NEW_DQM_PLOT; break;
+              case UpdatedPlot: key = UPDATED_DQM_PLOT; break;
+            }
+            //sleep(fOrder);
+            for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
+              Client::Send(SocketMessage(key, *nm)); usleep(500);
             }
           } // end of infinite loop to fetch messages
         } catch (Exception& e) { Client::Send(e); e.Dump(); }
@@ -141,6 +140,7 @@ namespace DQM
         }
       }
       unsigned short fOrder;
+      unsigned int fRunNumber;
       std::string fDetectorType;
       std::map<unsigned long, std::string> fAddressesCanProcess;
   };

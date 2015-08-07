@@ -132,7 +132,8 @@ class VMEReader : public Client
     }
     /// Send the path to the output file through the socket
     void SendOutputFile(uint32_t tdc_address) const;
-    void BroadcastNewBurst(unsigned int burst_id, unsigned long num_triggers) const;
+    void BroadcastNewBurst(unsigned int burst_id) const;
+    void BroadcastTriggerRate(unsigned int burst_id, unsigned long num_triggers) const;
 
     inline bool UseSocket() const { return fOnSocket; }
     /// Abort data collection for all modules on the bus handled by the bridge

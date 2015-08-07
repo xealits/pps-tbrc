@@ -86,8 +86,6 @@ VMEReader::ReadXML(const char* filename)
         }
         switch (triggering_mode) {
           case 0:
-            control.SetTriggeringMode(VME::FPGAUnitV1495Control::ContinuousStorage); break;
-            control.SetTriggerSource(VME::FPGAUnitV1495Control::ExternalTrigger); break;
           case 1:
             control.SetTriggeringMode(VME::FPGAUnitV1495Control::ContinuousStorage); break;
           case 2:
@@ -114,6 +112,7 @@ VMEReader::ReadXML(const char* filename)
           case 2:
             tdc->SetAcquisitionMode(VME::TRIG_MATCH); break;
         }
+        std::cout << triggering_mode << " --> " << tdc->GetAcquisitionMode() << std::endl;
         if (tinyxml2::XMLElement* verb=atdc->FirstChildElement("verbosity")) {
           tdc->SetVerboseLevel(atoi(verb->GetText()));
         }
@@ -137,7 +136,7 @@ VMEReader::ReadXML(const char* filename)
           if (tinyxml2::XMLElement* width=wind->FirstChildElement("width")) { tdc->SetWindowWidth(atoi(width->GetText())); }
           if (tinyxml2::XMLElement* offset=wind->FirstChildElement("offset")) { tdc->SetWindowOffset(atoi(offset->GetText())); }
         }
-        OnlineDBHandler("run_infos.db").SetTDCConditions(tdc_id, addr, tdc->GetAcquisitionMode(), tdc->GetDetectionMode(), detector_name);
+        OnlineDBHandler().SetTDCConditions(tdc_id, addr, tdc->GetAcquisitionMode(), tdc->GetDetectionMode(), detector_name);
       } catch (Exception& e) { throw e; }
     }
   }
@@ -313,11 +312,16 @@ VMEReader::SendOutputFile(uint32_t tdc_address) const
 }
 
 void
-VMEReader::BroadcastNewBurst(unsigned int spill_id, unsigned long num_triggers) const
+VMEReader::BroadcastNewBurst(unsigned int burst_id) const
 {
   if (!fOnSocket) return;
-  std::ostringstream os; os << "New output file detected: burst id " << spill_id << ", " << num_triggers << " triggers";
+  std::ostringstream os; os << "New output file detected: burst id " << burst_id;
   Client::Send(Exception(__PRETTY_FUNCTION__, os.str(), JustWarning));
-  os.str(""); os << spill_id << ":" << num_triggers;
+}
+
+void
+VMEReader::BroadcastTriggerRate(unsigned int burst_id, unsigned long num_triggers) const
+{
+  std::ostringstream os; os << burst_id << ":" << num_triggers;
   Client::Send(SocketMessage(NUM_TRIGGERS, os.str()));
 }

@@ -30,8 +30,15 @@ namespace VME
     SetAcquisitionMode(fAcquisitionMode);
     SetDetectionMode(fDetectionMode);
     SetLSBTraileadEdge(r25ps);
+   
+    /*for (unsigned int=0; i<4; i++) {
+      std::cout << "rc adjust " << i << ": " << GetRCAdjust()
+    }*/
+ 
     SetRCAdjust(0,0);
     SetRCAdjust(1,0);
+    SetRCAdjust(2,0);
+    SetRCAdjust(3,0);
 
     GlobalOffset offs; offs.fine = 0x0; offs.coarse = 0x0;
     SetGlobalOffset(offs); // coarse and fine set

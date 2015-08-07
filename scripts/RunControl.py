@@ -18,8 +18,11 @@ class DAQgui:
     self.acquisition_started = False
     self.daq_loop_launched = False
     self.current_run_id = -1
-    self.previous_burst_time = -1
+    self.previous_burst_time = -1.
     self.trigger_rate_data = [[0, 0.]]
+    self.dqm_enabled = True
+    self.dqm_updated_plots = []
+    self.dqm_updated_plots_images = []
 
     self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
     #self.window.maximize()
@@ -36,9 +39,12 @@ class DAQgui:
     top.pack_start(run, False)
     run.show()
     main.pack_start(top, False)
+    self.dqm_frame = gtk.HBox(False)
     main.pack_start(bottom, False)
+    main.pack_start(self.dqm_frame, False)
     top.show()
     bottom.show()
+    self.dqm_frame.show()
 
     self.log_frame = gtk.ScrolledWindow()
     self.log_view = gtk.TextView()
@@ -52,22 +58,19 @@ class DAQgui:
     self.log_frame.show()
     self.log_view.show()
 
-    #self.dqm_frame = gtk.ScrolledWindow()
-    self.dqm_frame = gtk.VBox(False)
-    bottom.pack_start(self.dqm_frame)
+    #self.stat_frame = gtk.ScrolledWindow()
+    self.stat_frame = gtk.VBox(False)
+    bottom.pack_start(self.stat_frame)
 
     self.trigger_rate = gtk.Label()
-    #self.dqm_frame.add(self.trigger_rate)
-    self.dqm_frame.pack_start(self.trigger_rate)
+    self.stat_frame.pack_start(self.trigger_rate)
     self.trigger_rate.set_markup('Trigger rate: ###')
     self.trigger_rate.show()
     self.trigger_rate_plot = LinePlot()
-    #self.dqm_frame.add(self.trigger_rate_plot)
-    self.dqm_frame.pack_start(self.trigger_rate_plot)
+    self.stat_frame.pack_start(self.trigger_rate_plot)
     self.trigger_rate_plot.set_data(self.trigger_rate_data, 'Trigger rate')
     self.trigger_rate_plot.show()
-
-    self.dqm_frame.show()
+    self.stat_frame.show()
 
     self.window.connect('destroy', self.Close)
 
@@ -81,22 +84,26 @@ class DAQgui:
 
     self.unbind_button = gtk.Button("Unbind")
     self.unbind_button.connect('clicked', self.Unbind)
+    self.unbind_button.set_tooltip_text("Disconnect this instance from the main controller.\nIf any run is started it will be left as it is!")
     self.unbind_button.set_sensitive(False)
     buttons.pack_start(self.unbind_button, False)
     self.unbind_button.show()
 
     self.exit_button = gtk.Button("Quit")
     self.exit_button.connect('clicked', self.Close)
+    self.exit_button.set_tooltip_text("Quit and disconnect this instance from the main controller")
     buttons.pack_start(self.exit_button, False)
     self.exit_button.show()
 
     self.socket_id = gtk.Label()
+    self.socket_id.set_tooltip_text("Identifier of this instance to the socket")
     buttons.pack_start(self.socket_id, False)
     self.socket_id.set_markup('########')
     self.socket_id.show()
 
     self.start_button = gtk.Button("Start")
     self.start_button.connect('clicked', self.StartAcquisition)
+    self.start_button.set_tooltip_text("Start a new run with the configuration provided in $PPS_PATH/config/config.xml")
     #self.start_button.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(0, 1, 0))
     self.start_button.set_size_request(120, 60)
     self.start_button.set_sensitive(False)
@@ -115,14 +122,10 @@ class DAQgui:
     self.run_id.set_markup('Run id: ###')
     self.run_id.show()
 
-    self.list_clients_frame = gtk.ScrolledWindow()
-    self.list_clients_frame.set_size_request(-1, 120)
     #self.list_clients = gtk.ListStore(int, int)
-    self.list_clients = gtk.TextView()
-    self.list_clients.set_editable(False)
-    top.pack_start(self.list_clients_frame, True)
-    self.list_clients_frame.add(self.list_clients)
-    self.list_clients_frame.show()
+    self.list_clients = gtk.Label()
+    self.list_clients.set_size_request(-1, 120)
+    top.pack_start(self.list_clients, True)
     self.list_clients.show()
 
     self.status_bar = gtk.Statusbar()
@@ -166,7 +169,11 @@ class DAQgui:
  
   def Unbind(self, widget, data=None):
     if self.socket_handler:
-      self.socket_handler.Disconnect()
+      print "Requested to unbind from master"
+      if not self.socket_handler.Disconnect():
+        print 'forcing the stop'
+        self.socket_handler = None
+      print 'socket handler deleted'
       self.socket_id.set_markup('########')
       self.bind_button.set_sensitive(True)
       self.unbind_button.set_sensitive(False)
@@ -174,7 +181,6 @@ class DAQgui:
       self.stop_button.set_sensitive(False)
       self.socket_handler = None
       self.client_id = -1
-      print "disconnect sent"
 
   def Close(self, widget, data=None):
     self.Unbind(self)
@@ -200,13 +206,18 @@ class DAQgui:
       self.UpdateClientsList(clients_list)
     self.start_button.set_sensitive(not self.acquisition_started)
     self.stop_button.set_sensitive(self.acquisition_started)
+    if self.acquisition_started and not self.daq_loop_launched:
+      print "Launching the acquisition monitor loop."
+      self.DAQLoop()
     return True
 
   def DAQLoop(self):
-    gobject.io_add_watch(self.socket_handler, gobject.IO_IN, self.test)
-    self.daq_loop_launched = True
+    gobject.io_add_watch(self.socket_handler, gobject.IO_IN, self.ReceiveDAQMasterMessages)
 
-  def test(self, source, condition):
+  def ReceiveDAQMasterMessages(self, source, condition):
+    if not self.socket_handler: return False
+    if not self.acquisition_started: return False
+    if not self.daq_loop_launched: self.daq_loop_launched = True
     rcv = source.Receive()
     print 'received', rcv
     if rcv[0]=='EXCEPTION':
@@ -215,17 +226,52 @@ class DAQgui:
     elif rcv[0]=='RUN_NUMBER':
       self.current_run_id = int(rcv[1])
       self.run_id.set_markup('Run id: <b>%d</b>' % self.current_run_id)
+      self.dqm_updated_plots = []
+      self.dqm_updated_plots_images = []
     elif rcv[0]=='NUM_TRIGGERS':
+      #return False
       burst_id, num_trig = [int(a) for a in rcv[1].split(':')]
-      now = int(round(time.time()*1000))
+      now = time.time()
       if self.previous_burst_time>0:
-        self.trigger_rate.set_markup('Trigger rate: <b>%.2f</b>' % round(num_trig/(now-self.previous_burst_time)/1000., 2))
-        self.trigger_rate_data.append([burst_id, num_trig/(now-self.previous_burst_time)/1000.])
-        #print "trigger_rate: ", num_trig/(now-self.previous_burst_time)
-        self.trigger_rate_plot.set_data(self.trigger_rate_data, 'Trigger rate')
+        rate = num_trig/(now-self.previous_burst_time)/1000.
+        self.trigger_rate.set_markup('Trigger rate: <b>%.2f kHz</b>' % round(rate, 2))
+        has_data = False
+        i = 0
+        #print 'aaa',self.trigger_rate_data
+        for data in self.trigger_rate_data:
+          if data[0]==burst_id:
+            self.trigger_rate_data[i][1] = rate
+            has_data = True
+            break
+          i += 1
+        if not has_data:
+          self.trigger_rate_data.append([burst_id, rate])
+        #print now, "trigger rate: ", rate
+        self.trigger_rate_plot.set_data(self.trigger_rate_data, 'Trigger rate (kHz)')
       self.previous_burst_time = now
-    #elif rcv[0]=='UPDATED_DQM_PLOT':
-    #  self.
+    elif rcv[0]=='UPDATED_DQM_PLOT':
+      if not self.dqm_enabled: return True
+      i = 0
+      for p in self.dqm_updated_plots:
+        if p==rcv[1] or rcv[1][0:15] in p:
+          if p!=rcv[1]: self.dqm_updated_plots[i] = rcv[1]
+          try:
+            pixbuf = gtk.gdk.pixbuf_new_from_file_at_size('/tmp/%s.png' % (rcv[1]), 200, 200)
+            self.dqm_updated_plots_images[i].set_from_pixbuf(pixbuf)
+          except glib.GError:
+            return True
+          return True
+        i += 1
+      self.dqm_updated_plots.append(rcv[1])
+      img = gtk.Image()
+      try:
+        pixbuf = gtk.gdk.pixbuf_new_from_file_at_size('/tmp/%s.png' % (rcv[1]), 200, 200)
+        img.set_from_pixbuf(pixbuf)
+        self.dqm_frame.pack_start(img)
+        self.dqm_updated_plots_images.append(img)
+        img.show()
+      except glib.GError:
+        return True
     return True
 
   def UpdateClientsList(self, clients_list):
@@ -240,10 +286,9 @@ class DAQgui:
     #  idx += 1
     out = ""
     for c in clients_list:
-      out += "Client %d, type %d (%s)\n" % (c['id'], c['type'], self.GetClientTypeName(c['type']))
-    text = gtk.TextBuffer()
-    text.set_text(out)
-    self.list_clients.set_buffer(text)
+      #out += "Client %d, type %d (%s)\n" % (c['id'], c['type'], self.GetClientTypeName(c['type']))
+      out += "<b>%s</b> (%d)  " % (self.GetClientTypeName(c['type']), c['id'])
+    self.list_clients.set_markup(out)
 
   def GetClientTypeName(self, type):
     if type==-1: return "INVALID"
@@ -258,12 +303,9 @@ class DAQgui:
     print "Requested to start acquisition"
     self.socket_handler.Send('START_ACQUISITION', self.client_id)
     rcv = self.socket_handler.Receive('ACQUISITION_STARTED')
-    #if rcv==None: return
     self.acquisition_started = True
     self.start_button.set_sensitive(not self.acquisition_started)
     self.stop_button.set_sensitive(self.acquisition_started)
-    #glib.timeout_add(1000, self.GetDAQMessages)
-    #self.GetDAQMessages()
 
   def StopAcquisition(self, widget, data=None):
     print "Requested to stop acquisition"

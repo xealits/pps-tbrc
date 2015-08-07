@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--<triggering mode="continuous_storage" />-->
 <triggering mode="trigger_start" />
-<!--triggering mode="trigger_matching" />-->
+<!--<triggering mode="trigger_matching" />-->
 <fpga address="0x00ee0000">
   <clock>
     <source>internal</source>
@@ -60,7 +60,8 @@
     <group1>0</group1>
   </dead_time>
   <threshold>
-    <channel id="0">250</channel>
-    <channel id="1">250</channel>
+    <channel id="0">50</channel>
+    <channel id="1">50</channel>
+    <channel id="2">50</channel>
   </threshold>
 </cfd>

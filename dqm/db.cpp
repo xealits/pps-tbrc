@@ -13,7 +13,7 @@ bool
 DBDQM(vector<string>* outputs)
 {
   try {
-    OnlineDBHandler ri("run_infos.db");
+    OnlineDBHandler ri;
     unsigned int last_run = ri.GetLastRun();
     OnlineDBHandler::BurstInfos si = ri.GetRunInfo(last_run);
 

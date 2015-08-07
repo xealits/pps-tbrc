@@ -10,12 +10,12 @@ namespace VME
     CVErrorCodes ret; 
     std::ostringstream o;
  
-    char rel[20];
+    /*char rel[20];
     CAENVME_SWRelease(rel);
     o.str("");
     o << "Initializing the VME bridge\n\t"
       << "CAEN library release: " << rel;
-    PrintInfo(o.str());
+    PrintInfo(o.str());*/
 
     switch (type) {
       case CAEN_V1718: tp = cvV1718; break;
@@ -40,7 +40,7 @@ namespace VME
       throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal, CAEN_ERROR(ret));
     }
 
-    ret = CAENVME_BoardFWRelease(fHandle, rel);
+    /*ret = CAENVME_BoardFWRelease(fHandle, rel);
     if (ret!=cvSuccess) {
       o.str("");
       o << "Failed to retrieve the board FW release!\n\t"
@@ -49,7 +49,7 @@ namespace VME
     }
     o.str("");
     o << "Bridge firmware version: " << rel;
-    PrintInfo(o.str());
+    PrintInfo(o.str());*/
     
     CheckConfiguration();
 
