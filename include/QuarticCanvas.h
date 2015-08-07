@@ -16,15 +16,15 @@ namespace DQM
     public:
       inline QuarticCanvas() :
         TCanvas("null"), fLegend(0), fLegendX(.52), fLegendY(.76), fLegendNumEntries(0),
-        fUpperLabel(0), fLabelsDrawn(false), fRunId(0), fRunDate(TDatime().AsString()) {;}
+        fUpperLabel(0), fLabelsDrawn(false), fBoardId(0), fRunId(0), fSpillId(0), fRunDate(TDatime().AsString()) {;}
       inline QuarticCanvas(TString name, unsigned int width=500, unsigned int height=500, TString upper_label="") :
         TCanvas(name, "", width, height), fWidth(width), fHeight(height), fLegend(0), fLegendX(.52), fLegendY(.76), fLegendNumEntries(0),
         fUpperLabelText(upper_label), fUpperLabel(0), fLabelsDrawn(false),
-        fRunId(0), fRunDate(TDatime().AsString()) { Build(); }
+        fBoardId(0), fRunId(0), fSpillId(0), fRunDate(TDatime().AsString()) { Build(); }
       inline QuarticCanvas(TString name, TString upper_label) :
         TCanvas(name, "", 500, 500), fWidth(500), fHeight(500), fLegend(0), fLegendX(.52), fLegendY(.76), fLegendNumEntries(0),
         fUpperLabelText(upper_label), fUpperLabel(0), fLabelsDrawn(false),
-        fRunId(0), fRunDate(TDatime().AsString()) { Build(); }
+        fBoardId(0), fRunId(0), fSpillId(0), fRunDate(TDatime().AsString()) { Build(); }
       inline virtual ~QuarticCanvas() {
         if (fLegend) delete fLegend;
         if (fUpperLabel) delete fUpperLabel;
@@ -88,17 +88,19 @@ namespace DQM
           fLabel2->SetTextAlign(13);
           fLabel2->SetTextSize(22);
           fLabel2->Draw();
-          fLabel3 = new TPaveText(.5, .0, .98, .05, "NDC");
-          fLabel3->AddText(Form("Board %x, Run %d - Spill %d - %s", fBoardId>>16, fRunId, fSpillId, fRunDate.Data()));
-          fLabel3->SetMargin(0.);
-          fLabel3->SetFillColor(kWhite);
-          fLabel3->SetLineColor(kWhite);
-          fLabel3->SetLineWidth(0);
-          fLabel3->SetShadowColor(kWhite);
-          fLabel3->SetTextFont(43);
-          fLabel3->SetTextAlign(32);
-          fLabel3->SetTextSize(16);
-          fLabel3->Draw();
+          if (fBoardId!=0 or fRunId!=0 or fSpillId!=0 or fRunDate!="") {
+            fLabel3 = new TPaveText(.5, .0, .98, .05, "NDC");
+            fLabel3->AddText(Form("Board %x, Run %d - Spill %d - %s", fBoardId>>16, fRunId, fSpillId, fRunDate.Data()));
+            fLabel3->SetMargin(0.);
+            fLabel3->SetFillColor(kWhite);
+            fLabel3->SetLineColor(kWhite);
+            fLabel3->SetLineWidth(0);
+            fLabel3->SetShadowColor(kWhite);
+            fLabel3->SetTextFont(43);
+            fLabel3->SetTextAlign(32);
+            fLabel3->SetTextSize(16);
+            fLabel3->Draw();
+          }
           fLabel4 = new TPaveText(.01, .5, .11, .55, "NDC");
           fLabel4->AddText("#otimes beam");
           fLabel4->SetMargin(0.);

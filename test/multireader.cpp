@@ -16,14 +16,21 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
-  enum plots {
+  enum general_plots {
     kNumWords,
-    numPlots
-  }
-  const num_plots = numPlots;
-  DQM::PPSCanvas* canv[num_plots];
+    numGenPlots
+  };
+  enum quartic_plots {
+    kLeadingTime,
+    kNumEvents,
+    numQuPlots
+  };
 
-  canv[kNumWords] = new DQM::PPSCanvas("multiread_num_words_per_file", "Number of data words per file");
+  const unsigned int num_gen_plots = numGenPlots;
+  DQM::PPSCanvas* cgen[num_gen_plots];
+
+  const unsigned int num_qu_plots = numQuPlots;
+  DQM::QuarticCanvas* cqu[num_qu_plots];
 
   vector<string> files;
   string buff;
@@ -32,20 +39,38 @@ int main(int argc, char* argv[]) {
 
   TH1D* h_num_words = new TH1D("num_words", "", 300, 0., 300000.);
 
+  cqu[kLeadingTime] = new DQM::QuarticCanvas("multiread_quartic_mean_leading_time", "Mean leading time (ns)");
+  //cqu[kNumEvents] = new DQM::QuarticCanvas("multiread_quartic_num_events_per_channel", "Number of events per channel");
+
+  VME::TDCMeasurement m;
   for (vector<string>::iterator f=files.begin(); f!=files.end(); f++) {
     try {
       FileReader fr(*f);
+      cout << "Opening file with burst train " << fr.GetBurstId() << endl;
       h_num_words->Fill(fr.GetNumEvents());
-      
+      for (unsigned int ch=0; ch<32; ch++) {
+        while (true) {
+          if (!fr.GetNextMeasurement(ch, &m)) break;
+          //cqu[kNumEvents]->FillChannel(ch, m.NumEvents());
+          unsigned int leadingtime = 0;
+          for (unsigned int i=0; i<m.NumEvents(); i++) { leadingtime += m.GetLeadingTime(i); }
+          cqu[kLeadingTime]->FillChannel(ch, leadingtime*25./1000./m.NumEvents());
+        }
+        fr.Clear();
+      }
     } catch (Exception& e) {
       e.Dump();
     }
   }
 
-  //canv[kNumWords]->cd();
+  cgen[kNumWords] = new DQM::PPSCanvas("multiread_num_words_per_file", "Number of data words per file");
+  //cgen[kNumWords]->cd();
   h_num_words->Draw();
-  //canv[kNumWords]->Grid()->SetLogx();
-  canv[kNumWords]->Save("png");
+  //cgen[kNumWords]->Grid()->SetLogx();
+  cgen[kNumWords]->Save("png");
+
+  //cqu[kNumEvents]->Save("png");
+  cqu[kLeadingTime]->Save("png");
 
   return 0;
 }
