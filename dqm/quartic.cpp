@@ -19,15 +19,15 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
 
   enum plots {
     kDensity,
-    kMeanToT,
-    kTriggerTimeDiff,
+    //kMeanToT,
+    //kTriggerTimeDiff,
     kNumPlots
   };
   const unsigned short num_plots = kNumPlots;
   DQM::QuarticCanvas* canv[num_plots];
-  canv[kDensity] = new DQM::QuarticCanvas(Form("quartic_channels_density_%d_%d_%d", reader.GetRunId(), reader.GetBurstId(), address), "Channels density");
-  canv[kMeanToT] = new DQM::QuarticCanvas(Form("quartic_mean_tot_%d_%d_%d", reader.GetRunId(), reader.GetBurstId(), address), "Mean ToT (ns)");
-  canv[kTriggerTimeDiff] = new DQM::QuarticCanvas(Form("quartic_trigger_time_difference_%d_%d_%d", reader.GetRunId(), reader.GetBurstId(), address), "Time btw. each trigger (ns)");
+  canv[kDensity] = new DQM::QuarticCanvas(Form("quartic_%d_%d_%d_channels_density", reader.GetRunId(), reader.GetBurstId(), address), "Channels density");
+  //canv[kMeanToT] = new DQM::QuarticCanvas(Form("quartic_%d_%d_%d_mean_tot", reader.GetRunId(), reader.GetBurstId(), address), "Mean ToT (ns)");
+  //canv[kTriggerTimeDiff] = new DQM::QuarticCanvas(Form("quartic_%d_%d_%d_trigger_time_difference", reader.GetRunId(), reader.GetBurstId(), address), "Time btw. each trigger (ns)");
 
   VME::TDCMeasurement m;
   for (unsigned int i=0; i<num_channels; i++) {
@@ -37,7 +37,7 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
     try {
       while (true) {
         if (!reader.GetNextMeasurement(i, &m)) break;
-        if (trigger_td!=0) { canv[kTriggerTimeDiff]->FillChannel(i, (m.GetLeadingTime(0)-trigger_td)*25./1.e3); }
+        //if (trigger_td!=0) { canv[kTriggerTimeDiff]->FillChannel(i, (m.GetLeadingTime(0)-trigger_td)*25./1.e3); }
         trigger_td = m.GetLeadingTime(0);
         for (unsigned int j=0; j<m.NumEvents(); j++) {
           mean_tot[i] += m.GetToT(j)*25./1.e3/m.NumEvents();
@@ -49,9 +49,8 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
         mean_num_events[i] /= num_events[i];
         mean_tot[i] /= num_events[i];
       }
-      std::cout << i << " -> " << num_events[i] << std::endl;
       canv[kDensity]->FillChannel(i, num_events[i]);
-      canv[kMeanToT]->FillChannel(i, mean_tot[i]);
+      //canv[kMeanToT]->FillChannel(i, mean_tot[i]);
       cout << dec;
       cout << "Finished extracting channel " << i << ": " << num_events[i] << " measurements, "
            << "mean number of hits: " << mean_num_events[i] << ", "

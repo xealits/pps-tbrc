@@ -20,6 +20,8 @@ class DAQgui:
     self.current_run_id = -1
     self.previous_burst_time = -1.
     self.trigger_rate_data = [[0, 0.]]
+    self.time_start = time.time()
+    self.tot_trigger_data = [[self.time_start, 0]]
     self.dqm_enabled = True
     self.dqm_updated_plots = []
     self.dqm_updated_plots_images = []
@@ -62,14 +64,30 @@ class DAQgui:
     self.stat_frame = gtk.VBox(False)
     bottom.pack_start(self.stat_frame)
 
+    self.tot_trigger = gtk.Label()
+    self.stat_frame.pack_start(self.tot_trigger)
+    self.tot_trigger.set_markup('Triggers number: ###')
+    self.tot_trigger.show()
     self.trigger_rate = gtk.Label()
     self.stat_frame.pack_start(self.trigger_rate)
     self.trigger_rate.set_markup('Trigger rate: ###')
     self.trigger_rate.show()
+    
+    self.plots_frame = gtk.HBox(False)
+    self.stat_frame.pack_start(self.plots_frame)
     self.trigger_rate_plot = LinePlot()
-    self.stat_frame.pack_start(self.trigger_rate_plot)
+    self.trigger_rate_plot.set_size_request(-1, 300)
+    self.plots_frame.pack_start(self.trigger_rate_plot)
     self.trigger_rate_plot.set_data(self.trigger_rate_data, 'Trigger rate')
     self.trigger_rate_plot.show()
+
+    self.tot_trigger_plot = LinePlot()
+    self.plots_frame.pack_start(self.tot_trigger_plot)
+    self.tot_trigger_plot.set_data(self.trigger_rate_data, 'Triggers number')
+    self.plots_frame.set_size_request(-1, 300)
+    self.tot_trigger_plot.show()
+
+    #self.plots_frame.show()
     self.stat_frame.show()
 
     self.window.connect('destroy', self.Close)
@@ -132,7 +150,8 @@ class DAQgui:
     main.pack_start(self.status_bar)
     self.status_bar.show()
 
-    self.window.maximize()
+    #self.window.maximize()
+    self.window.set_default_size(1024, 768)
     self.window.add(main)
     main.show()
     self.window.show()
@@ -161,7 +180,7 @@ class DAQgui:
       self.Log('Client connected with id: %d' % self.client_id)
       self.Update()
       if self.acquisition_started and not self.daq_loop_launched:
-        print "Launching the acquisition monitor loop."
+        #print "Launching the acquisition monitor loop."
         self.DAQLoop()
     except SocketHandler.SocketError:
       print "Failed to bind!"
@@ -207,7 +226,7 @@ class DAQgui:
     self.start_button.set_sensitive(not self.acquisition_started)
     self.stop_button.set_sensitive(self.acquisition_started)
     if self.acquisition_started and not self.daq_loop_launched:
-      print "Launching the acquisition monitor loop."
+      #print "Launching the acquisition monitor loop."
       self.DAQLoop()
     return True
 
@@ -231,7 +250,10 @@ class DAQgui:
     elif rcv[0]=='NUM_TRIGGERS':
       #return False
       burst_id, num_trig = [int(a) for a in rcv[1].split(':')]
+      self.tot_trigger.set_markup('Triggers number: <b>%d</b>' % num_trig)
       now = time.time()
+      self.tot_trigger_data.append([(now-self.time_start)*1e6, num_trig])
+      #self.tot_trigger_plot.set_data(self.tot_trigger_data)
       if self.previous_burst_time>0:
         rate = num_trig/(now-self.previous_burst_time)/1000.
         self.trigger_rate.set_markup('Trigger rate: <b>%.2f kHz</b>' % round(rate, 2))
@@ -247,9 +269,10 @@ class DAQgui:
         if not has_data:
           self.trigger_rate_data.append([burst_id, rate])
         #print now, "trigger rate: ", rate
-        self.trigger_rate_plot.set_data(self.trigger_rate_data, 'Trigger rate (kHz)')
+        #self.trigger_rate_plot.set_data(self.trigger_rate_data, 'Trigger rate (kHz)')
       self.previous_burst_time = now
     elif rcv[0]=='UPDATED_DQM_PLOT':
+      return True
       if not self.dqm_enabled: return True
       i = 0
       for p in self.dqm_updated_plots:

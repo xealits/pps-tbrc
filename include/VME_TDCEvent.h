@@ -112,13 +112,15 @@ namespace VME
         GlobalHeader = 0x8,
         GlobalTrailer = 0x10,
         ETTT = 0x11,
-        Filler = 0x18
+        Filler = 0x18,
+        Trigger = 0x1f
       };
     
     public:
       inline TDCEvent() : fWord(0) {;}
       inline TDCEvent(const TDCEvent& ev) : fWord(ev.fWord) {;}
       inline TDCEvent(const uint32_t& word) : fWord(word) {;}
+      inline TDCEvent(const EventType& ev) : fWord(static_cast<uint16_t>(ev)<<27) {;}
       inline virtual ~TDCEvent() {;}
 
       inline void Dump() const {
@@ -139,6 +141,7 @@ namespace VME
           case GlobalTrailer: ss << "Global trailer"; break;
           case ETTT: ss << "ETTT"; break;
           case Filler: ss << "Filler"; break;
+          case Trigger: ss << "Trigger"; break;
         }
         PrintInfo(ss.str());
       }

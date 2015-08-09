@@ -116,9 +116,11 @@ FileReader::GetNextMeasurement(unsigned int channel_id, VME::TDCMeasurement* mc)
           //std::cerr << " ---> Error flags: " << ev.GetErrorFlags() << std::endl;
           break;
         case VME::TDCEvent::Filler:
+        case VME::TDCEvent::Trigger:
           break;
       }
       if (has_lead and has_trail) break;
+      if (ev.GetType()==VME::TDCEvent::Trigger) break;
     }
     if (has_error) throw Exception(__PRETTY_FUNCTION__, "Measurement has at least one error word.", JustWarning, 41000);
   }

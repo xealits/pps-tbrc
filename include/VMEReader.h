@@ -40,6 +40,9 @@ class VMEReader : public Client
 
     void NewRun() const;
 
+    enum GlobalAcqMode { ContinuousStorage = 0x0, TriggerStart = 0x1, TriggerMatching = 0x2 };
+    inline GlobalAcqMode GetGlobalAcquisitionMode() const { return fGlobalAcqMode; }
+
     /**
      * \brief Add a TDC to handle
      * \param[in] address 32-bit address of the TDC module on the VME bus
@@ -162,6 +165,7 @@ class VMEReader : public Client
     /// Path to the current output files the DAQ is writing to
     /// (indexed by the TDC id)
     OutputFiles fOutputFiles;
+    GlobalAcqMode fGlobalAcqMode;
 };
 
 #endif

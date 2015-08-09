@@ -33,23 +33,22 @@ namespace VME
    
     /*for (unsigned int=0; i<4; i++) {
       std::cout << "rc adjust " << i << ": " << GetRCAdjust()
-    }*/
- 
+    }
     SetRCAdjust(0,0);
     SetRCAdjust(1,0);
     SetRCAdjust(2,0);
-    SetRCAdjust(3,0);
+    SetRCAdjust(3,0);*/
 
     GlobalOffset offs; offs.fine = 0x0; offs.coarse = 0x0;
     SetGlobalOffset(offs); // coarse and fine set
     //GetGlobalOffset();
 
     //SetBLTEventNumberRegister(1); // FIXME find good value!
-    SetTDCEncapsulation(false);
+    SetTDCEncapsulation(true);
     SetErrorMarks(true);
     SetETTT(true);
-    SetWindowWidth(2045); // in units of clock cycles
-    SetWindowOffset(-2050); // in units of clock cycles
+    //SetWindowWidth(2045); // in units of clock cycles
+    //SetWindowOffset(-2050); // in units of clock cycles
     //SetPairModeResolution(0,0x4);
     SetPoI(0xFFFF, 0xFFFF);
     //GetResolution();
@@ -208,7 +207,7 @@ namespace VME
       WaitMicro(WRITE_OK);
       WriteRegister(kMicro, word2);
     } catch (Exception& e) { e.Dump(); }
-    if (fVerb>1) {
+    //if (fVerb>1) {
       std::ostringstream os;
       os << "Debug: Pattern of inhibit modified:" << "\n\t";
       for (unsigned int i=0; i<16; i++) {
@@ -216,7 +215,7 @@ namespace VME
            << "Channel " << (i+16) << ": " << ((word2>>i)&0x1) << "\n\t";
       }
       PrintInfo(os.str());
-    }
+    //}
   }
 
   std::map<unsigned short, bool>

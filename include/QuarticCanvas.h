@@ -55,7 +55,7 @@ namespace DQM
 
       inline void FillChannel(unsigned short channel_id, double content) {
         const Coord c = GetCoordinates(channel_id);
-        fHist->Fill(c.x-0.5, c.y-0.5, content);
+        fHist->Fill(c.x, c.y, content);
       }
       inline TH2D* Grid() { return fHist; }
 
@@ -131,7 +131,10 @@ namespace DQM
         fLegend->SetTextFont(43);
         fLegend->SetTextSize(14);
     
-        fHist = new TH2D(Form("hist_%s", TCanvas::GetName()), "", 5, -0.5, 4.5, 4, -0.5, 3.5);
+	// JH - testing, do we have channels off-scale by 1?
+	//        fHist = new TH2D(Form("hist_%s", TCanvas::GetName()), "", 5, -0.5, 4.5, 4, -0.5, 3.5);
+	fHist = new TH2D(Form("hist_%s", TCanvas::GetName()), "", 5, 0.5, 5.5, 4, 0.5, 4.5); // LF - indeed...
+	// JH - end testing
         for (unsigned int i=1; i<=5; i++) fHist->GetXaxis()->SetBinLabel(i, Form("%d", i));
         for (unsigned int i=1; i<=4; i++) fHist->GetYaxis()->SetBinLabel(i, Form("%d", i));
       }

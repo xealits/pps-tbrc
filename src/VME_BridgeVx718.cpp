@@ -40,7 +40,8 @@ namespace VME
       throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal, CAEN_ERROR(ret));
     }
 
-    /*ret = CAENVME_BoardFWRelease(fHandle, rel);
+    char board_rel[100];
+    ret = CAENVME_BoardFWRelease(fHandle, board_rel);
     if (ret!=cvSuccess) {
       o.str("");
       o << "Failed to retrieve the board FW release!\n\t"
@@ -48,9 +49,8 @@ namespace VME
       throw Exception(__PRETTY_FUNCTION__, o.str(), Fatal, CAEN_ERROR(ret));
     }
     o.str("");
-    o << "Bridge firmware version: " << rel;
-    PrintInfo(o.str());*/
-    
+    o << "Bridge firmware version: " << board_rel;
+    PrintInfo(o.str());
     CheckConfiguration();
 
     //SetIRQ(IRQ1|IRQ2|IRQ3|IRQ4|IRQ5|IRQ6|IRQ7, false);

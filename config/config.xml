@@ -23,9 +23,13 @@
   <dll>PLL_High_Resolution</dll>
   <ettt/>
   <trigger_window>
-    <width>4000</width>
-    <offset>-2000</offset>
+    <width>400</width>
+    <offset>-400</offset>
   </trigger_window>
+  <poi>
+    <group0>57343</group0>
+    <group1>63485</group1>
+  </poi>
 </tdc>
 <tdc address="0x00bb0000">
   <detector>quartic_2</detector>
@@ -34,8 +38,8 @@
   <dll>PLL_High_Resolution</dll>
   <ettt/>
   <trigger_window>
-    <width>4000</width>
-    <offset>-2000</offset>
+    <width>400</width>
+    <offset>-400</offset>
   </trigger_window>
 </tdc>
 <tdc address="0x00cc0000">
@@ -45,23 +49,27 @@
   <dll>PLL_High_Resolution</dll>
   <ettt/>
   <trigger_window>
-    <width>4000</width>
-    <offset>-2000</offset>
+    <width>400</width>
+    <offset>-400</offset>
   </trigger_window>
+  <poi>
+    <group0>1</group0>
+    <group1>0</group1>
+  </poi>
 </tdc>
 <cfd address="0x00070000">
   <poi>1</poi>
   <output_width>
-    <group0>0</group0>
-    <group1>0</group1>
+    <group0>120</group0>
+    <group1>120</group1>
   </output_width>
   <dead_time>
     <group0>0</group0>
     <group1>0</group1>
   </dead_time>
   <threshold>
-    <channel id="0">50</channel>
-    <channel id="1">50</channel>
-    <channel id="2">50</channel>
+    <channel id="0">30</channel>
+    <channel id="1">6</channel>
+    <channel id="2">6</channel>
   </threshold>
 </cfd>

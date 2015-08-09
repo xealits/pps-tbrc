@@ -20,7 +20,7 @@ namespace DQM
         SocketMessage run_msg = Client::SendAndReceive(GET_RUN_NUMBER, RUN_NUMBER);
         std::cout << "Current run number is: " << run_msg.GetIntValue() << std::endl;
         fRunNumber = run_msg.GetIntValue();
-        IsInRun(fRunNumber);
+        IsInRun();
       }
       inline ~DQMProcess() { Client::Disconnect(); }
 
@@ -104,12 +104,11 @@ namespace DQM
           return 1;
         }
         else if (msg.GetKey()==RUN_NUMBER) {
-          unsigned int run_id;
-          try { run_id = msg.GetIntValue(); } catch (Exception& e) {
+          try { fRunNumber = msg.GetIntValue(); } catch (Exception& e) {
             std::cout << "Invalid Run number received: " << msg.GetValue() << std::endl;
             return -2;
           }
-          if (IsInRun(msg.GetIntValue())) return 0;
+          if (IsInRun()) return 0;
           else return -3;
         }
         else {
@@ -118,12 +117,17 @@ namespace DQM
         }
         return -1;
       }
-      inline bool IsInRun(unsigned int run_id) {
+      inline bool IsInRun() {
         if (fDetectorType=="") return true; // no particular reason to leave it outside run
         fAddressesCanProcess.clear();
         std::string type = "";
         try {
-          OnlineDBHandler::TDCConditionsCollection cc = OnlineDBHandler().GetTDCConditions(run_id);
+          OnlineDBHandler::TDCConditionsCollection cc;
+          try { cc = OnlineDBHandler().GetTDCConditions(fRunNumber); } catch (Exception& e) {
+            e.Dump();
+            std::cout << "Trying to fetch last run's conditions..." << std::endl;
+            cc = OnlineDBHandler().GetTDCConditions(fRunNumber-1); //FIXME why is this happening????
+          }
           for (OnlineDBHandler::TDCConditionsCollection::const_iterator c=cc.begin(); c!=cc.end(); c++) {
             if (c->detector.find(fDetectorType)!=std::string::npos) {
               std::cout << "Detectors of type \"" << fDetectorType << "\" are present in the run!"
@@ -135,6 +139,7 @@ namespace DQM
           std::cout << "Detector not in conditions... leaving this DQM (" << fDetectorType << ") hanging." << std::endl;
           return false;
         } catch (Exception& e) {
+          e.Dump();
           std::cout << "Failed to retrieve online TDC conditions. Aborting" << std::endl;
           return false;
         }

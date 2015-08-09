@@ -48,6 +48,7 @@ int main(int argc, char *argv[]) {
   
   file_header_t fh;
   fh.magic = 0x30535050; // PPS0 in ASCII
+  fh.run_id = 0;
   fh.spill_id = 0;
   fh.acq_mode = acq_mode;
   fh.det_mode = det_mode;
@@ -59,15 +60,16 @@ int main(int argc, char *argv[]) {
   try {
     bool with_socket = true;
 
-    // Initialize the configuration one single time
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
+
+    // Declare a new run to the online database
+    vme->NewRun();
+
+    // Initialize the configuration one single time
     try { vme->ReadXML(xml_config); } catch (Exception& e) {
       if (vme->UseSocket()) vme->Send(e);
     }
  
-    // Declare a new run to the online database
-    vme->NewRun();
-
     fh.run_id = vme->GetRunNumber();
   
     static const unsigned int num_tdc = vme->GetNumTDC();
@@ -76,7 +78,6 @@ int main(int argc, char *argv[]) {
     const bool use_fpga = (fpga!=0);
     fstream out_file[num_tdc];
     string acqmode[num_tdc], detmode[num_tdc];
-    unsigned int num_events[num_tdc];
     int num_triggers_in_files;
 
     t_beg = time(0);
@@ -118,8 +119,11 @@ int main(int argc, char *argv[]) {
       num_triggers_in_files = 0;
 
       // Declare a new burst to the online DB
-      OnlineDBHandler().NewBurst();
+      try { OnlineDBHandler().NewBurst(); } catch (Exception& e) {
+        usleep(2000); OnlineDBHandler().NewBurst();
+      }
       fh.spill_id = OnlineDBHandler().GetLastBurst(fh.run_id);
+      fh.spill_id += 1;
 
       // TDC output files configuration
       for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
@@ -151,24 +155,40 @@ int main(int argc, char *argv[]) {
       }
       
       // Data readout from the two TDC boards
-      for (unsigned int i=0; i<num_tdc; i++) { num_events[i] = 0; }
       unsigned long tm = 0;
+      unsigned long nt = 0;
+      uint32_t word;
       while (true) {
+        if (use_fpga and (vme->GetGlobalAcquisitionMode()==VMEReader::TriggerStart)) {
+          if ((nt=fpga->GetScalerValue())!=num_triggers) { 
+            for (unsigned int i=0; i<tdcs.size(); i++) {
+              if (out_file[i].is_open()) {
+                word = VME::TDCEvent(VME::TDCEvent::Trigger).GetWord();
+                out_file[i].write((char*)&word, sizeof(uint32_t));
+              }
+            }
+            num_triggers = nt;
+          }
+          /*else if (cnt_without_new_trigger>1000) { break; cnt_without_new_trigger = 0; }
+          cnt_without_new_trigger++;*/ //FIXME new feature to be tested before integration
+        }
         unsigned int i = 0; tm += 1;
         for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
           ec = atdc->second->FetchEvents();
           if (ec.size()==0) continue; // no events were fetched
           for (VME::TDCEventCollection::const_iterator e=ec.begin(); e!=ec.end(); e++) {
-            uint32_t word = e->GetWord();
+            word = e->GetWord();
             out_file[i].write((char*)&word, sizeof(uint32_t));
-            cout << dec << "board" << i << ": " << hex << e->GetType() << "\t";
+            /*cout << dec << "board" << i << ": " << hex << e->GetType() << "\t";
             if (e->GetType()==VME::TDCEvent::TDCMeasurement) cout << e->GetChannelId();
-            cout << endl;
+            cout << endl;*/
+            //e->Dump();
+            //if (e->GetType()==VME::TDCEvent::TDCMeasurement) cout << "----> (board " << dec << i << " with address " << hex << atdc->first << dec << ") new event on channel " << e->GetChannelId() << endl;
           }
           num_events[i] += ec.size();
         }
-        if (use_fpga and tm>10000) { // probe the scaler value every N data readouts
-          num_triggers = fpga->GetScalerValue(); // FIXME need to probe this a bit less frequently
+        if (use_fpga and tm>5000) { // probe the scaler value every N data readouts
+          if (vme->GetGlobalAcquisitionMode()!=VMEReader::TriggerStart) num_triggers = fpga->GetScalerValue();
           num_triggers_in_files = num_triggers-num_all_triggers;
             cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
           if (num_triggers_in_files>0 and num_triggers_in_files>=NUM_TRIG_BEFORE_FILE_CHANGE) {
@@ -184,9 +204,9 @@ int main(int argc, char *argv[]) {
       for (VME::TDCCollection::const_iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
         if (out_file[i].is_open()) out_file[i].close();
         cout << "Sent output from TDC 0x" << hex << atdc->first << dec << " in spill id " << fh.spill_id << endl;
-        vme->SendOutputFile(atdc->first); usleep(10000);
+        vme->SendOutputFile(atdc->first); usleep(1000);
       }
-      vme->BroadcastNewBurst(fh.spill_id);
+      vme->BroadcastNewBurst(fh.spill_id); usleep(1000);
       vme->BroadcastTriggerRate(fh.spill_id, num_triggers);
     }
   } catch (Exception& e) {
@@ -197,7 +217,7 @@ int main(int argc, char *argv[]) {
         VME::TDCCollection tdcs = vme->GetTDCCollection();
         for (VME::TDCCollection::const_iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
           if (out_file[i].is_open()) out_file[i].close();
-          vme->SendOutputFile(atdc->first); usleep(10000);
+          vme->SendOutputFile(atdc->first); usleep(1000);
         }
   
         time_t t_end = time(0);
@@ -210,12 +230,12 @@ int main(int argc, char *argv[]) {
 
         cerr << endl << "Acquired ";
         for (unsigned int i=0; i<num_tdc; i++) { if (i>0) cerr << " / "; cerr << num_events[i]; }
-        cerr << " words in " << num_files << " files for " << num_all_triggers << " triggers in this run" << endl;
+        cerr << " words in " << num_files << " files for " << num_triggers << " triggers in this run" << endl;
     
         ostringstream os;
         os << "Acquired ";
         for (unsigned int i=0; i<num_tdc; i++) { if (i>0) os << " / "; os << num_events[i]; }
-        os << " words in " << num_files << " files for " << num_all_triggers << " triggers in this run" << endl
+        os << " words in " << num_files << " files for " << num_triggers << " triggers in this run" << endl
            << "Total acquisition time: " << difftime(t_end, t_beg) << " seconds"
            << " (" << nmin << " min " << nsec << " sec)";
         if (vme->UseSocket()) vme->Send(Exception(__PRETTY_FUNCTION__, os.str(), Info));
