@@ -90,7 +90,7 @@ namespace DQM
           fLabel2->Draw();
           if (fBoardId!=0 or fRunId!=0 or fSpillId!=0 or fRunDate!="") {
             fLabel3 = new TPaveText(.5, .0, .98, .05, "NDC");
-            fLabel3->AddText(Form("Board %x, Run %d - Spill %d - %s", fBoardId>>16, fRunId, fSpillId, fRunDate.Data()));
+            fLabel3->AddText(Form("Board %x, Run %d - Spill %d - %s", fBoardId, fRunId, fSpillId, fRunDate.Data()));
             fLabel3->SetMargin(0.);
             fLabel3->SetFillColor(kWhite);
             fLabel3->SetLineColor(kWhite);
@@ -149,7 +149,7 @@ namespace DQM
         c2->SetPad(0.,0.,1.,0.);
         c1->SetBottomMargin(0.1);
         c1->SetLeftMargin(0.1);
-        c1->SetRightMargin(0.115);
+        c1->SetRightMargin(0.13);
         c1->SetTopMargin(0.1);
         TCanvas::cd(1);
         

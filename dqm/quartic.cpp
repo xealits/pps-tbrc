@@ -25,7 +25,7 @@ QuarticDQM(unsigned int address, string filename, vector<string>* outputs)
   };
   const unsigned short num_plots = kNumPlots;
   DQM::QuarticCanvas* canv[num_plots];
-  canv[kDensity] = new DQM::QuarticCanvas(Form("quartic_%d_%d_%d_channels_density", reader.GetRunId(), reader.GetBurstId(), address), "Channels density");
+  canv[kDensity] = new DQM::QuarticCanvas(Form("quartic_%d_%d_%d_channels_density", reader.GetRunId(), reader.GetBurstId(), address>>16), "Channels density");
   //canv[kMeanToT] = new DQM::QuarticCanvas(Form("quartic_%d_%d_%d_mean_tot", reader.GetRunId(), reader.GetBurstId(), address), "Mean ToT (ns)");
   //canv[kTriggerTimeDiff] = new DQM::QuarticCanvas(Form("quartic_%d_%d_%d_trigger_time_difference", reader.GetRunId(), reader.GetBurstId(), address), "Time btw. each trigger (ns)");
 

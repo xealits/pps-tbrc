@@ -8,7 +8,7 @@
 #include <ctime>
 #include <signal.h>
 
-#define NUM_TRIG_BEFORE_FILE_CHANGE 100
+#define NUM_TRIG_BEFORE_FILE_CHANGE 1000
 #define PATH "/home/ppstb/timing_data/"
 
 using namespace std;
