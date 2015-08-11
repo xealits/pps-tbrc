@@ -196,6 +196,17 @@ namespace VME
         if (word_id<0 or word_id>=fWords.size()) return;
         fWords.at(word_id) = word_content;
       }
+      
+      inline void Dump() const {
+        std::ostringstream os;
+        os << "Window width: " << GetWindowWidth() << "\n\t"
+           << "Window offset: " << GetWindowOffset() << "\n\t"
+           << "Extra search window width: " << GetExtraSearchWindowWidth() << "\n\t"
+           << "Reject margin: " << GetRejectMargin() << "\n\t"
+           << "Trigger time subtraction? " << HasTriggerTimeSubtraction() << "\n\t"
+           << "(all results are quoted in clock cycles)";
+        PrintInfo(os.str());
+      }
 
       inline unsigned short GetWindowWidth() const { return static_cast<unsigned short>(fWords.at(0)&0xffff); }
       inline short GetWindowOffset() const { return static_cast<short>(fWords.at(1)&0xffff); }
