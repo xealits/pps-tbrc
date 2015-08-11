@@ -461,21 +461,6 @@ namespace VME
   }
     
   uint16_t
-  TDCV1x90::GetTriggerConfiguration(const trig_conf& type) const
-  {
-    uint16_t buff[5];
-    try { 
-      WaitMicro(WRITE_OK);
-      WriteRegister(kMicro, TDCV1x90Opcodes::READ_TRG_CONF);
-      for (int i=0; i<5; i++) {
-        WaitMicro(READ_OK);
-        ReadRegister(kMicro,&(buff[i]));
-      }
-    } catch (Exception& e) { e.Dump(); }
-    return buff[type];
-  }
-
-  uint16_t
   TDCV1x90::GetResolution() const
   {
     uint16_t data;
@@ -842,6 +827,25 @@ namespace VME
     uint16_t value;
     try { ReadRegister(kControl, &value); } catch (Exception& e) { e.Dump(); }
     return TDCV1x90Control(value&0xFFFF);
+  }
+
+  TDCV1x90TriggerConfig
+  TDCV1x90::GetTriggerConfiguration() const
+  {
+    uint16_t buff[5];
+    TDCV1x90TriggerConfig conf;
+    try {
+      WaitMicro(WRITE_OK);
+      WriteRegister(kMicro, TDCV1x90Opcodes::READ_TRG_CONF);
+      for (unsigned short i=0; i<5; i++) {
+        WaitMicro(READ_OK);
+        ReadRegister(kMicro,&(buff[i]));
+        conf.SetWord(i, buff[i]);
+      }
+    } catch (Exception& e) {
+      e.Dump();
+    }
+    return conf;
   }
 
   TDCEventCollection
