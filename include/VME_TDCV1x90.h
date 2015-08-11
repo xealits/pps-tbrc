@@ -184,6 +184,29 @@ namespace VME
       uint16_t fWord;
   };
 
+  class TDCV1x90TriggerConfig
+  {
+    public:
+      inline TDCV1x90TriggerConfig() {
+        for (unsigned int i=0; i<5; i++) { fWords.push_back(0); }
+      }
+      inline ~TDCV1x90TriggerConfig() { fWords.clear(); }
+    
+      inline void SetWord(unsigned int word_id, uint16_t word_content) {
+        if (word_id<0 or word_id>=fWords.size()) return;
+        fWords.at(word_id) = word_content;
+      }
+
+      inline unsigned short GetWindowWidth() const { return static_cast<unsigned short>(fWords.at(0)&0xffff); }
+      inline short GetWindowOffset() const { return static_cast<short>(fWords.at(1)&0xffff); }
+      inline unsigned short GetExtraSearchWindowWidth() const { return static_cast<unsigned short>(fWords.at(2)&0xffff); }
+      inline unsigned short GetRejectMargin() const { return static_cast<unsigned short>(fWords.at(3)&0xffff); }
+      inline bool HasTriggerTimeSubtraction() const { return static_cast<bool>(fWords.at(4)&0xffff); }
+
+    private:
+      std::vector<uint16_t> fWords;
+  };
+
   enum TDCV1x90Register {
     kOutputBuffer            = 0x0000, // D32 R
     kControl                 = 0x1000, // D16 R/W
@@ -318,7 +341,8 @@ namespace VME
       void SetWindowOffset(const int16_t&) const;
       int16_t GetWindowOffset() const;
 
-      uint16_t GetTriggerConfiguration(const trig_conf&) const;
+      TDCV1x90TriggerConfig GetTriggerConfiguration() const;
+      //uint16_t GetTriggerConfiguration(const trig_conf&) const;
 
       bool SoftwareClear() const;
       bool SoftwareReset() const;
