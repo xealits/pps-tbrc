@@ -12,7 +12,7 @@ function ppsGUI() {
 
 function ppsDQM() {
   declare -a proc=(
-    #"gastof"
+    "gastof"
     "quartic"
     "daq"
     "db")
@@ -26,6 +26,10 @@ function ppsDQM() {
   function status_proc() {
     state=`ps -C "$1" -o stat | tail -1`
     time_started=`ps -C "$1" -o lstart | tail -1`
+    if [[ $state =~ .*STA.* ]] ; then
+      state=""
+      time_started="Stopped";
+    fi
     printf "%15s: %2s\t%-10s\n" "$1" "$state" "$time_started";
   }
   if [ -z "$1" ] ; then

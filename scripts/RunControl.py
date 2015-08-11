@@ -11,6 +11,7 @@ from Plot import LinePlot
 
 class DAQgui:
   exc_rgx = re.compile(r'\[(.*)\] === (.*)\ === (.*)')
+  client_rgx = re.compile(r'(.*)\ \(type (.*)\)')
 
   def __init__(self):
     self.socket_handler = None
@@ -51,7 +52,7 @@ class DAQgui:
     self.log_frame = gtk.ScrolledWindow()
     self.log_view = gtk.TextView()
     self.log_view.set_editable(False)
-    self.log_frame.set_size_request(50, 500)
+    self.log_frame.set_size_request(50, 400)
     #self.log = self.log_view.get_buffer()
     self.log = gtk.TextBuffer()
     self.log_view.set_buffer(self.log)
@@ -72,6 +73,22 @@ class DAQgui:
     self.stat_frame.pack_start(self.trigger_rate)
     self.trigger_rate.set_markup('Trigger rate: ###')
     self.trigger_rate.show()
+    self.hv_imon0 = gtk.Label()
+    self.stat_frame.pack_start(self.hv_imon0)
+    self.hv_imon0.set_markup('I(GasToF):###')
+    self.hv_imon0.show()
+    self.hv_vmon0 = gtk.Label()
+    self.stat_frame.pack_start(self.hv_vmon0)
+    self.hv_vmon0.set_markup('V(GasToF):###')
+    self.hv_vmon0.show()
+    self.hv_imon1 = gtk.Label()
+    self.stat_frame.pack_start(self.hv_imon1)
+    self.hv_imon1.set_markup('I(reference timing):###')
+    self.hv_imon1.show()
+    self.hv_vmon1 = gtk.Label()
+    self.stat_frame.pack_start(self.hv_vmon1)
+    self.hv_vmon1.set_markup('V(reference timing):###')
+    self.hv_vmon1.show()
     
     self.plots_frame = gtk.HBox(False)
     self.stat_frame.pack_start(self.plots_frame)
@@ -151,7 +168,7 @@ class DAQgui:
     self.status_bar.show()
 
     #self.window.maximize()
-    self.window.set_default_size(1024, 768)
+    self.window.set_default_size(1024, 668)
     self.window.add(main)
     main.show()
     self.window.show()
@@ -207,7 +224,6 @@ class DAQgui:
 
   def Update(self, source=None, condition=None):
     if not self.socket_handler: return False
-    rgx = re.compile(r'(.*)\ \(type (.*)\)')
     #print "Getting clients..."
     self.socket_handler.Send('GET_CLIENTS', self.client_id)
     rcv = self.socket_handler.Receive()
@@ -216,7 +232,7 @@ class DAQgui:
       if ';' not in rcv[1]: return True
       clients_list = []
       for client in rcv[1].split(';'):
-        try: client_id, client_type = [int(v) for v in re.split(rgx, client)[1:3]]
+        try: client_id, client_type = [int(v) for v in re.split(self.client_rgx, client)[1:3]]
         except ValueError:
           print "Wrong value for client list:", client
           return True
@@ -271,6 +287,17 @@ class DAQgui:
         #print now, "trigger rate: ", rate
         #self.trigger_rate_plot.set_data(self.trigger_rate_data, 'Trigger rate (kHz)')
       self.previous_burst_time = now
+      return True
+    elif rcv[0]=='HV_STATUS':
+      channel, stat = rcv[1].split(':')
+      status, imon, vmon = [int(a) for a in stat.split(',')]
+      if channel=='0':
+        self.hv_imon0.set_markup('I(GasToF): <b>%d uA</b>' % imon)
+        self.hv_vmon0.set_markup('V(GasToF): <b>%d V</b>' % vmon)
+      elif channel=='3':
+        self.hv_imon1.set_markup('I(reference timing): <b>%d uA</b>' % imon)
+        self.hv_vmon1.set_markup('V(reference timing): <b>%d V</b>' % vmon)
+      return True
     elif rcv[0]=='UPDATED_DQM_PLOT':
       return True
       if not self.dqm_enabled: return True

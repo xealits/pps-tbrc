@@ -62,6 +62,19 @@ int main(int argc, char *argv[]) {
 
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
 
+    NIM::HVModuleN470* hv;
+    try {
+      vme->AddHVModule(0x500000, 0xb);
+    } catch (Exception& e) { if (vme->UseSocket()) vme->Send(e); }
+    try {
+      hv = vme->GetHVModule();
+      cout << "module id=" << hv->GetModuleId() << endl;
+      hv->ReadMonitoringValues().Dump();
+    } catch (Exception& e) { if (vme->UseSocket()) vme->Send(e); e.Dump(); }
+    /*hv->SetChannelV0(0, 320);
+    hv->SetChannelI0(0, 0);
+    hv->ReadChannelValues(0);*/
+
     // Declare a new run to the online database
     vme->NewRun();
 
@@ -119,11 +132,8 @@ int main(int argc, char *argv[]) {
       num_triggers_in_files = 0;
 
       // Declare a new burst to the online DB
-      try { OnlineDBHandler().NewBurst(); } catch (Exception& e) {
-        usleep(2000); OnlineDBHandler().NewBurst();
-      }
-      fh.spill_id = OnlineDBHandler().GetLastBurst(fh.run_id);
-      fh.spill_id += 1;
+      vme->NewBurst();
+      fh.spill_id = vme->GetBurstNumber();
 
       // TDC output files configuration
       for (VME::TDCCollection::iterator atdc=tdcs.begin(); atdc!=tdcs.end(); atdc++, i++) {
@@ -189,6 +199,10 @@ int main(int argc, char *argv[]) {
         }
         if (use_fpga and tm>5000) { // probe the scaler value every N data readouts
           if (vme->GetGlobalAcquisitionMode()!=VMEReader::TriggerStart) num_triggers = fpga->GetScalerValue();
+          try {
+            vme->BroadcastHVStatus(0, hv->ReadChannelValues(0));
+            vme->BroadcastHVStatus(3, hv->ReadChannelValues(3));
+          } catch (Exception& e) {;}
           num_triggers_in_files = num_triggers-num_all_triggers;
             cerr << "--> " << num_triggers << " triggers acquired in this run so far" << endl;
           if (num_triggers_in_files>0 and num_triggers_in_files>=NUM_TRIG_BEFORE_FILE_CHANGE) {
