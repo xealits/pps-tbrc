@@ -345,3 +345,13 @@ VMEReader::BroadcastHVStatus(unsigned short channel_id, const NIM::HVModuleN470C
   std::ostringstream os; os << channel_id << ":" << val.ChannelStatus() << "," << val.Imon() << "," << val.Vmon();
   Client::Send(SocketMessage(HV_STATUS, os.str()));
 }
+
+void
+VMEReader::LogHVValues(unsigned short channel_id, const NIM::HVModuleN470ChannelValues& val) const
+{
+  try {
+    OnlineDBHandler().SetHVConditions(channel_id, val.V0(), val.I0());
+  } catch (Exception& e) {
+    e.Dump();
+  }
+}

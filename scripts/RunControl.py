@@ -34,7 +34,7 @@ class DAQgui:
 
     main = gtk.VBox(False, 10)
     top = gtk.HBox(False, 10)
-    bottom = gtk.HBox(False)
+    bottom = gtk.HBox(False, 10)
     buttons = gtk.VBox(False, 5)
     run = gtk.VBox(False, 5)
     top.pack_start(buttons, False)
@@ -52,7 +52,7 @@ class DAQgui:
     self.log_frame = gtk.ScrolledWindow()
     self.log_view = gtk.TextView()
     self.log_view.set_editable(False)
-    self.log_frame.set_size_request(50, 400)
+    self.log_frame.set_size_request(200, 400)
     #self.log = self.log_view.get_buffer()
     self.log = gtk.TextBuffer()
     self.log_view.set_buffer(self.log)
@@ -63,31 +63,43 @@ class DAQgui:
 
     #self.stat_frame = gtk.ScrolledWindow()
     self.stat_frame = gtk.VBox(False)
+    self.stat_frame.set_size_request(50, 400)
     bottom.pack_start(self.stat_frame)
 
     self.tot_trigger = gtk.Label()
     self.stat_frame.pack_start(self.tot_trigger)
     self.tot_trigger.set_markup('Triggers number: ###')
+    self.tot_trigger.set_alignment(0, 0)
     self.tot_trigger.show()
+
     self.trigger_rate = gtk.Label()
     self.stat_frame.pack_start(self.trigger_rate)
     self.trigger_rate.set_markup('Trigger rate: ###')
+    self.trigger_rate.set_alignment(0, 0)
     self.trigger_rate.show()
+
     self.hv_imon0 = gtk.Label()
     self.stat_frame.pack_start(self.hv_imon0)
     self.hv_imon0.set_markup('I(GasToF):###')
+    self.hv_imon0.set_alignment(0, 0)
     self.hv_imon0.show()
+
     self.hv_vmon0 = gtk.Label()
     self.stat_frame.pack_start(self.hv_vmon0)
     self.hv_vmon0.set_markup('V(GasToF):###')
+    self.hv_vmon0.set_alignment(0, 0)
     self.hv_vmon0.show()
+
     self.hv_imon1 = gtk.Label()
     self.stat_frame.pack_start(self.hv_imon1)
     self.hv_imon1.set_markup('I(reference timing):###')
+    self.hv_imon1.set_alignment(0, 0)
     self.hv_imon1.show()
+
     self.hv_vmon1 = gtk.Label()
     self.stat_frame.pack_start(self.hv_vmon1)
     self.hv_vmon1.set_markup('V(reference timing):###')
+    self.hv_vmon1.set_alignment(0, 0)
     self.hv_vmon1.show()
     
     self.plots_frame = gtk.HBox(False)

@@ -203,8 +203,8 @@ namespace VME
            << "Window offset: " << GetWindowOffset() << "\n\t"
            << "Extra search window width: " << GetExtraSearchWindowWidth() << "\n\t"
            << "Reject margin: " << GetRejectMargin() << "\n\t"
-           << "Trigger time subtraction? " << HasTriggerTimeSubtraction() << "\n\t"
-           << "(all results are quoted in clock cycles)";
+           << "(all results are quoted in clock cycles)" << "\n\t"
+           << "Trigger time subtraction? " << HasTriggerTimeSubtraction();
         PrintInfo(os.str());
       }
 
@@ -351,6 +351,8 @@ namespace VME
        */ 
       void SetWindowOffset(const int16_t&) const;
       int16_t GetWindowOffset() const;
+
+      void SetTriggerTimeSubtraction(bool enabled=true) const;
 
       TDCV1x90TriggerConfig GetTriggerConfiguration() const;
       //uint16_t GetTriggerConfiguration(const trig_conf&) const;

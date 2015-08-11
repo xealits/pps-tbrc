@@ -30,6 +30,7 @@ namespace VME
     SetAcquisitionMode(fAcquisitionMode);
     SetDetectionMode(fDetectionMode);
     SetLSBTraileadEdge(r25ps);
+    SetTriggerTimeSubtraction(true);
    
     /*for (unsigned int=0; i<4; i++) {
       std::cout << "rc adjust " << i << ": " << GetRCAdjust()
@@ -57,6 +58,9 @@ namespace VME
     
     std::stringstream s; s << "TDC with base address 0x" << std::hex << baseaddr << " successfully built!";
     PrintInfo(s.str());
+
+    GetTriggerConfiguration().Dump();
+
   }
 
   TDCV1x90::~TDCV1x90()
@@ -798,6 +802,18 @@ namespace VME
       WriteRegister(kMicro, TDCV1x90Opcodes::SET_DLL_CLOCK);
       WaitMicro(WRITE_OK);
       WriteRegister(kMicro, static_cast<uint16_t>(dll));
+    } catch (Exception& e) { e.Dump(); return; }
+  }
+
+  void
+  TDCV1x90::SetTriggerTimeSubtraction(bool enabled) const
+  {
+    uint16_t opcode;
+    if (enabled) opcode = TDCV1x90Opcodes::EN_SUB_TRG;
+    else         opcode = TDCV1x90Opcodes::DIS_SUB_TRG;
+    try {
+      WaitMicro(WRITE_OK);
+      WriteRegister(kMicro, opcode);
     } catch (Exception& e) { e.Dump(); return; }
   }
     

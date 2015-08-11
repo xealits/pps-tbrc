@@ -62,21 +62,25 @@ int main(int argc, char *argv[]) {
 
     vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
 
+    // Declare a new run to the online database
+    vme->NewRun();
+
     NIM::HVModuleN470* hv;
     try {
-      vme->AddHVModule(0x500000, 0xb);
+      vme->AddHVModule(0x500000, 0xc);
     } catch (Exception& e) { if (vme->UseSocket()) vme->Send(e); }
     try {
       hv = vme->GetHVModule();
       cout << "module id=" << hv->GetModuleId() << endl;
-      hv->ReadMonitoringValues().Dump();
+      hv->ReadMonitoringValues();
+      try {
+        vme->LogHVValues(0, hv->ReadChannelValues(0));
+        vme->LogHVValues(3, hv->ReadChannelValues(3));
+      } catch (Exception& e) {;}
     } catch (Exception& e) { if (vme->UseSocket()) vme->Send(e); e.Dump(); }
     /*hv->SetChannelV0(0, 320);
     hv->SetChannelI0(0, 0);
     hv->ReadChannelValues(0);*/
-
-    // Declare a new run to the online database
-    vme->NewRun();
 
     // Initialize the configuration one single time
     try { vme->ReadXML(xml_config); } catch (Exception& e) {

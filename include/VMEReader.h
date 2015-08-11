@@ -146,6 +146,7 @@ class VMEReader : public Client
     void BroadcastNewBurst(unsigned int burst_id) const;
     void BroadcastTriggerRate(unsigned int burst_id, unsigned long num_triggers) const;
     void BroadcastHVStatus(unsigned short channel_id, const NIM::HVModuleN470ChannelValues& val) const;
+    void LogHVValues(unsigned short channel_id, const NIM::HVModuleN470ChannelValues& val) const;
 
     inline bool UseSocket() const { return fOnSocket; }
     /// Abort data collection for all modules on the bus handled by the bridge

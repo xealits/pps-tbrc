@@ -29,6 +29,7 @@ if (ROOT_FOUND)
   add_test(reader_oneedge)
   add_test(errors)
   add_test(quartic_occupancy_vs_run)
+  add_test(gastof_occupancy_vs_run)
   #add_test(reader_2boards)
 endif()
 

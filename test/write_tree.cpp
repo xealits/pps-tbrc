@@ -23,6 +23,8 @@ int main(int argc, char* argv[]) {
   unsigned int fNumMeasurements, fNumErrors;
   unsigned int fRunId, fBurstId;
   unsigned long fETTT;
+  // JH - testing
+  unsigned int fEventID;
   unsigned int fChannelId[MAX_MEAS];
   double fLeadingEdge[MAX_MEAS], fTrailingEdge[MAX_MEAS], fToT[MAX_MEAS];
 
@@ -37,6 +39,8 @@ int main(int argc, char* argv[]) {
   t->Branch("leading_edge", fLeadingEdge, "leading_edge[num_measurements]/D");
   t->Branch("trailing_edge", fTrailingEdge, "trailing_edge[num_measurements]/D");
   t->Branch("tot", fToT, "tot[num_measurements]/D");
+  // JH - testing
+  t->Branch("event_id",&fEventID, "event_id/I");
 
   fNumMeasurements = fNumErrors = fRunId = fBurstId = 0;
   for (unsigned int i=0; i<MAX_MEAS; i++) {
@@ -49,17 +53,21 @@ int main(int argc, char* argv[]) {
     FileReader fr(argv[1]);
     fRunId = fr.GetRunId();
     cout << "Opening file with burst train " << fr.GetBurstId() << endl;
+
     for (unsigned int ch=0; ch<32; ch++) {
       while (true) {
-        if (!fr.GetNextMeasurement(ch, &m)) break;
+        if (!fr.GetNextMeasurement(ch, &m))
+	    break;
         fNumMeasurements = m.NumEvents();
         fNumErrors = m.NumErrors();
+	// JH - testing
+	fEventID = m.GetEventId();
         fETTT = m.GetETTT();
         for (unsigned int i=0; i<m.NumEvents(); i++) {
-          fLeadingEdge[i] = m.GetLeadingTime(i)*25./1000.;
+          fLeadingEdge[i] = m.GetLeadingTime(i)*25./1024.;
           fChannelId[i] = ch;
-          fTrailingEdge[i] = m.GetTrailingTime(i)*25./1000.;
-          fToT[i] = m.GetToT(i)*25./1000.;
+          fTrailingEdge[i] = m.GetTrailingTime(i)*25./1024.;
+          fToT[i] = m.GetToT(i)*25./1024.;
         }
         t->Fill();
       }

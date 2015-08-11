@@ -44,11 +44,11 @@ main(int argc, char* argv[])
       m.Dump();
       for (unsigned int i=0; i<m.NumEvents(); i++) {
         //std::cout << "--> " << (m.GetToT(i)*25./1024.) << std::endl;
-        hist_lead->Fill(m.GetLeadingTime(i)*25./1000.);
-        hist_trail->Fill(m.GetTrailingTime(i)*25./1000.);
-        hist_lead_zoom->Fill(m.GetLeadingTime(i)*25./1000.);
-        hist_trail_zoom->Fill(m.GetTrailingTime(i)*25./1000.);
-        hist_tot->Fill(m.GetToT(i)*25./1000.);
+        hist_lead->Fill(m.GetLeadingTime(i)*25./1024.);
+        hist_trail->Fill(m.GetTrailingTime(i)*25./1024.);
+        hist_lead_zoom->Fill(m.GetLeadingTime(i)*25./1024.);
+        hist_trail_zoom->Fill(m.GetTrailingTime(i)*25./1024.);
+        hist_tot->Fill(m.GetToT(i)*25./1024.);
         //std::cout << "ettt=" << m.GetETTT() << std::endl;
       }
       num_events += m.NumEvents();
