@@ -17,7 +17,7 @@
   </signal>
 </fpga>
 <tdc address="0x00aa0000">
-  <detector>quartic_1</detector>
+  <detector>gastof</detector>
   <verbosity>1</verbosity>
   <det_mode>trailead</det_mode>
   <dll>PLL_High_Resolution</dll>
@@ -39,7 +39,7 @@
   </trigger_window>
 </tdc>
 <tdc address="0x00cc0000">
-  <detector>gastof</detector>
+  <detector>gstof1+reference</detector>
   <verbosity>1</verbosity>
   <det_mode>trailead</det_mode>
   <dll>PLL_High_Resolution</dll>
@@ -49,12 +49,12 @@
     <offset>-400</offset>
   </trigger_window>
   <poi>
-    <group0>1</group0>
+    <group0>3</group0>
     <group1>0</group1>
   </poi>
 </tdc>
 <cfd address="0x00070000">
-  <poi>1</poi>
+  <poi>3</poi>
   <output_width>
     <group0>120</group0>
     <group1>120</group1>
@@ -65,7 +65,7 @@
   </dead_time>
   <threshold>
     <channel id="0">30</channel>
-    <channel id="1">6</channel>
+    <channel id="1">30</channel>
     <channel id="2">6</channel>
   </threshold>
 </cfd>

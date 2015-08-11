@@ -246,7 +246,7 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
       SendAll(DQM, SocketMessage(NEW_FILENAME, m.GetValue().c_str()));
     } catch (Exception& e) { e.Dump(); }
   }
-  else if (m.GetKey()==NUM_TRIGGERS) {
+  else if (m.GetKey()==NUM_TRIGGERS or m.GetKey()==HV_STATUS) {
     try {
       SendAll(DAQ, m);
     } catch (Exception& e) { e.Dump(); }
