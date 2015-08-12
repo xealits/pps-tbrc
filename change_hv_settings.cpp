@@ -29,10 +29,11 @@ int main(int argc, char *argv[]) {
     try { vme->AddHVModule(0x500000, 0xc); } catch (Exception& e) { e.Dump(); }
     NIM::HVModuleN470* hv = vme->GetHVModule();
     cout << "module id=" << hv->GetModuleId() << endl;
-    hv->ReadMonitoringValues().Dump();
-    /*hv->SetChannelV0(0, 2400);
-    hv->SetChannelI0(0, 500);*/
+    //hv->ReadMonitoringValues().Dump();
+    hv->SetChannelV0(0, 2400);
+    //hv->SetChannelI0(0, 500);
     hv->ReadChannelValues(0).Dump();
+    hv->ReadChannelValues(3).Dump();
     
   } catch (Exception& e) {
     e.Dump();

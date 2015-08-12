@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
     } catch (Exception& e) { e.Dump(); }
   }
   cout << "num events = " << occ->Grid()->GetSumOfWeights() << endl;
-  cout << "num triggers = " << num_triggers << endl;
+  cout << "num triggers = " << (num_triggers-trigger_start) << endl;
   occ->Grid()->SetMaximum(0.15);
   occ->Grid()->Scale(1./(num_triggers-trigger_start));
   occ->SetRunInfo(board_id, run_id, 0, Form("Triggers %d-%d", trigger_start, trigger_stop));

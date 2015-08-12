@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
   DIR* dir; struct dirent* ent;
   cout << "Search in directory: " << getenv("PPS_DATA_PATH") << endl;
   VME::TDCMeasurement m; VME::TDCEvent e;
-  int num_triggers = 0;
+  int num_triggers;
   for (int sp=0; sp<1000000; sp++) { // we loop over all spills
     search1.str(""); search1 << "events_" << run_id << "_" << sp << "_";
     bool file_found = false; string filename;
@@ -42,6 +42,7 @@ int main(int argc, char* argv[]) {
     cout << "Opening file " << file.str() << endl;
     try {
       FileReader f(file.str());
+      num_triggers = 0;
       while (true) {
         if (!f.GetNextEvent(&e)) break;
         if (e.GetType()==VME::TDCEvent::GlobalHeader) num_triggers++;
@@ -52,7 +53,7 @@ int main(int argc, char* argv[]) {
     } catch (Exception& e) { cout << "prout" << endl; e.Dump(); }
   }
   cout << "num events = " << occ->Grid()->GetSumOfWeights() << endl;
-  cout << "num triggers = " << num_triggers << endl;
+  cout << "num triggers = " << (num_triggers-trigger_start) << endl;
   occ->Grid()->SetMaximum(0.15);
   occ->Grid()->Scale(1./(num_triggers-trigger_start));
   occ->SetRunInfo(board_id, run_id, 0, Form("Triggers %d-%d", trigger_start, trigger_stop));
