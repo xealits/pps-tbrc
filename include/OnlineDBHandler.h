@@ -10,6 +10,7 @@
 #include <sqlite3.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "Exception.h"
 
@@ -80,7 +81,7 @@ class OnlineDBHandler
     }
 
     typedef std::map<unsigned int, unsigned int> RunCollection;
-    inline RunCollection GetRuns() {
+    inline RunCollection GetRuns() const {
       std::vector< std::vector<int> > out = Select<int>("SELECT id,start FROM run ORDER BY id");
       if (out.size()==0) {
         throw Exception(__PRETTY_FUNCTION__, "Trying to read runs in an empty database", JustWarning, 60200);
@@ -93,7 +94,7 @@ class OnlineDBHandler
     }
 
     /// Retrieve the last run acquired
-    inline unsigned int GetLastRun() {
+    inline unsigned int GetLastRun() const {
       std::vector< std::vector<int> > out = Select<int>("SELECT id FROM run ORDER BY id DESC LIMIT 1");
       if (out.size()==1) return out[0][0];
       if (out.size()==0) {
@@ -105,7 +106,7 @@ class OnlineDBHandler
       return 0;
     }
 
-    inline int GetLastBurst(unsigned int run) {
+    inline int GetLastBurst(unsigned int run) const {
       std::ostringstream os;
       os << "SELECT burst_id FROM burst WHERE run_id=" << run << " ORDER BY burst_id DESC LIMIT 1";
       std::vector< std::vector<int> > out = Select<int>(os.str());
@@ -124,7 +125,7 @@ class OnlineDBHandler
     };
     typedef std::vector<BurstInfo> BurstInfos;
     /// Retrieve information on a given run (spill IDs / timestamp)
-    inline BurstInfos GetRunInfo(unsigned int run) {
+    inline BurstInfos GetRunInfo(unsigned int run) const {
       std::ostringstream os;
       BurstInfos ret; ret.clear();
       os << "SELECT burst_id,start FROM burst WHERE run_id=" << run << " ORDER BY burst_id";
@@ -163,9 +164,21 @@ class OnlineDBHandler
       unsigned short tdc_id; unsigned long tdc_address;
       unsigned short tdc_acq_mode; unsigned short tdc_det_mode;
       std::string detector;
+      bool operator==(const TDCConditions& rhs) const {
+        return (tdc_id==rhs.tdc_id
+            and tdc_address==rhs.tdc_address
+            and tdc_acq_mode==rhs.tdc_acq_mode
+            and tdc_det_mode==rhs.tdc_det_mode
+            and detector.compare(rhs.detector)==0); // we leave the run id out of the comparison operator
+      }
+      TDCConditions& operator=(const TDCConditions& rhs) {
+        run_id = rhs.run_id; tdc_id = rhs.tdc_id; tdc_address = rhs.tdc_address;
+        tdc_acq_mode = rhs.tdc_acq_mode; tdc_det_mode = rhs.tdc_det_mode; detector = rhs.detector;
+        return *this;
+      }
     };
     typedef std::vector<TDCConditions> TDCConditionsCollection;
-    inline TDCConditionsCollection GetTDCConditions(unsigned int run_id) {
+    inline TDCConditionsCollection GetTDCConditions(unsigned int run_id) const {
       std::ostringstream os;
       os << "SELECT tdc_id,tdc_address,tdc_acq_mode,tdc_det_mode FROM tdc_conditions"
          << " WHERE run_id=" << run_id;
@@ -289,7 +302,7 @@ class OnlineDBHandler
       }
     }
 
-    template<class T> inline std::vector< std::vector<T> > Select(std::string req, int num_fields=-1) {
+    template<class T> inline std::vector< std::vector<T> > Select(std::string req, int num_fields=-1) const {
       if (req.find(';')==std::string::npos) req += ";";
       std::vector< std::vector<T> > out;
       int rc;
