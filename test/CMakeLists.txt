@@ -31,6 +31,7 @@ if (ROOT_FOUND)
   add_test(quartic_occupancy_vs_run)
   add_test(gastof_occupancy_vs_run)
   #add_test(reader_2boards)
+  add_test(write_tree_sorted)
 endif()
 
 add_test(testdb)
