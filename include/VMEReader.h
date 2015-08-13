@@ -38,7 +38,8 @@ class VMEReader : public Client
     void ReadXML(const char* filename);
     inline void ReadXML(std::string filename) { ReadXML(filename.c_str()); }
 
-    void NewRun() const;
+    enum GlobalAcqMode { ContinuousStorage = 0x0, TriggerStart = 0x1, TriggerMatching = 0x2 };
+    inline GlobalAcqMode GetGlobalAcquisitionMode() const { return fGlobalAcqMode; }
 
     /**
      * \brief Add a TDC to handle
@@ -85,8 +86,18 @@ class VMEReader : public Client
     /// Return the pointer to the FPGA board connected to this controller (if any ; 0 otherwise)
     inline VME::FPGAUnitV1495* GetFPGAUnit() { return fFPGA; }
 
+    void NewRun() const;
+    inline void NewBurst() const {
+      try {
+        OnlineDBHandler().NewBurst();
+      } catch (Exception& e) {
+        usleep(2000); OnlineDBHandler().NewBurst();
+      }
+    }
+
     /// Ask the socket master a run number
     unsigned int GetRunNumber() const;
+    inline unsigned int GetBurstNumber() const { return OnlineDBHandler().GetLastBurst(GetRunNumber()); }
     
     /// Start the bridge's pulse generator [faulty]
     inline void StartPulser(double period, double width, unsigned int num_pulses=0) {
@@ -134,6 +145,8 @@ class VMEReader : public Client
     void SendOutputFile(uint32_t tdc_address) const;
     void BroadcastNewBurst(unsigned int burst_id) const;
     void BroadcastTriggerRate(unsigned int burst_id, unsigned long num_triggers) const;
+    void BroadcastHVStatus(unsigned short channel_id, const NIM::HVModuleN470ChannelValues& val) const;
+    void LogHVValues(unsigned short channel_id, const NIM::HVModuleN470ChannelValues& val) const;
 
     inline bool UseSocket() const { return fOnSocket; }
     /// Abort data collection for all modules on the bus handled by the bridge
@@ -162,6 +175,7 @@ class VMEReader : public Client
     /// Path to the current output files the DAQ is writing to
     /// (indexed by the TDC id)
     OutputFiles fOutputFiles;
+    GlobalAcqMode fGlobalAcqMode;
 };
 
 #endif

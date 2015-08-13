@@ -30,7 +30,7 @@ namespace NIM
       e.Dump();
     }
     HVModuleN470Values vals(out);
-    vals.Dump();
+    //vals.Dump();
     return vals;
   }
 
@@ -44,7 +44,7 @@ namespace NIM
       e.Dump();
     }
     HVModuleN470ChannelValues vals(ch_id, out);
-    vals.Dump();
+    //vals.Dump();
     return vals;
   }
 

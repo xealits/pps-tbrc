@@ -29,7 +29,7 @@ main(int argc, char* argv[])
   TH1D* hist_trail = new TH1D("trail", "", 700, -14000., 14000.);
   TH1D* hist_lead_zoom = new TH1D("lead_zoom", "", 600, 255., 325.);
   TH1D* hist_trail_zoom = new TH1D("trail_zoom", "", 600, 255., 325.);
-  TH1D* hist_tot = new TH1D("tot", "", 100, 24., 26.);
+  TH1D* hist_tot = new TH1D("tot", "", 100, 27., 29.);
   TH1D* hist_numevts = new TH1D("nevts", "", 100, -.5, 99.5);
   
   FileReader f(argv[1]);
@@ -41,14 +41,14 @@ main(int argc, char* argv[])
   while (true) {
     try {
       if (!f.GetNextMeasurement(channel_id, &m)) break;
-      //m.Dump();
+      m.Dump();
       for (unsigned int i=0; i<m.NumEvents(); i++) {
         //std::cout << "--> " << (m.GetToT(i)*25./1024.) << std::endl;
-        hist_lead->Fill(m.GetLeadingTime(i)*25./1000.);
-        hist_trail->Fill(m.GetTrailingTime(i)*25./1000.);
-        hist_lead_zoom->Fill(m.GetLeadingTime(i)*25./1000.);
-        hist_trail_zoom->Fill(m.GetTrailingTime(i)*25./1000.);
-        hist_tot->Fill(m.GetToT(i)*25./1000.);
+        hist_lead->Fill(m.GetLeadingTime(i)*25./1024.);
+        hist_trail->Fill(m.GetTrailingTime(i)*25./1024.);
+        hist_lead_zoom->Fill(m.GetLeadingTime(i)*25./1024.);
+        hist_trail_zoom->Fill(m.GetTrailingTime(i)*25./1024.);
+        hist_tot->Fill(m.GetToT(i)*25./1024.);
         //std::cout << "ettt=" << m.GetETTT() << std::endl;
       }
       num_events += m.NumEvents();

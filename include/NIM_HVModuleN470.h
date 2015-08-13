@@ -120,6 +120,7 @@ namespace NIM
       inline void Dump() const {
         std::ostringstream os;
         os << "Individual channel values: channel " << fChannelId << "\n\t"
+           << "Vmon/Imon = " << std::setw(4) << Vmon() << " V / " << std::setw(4) << Imon() << " uA\n\t"
            << "V0/I0 = " << std::setw(4) << V0() << " V / " << std::setw(4) << I0() << " uA\n\t"
            << "V1/I1 = " << std::setw(4) << V1() << " V / " << std::setw(4) << I1() << " uA\n\t"
            << "Trip = " << Trip() << "\n\t"

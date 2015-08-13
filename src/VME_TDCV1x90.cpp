@@ -30,26 +30,26 @@ namespace VME
     SetAcquisitionMode(fAcquisitionMode);
     SetDetectionMode(fDetectionMode);
     SetLSBTraileadEdge(r25ps);
+    SetTriggerTimeSubtraction(true);
    
     /*for (unsigned int=0; i<4; i++) {
       std::cout << "rc adjust " << i << ": " << GetRCAdjust()
-    }*/
- 
+    }
     SetRCAdjust(0,0);
     SetRCAdjust(1,0);
     SetRCAdjust(2,0);
-    SetRCAdjust(3,0);
+    SetRCAdjust(3,0);*/
 
     GlobalOffset offs; offs.fine = 0x0; offs.coarse = 0x0;
     SetGlobalOffset(offs); // coarse and fine set
     //GetGlobalOffset();
 
     //SetBLTEventNumberRegister(1); // FIXME find good value!
-    SetTDCEncapsulation(false);
+    SetTDCEncapsulation(true);
     SetErrorMarks(true);
     SetETTT(true);
-    SetWindowWidth(2045); // in units of clock cycles
-    SetWindowOffset(-2050); // in units of clock cycles
+    //SetWindowWidth(2045); // in units of clock cycles
+    //SetWindowOffset(-2050); // in units of clock cycles
     //SetPairModeResolution(0,0x4);
     SetPoI(0xFFFF, 0xFFFF);
     //GetResolution();
@@ -58,6 +58,9 @@ namespace VME
     
     std::stringstream s; s << "TDC with base address 0x" << std::hex << baseaddr << " successfully built!";
     PrintInfo(s.str());
+
+    GetTriggerConfiguration().Dump();
+
   }
 
   TDCV1x90::~TDCV1x90()
@@ -208,7 +211,7 @@ namespace VME
       WaitMicro(WRITE_OK);
       WriteRegister(kMicro, word2);
     } catch (Exception& e) { e.Dump(); }
-    if (fVerb>1) {
+    //if (fVerb>1) {
       std::ostringstream os;
       os << "Debug: Pattern of inhibit modified:" << "\n\t";
       for (unsigned int i=0; i<16; i++) {
@@ -216,7 +219,7 @@ namespace VME
            << "Channel " << (i+16) << ": " << ((word2>>i)&0x1) << "\n\t";
       }
       PrintInfo(os.str());
-    }
+    //}
   }
 
   std::map<unsigned short, bool>
@@ -461,21 +464,6 @@ namespace VME
     } catch (Exception& e) { e.Dump(); }
   }
     
-  uint16_t
-  TDCV1x90::GetTriggerConfiguration(const trig_conf& type) const
-  {
-    uint16_t buff[5];
-    try { 
-      WaitMicro(WRITE_OK);
-      WriteRegister(kMicro, TDCV1x90Opcodes::READ_TRG_CONF);
-      for (int i=0; i<5; i++) {
-        WaitMicro(READ_OK);
-        ReadRegister(kMicro,&(buff[i]));
-      }
-    } catch (Exception& e) { e.Dump(); }
-    return buff[type];
-  }
-
   uint16_t
   TDCV1x90::GetResolution() const
   {
@@ -816,6 +804,18 @@ namespace VME
       WriteRegister(kMicro, static_cast<uint16_t>(dll));
     } catch (Exception& e) { e.Dump(); return; }
   }
+
+  void
+  TDCV1x90::SetTriggerTimeSubtraction(bool enabled) const
+  {
+    uint16_t opcode;
+    if (enabled) opcode = TDCV1x90Opcodes::EN_SUB_TRG;
+    else         opcode = TDCV1x90Opcodes::DIS_SUB_TRG;
+    try {
+      WaitMicro(WRITE_OK);
+      WriteRegister(kMicro, opcode);
+    } catch (Exception& e) { e.Dump(); return; }
+  }
     
   void
   TDCV1x90::SetStatus(const TDCV1x90Status& status) const
@@ -843,6 +843,25 @@ namespace VME
     uint16_t value;
     try { ReadRegister(kControl, &value); } catch (Exception& e) { e.Dump(); }
     return TDCV1x90Control(value&0xFFFF);
+  }
+
+  TDCV1x90TriggerConfig
+  TDCV1x90::GetTriggerConfiguration() const
+  {
+    uint16_t buff[5];
+    TDCV1x90TriggerConfig conf;
+    try {
+      WaitMicro(WRITE_OK);
+      WriteRegister(kMicro, TDCV1x90Opcodes::READ_TRG_CONF);
+      for (unsigned short i=0; i<5; i++) {
+        WaitMicro(READ_OK);
+        ReadRegister(kMicro,&(buff[i]));
+        conf.SetWord(i, buff[i]);
+      }
+    } catch (Exception& e) {
+      e.Dump();
+    }
+    return conf;
   }
 
   TDCEventCollection

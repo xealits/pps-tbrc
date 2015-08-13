@@ -40,13 +40,12 @@ VMEReader::ReadXML(const char* filename)
        << doc.GetErrorStr1();
     throw Exception(__PRETTY_FUNCTION__, os.str(), Fatal);
   }
-  int triggering_mode = 0;
   if (tinyxml2::XMLElement* fpga=doc.FirstChildElement("triggering")) {
     if (const char* mode=fpga->Attribute("mode")) {
       std::ostringstream os; os << "Triggering mode: ";
-      if (!strcmp(mode,"continuous_storage")) { triggering_mode = 0; os << "Continuous storage (manual)"; }
-      if (!strcmp(mode,"trigger_start"))      { triggering_mode = 1; os << "Continuous storage (trigger on start)"; }
-      if (!strcmp(mode,"trigger_matching"))   { triggering_mode = 2; os << "Trigger matching"; }
+      if (!strcmp(mode,"continuous_storage")) { fGlobalAcqMode = ContinuousStorage; os << "Continuous storage (manual)"; }
+      if (!strcmp(mode,"trigger_start"))      { fGlobalAcqMode = TriggerStart; os << "Continuous storage (trigger on start)"; }
+      if (!strcmp(mode,"trigger_matching"))   { fGlobalAcqMode = TriggerMatching; os << "Trigger matching"; }
       if (fOnSocket) Client::Send(Exception(__PRETTY_FUNCTION__, os.str(), Info));
     }
   }
@@ -84,11 +83,11 @@ VMEReader::ReadXML(const char* filename)
             fFPGA->SetOutputPulserPOI(atoi(poi->GetText()));
           }
         }
-        switch (triggering_mode) {
-          case 0:
-          case 1:
+        switch (fGlobalAcqMode) {
+          case ContinuousStorage:
+          case TriggerStart:
             control.SetTriggeringMode(VME::FPGAUnitV1495Control::ContinuousStorage); break;
-          case 2:
+          case TriggerMatching:
             control.SetTriggeringMode(VME::FPGAUnitV1495Control::TriggerMatching); break;
         }
         fFPGA->SetControl(control);
@@ -104,15 +103,16 @@ VMEReader::ReadXML(const char* filename)
       try {
         try { AddTDC(addr); } catch (Exception& e) { if (fOnSocket) Client::Send(e); }
         VME::TDCV1x90* tdc = GetTDC(addr);
+        uint16_t poi_group1 = 0xffff, poi_group2 = 0xffff;
         std::string detector_name = "unknown";
-        switch (triggering_mode) {
-          case 0:
-          case 1:
+        switch (fGlobalAcqMode) {
+          case ContinuousStorage:
+          case TriggerStart:
             tdc->SetAcquisitionMode(VME::CONT_STORAGE); break;
-          case 2:
+          case TriggerMatching:
             tdc->SetAcquisitionMode(VME::TRIG_MATCH); break;
         }
-        std::cout << triggering_mode << " --> " << tdc->GetAcquisitionMode() << std::endl;
+        //std::cout << triggering_mode << " --> " << tdc->GetAcquisitionMode() << std::endl;
         if (tinyxml2::XMLElement* verb=atdc->FirstChildElement("verbosity")) {
           tdc->SetVerboseLevel(atoi(verb->GetText()));
         }
@@ -131,6 +131,11 @@ VMEReader::ReadXML(const char* filename)
 	  if (!strcmp(dll->GetText(),"PLL_Medium_Resolution")) tdc->SetDLLClock(VME::TDCV1x90::DLL_PLL_MedRes);
 	  if (!strcmp(dll->GetText(),"PLL_High_Resolution")) tdc->SetDLLClock(VME::TDCV1x90::DLL_PLL_HighRes);
         }
+        if (tinyxml2::XMLElement* poi=atdc->FirstChildElement("poi")) {
+          if (tinyxml2::XMLElement* g0=poi->FirstChildElement("group0")) { poi_group1 = atoi(g0->GetText()); }
+          if (tinyxml2::XMLElement* g1=poi->FirstChildElement("group1")) { poi_group2 = atoi(g1->GetText()); }
+        }
+        tdc->SetPoI(poi_group1, poi_group2);
 	if (atdc->FirstChildElement("ettt")) { tdc->SetETTT(); }
 	if (tinyxml2::XMLElement* wind=atdc->FirstChildElement("trigger_window")) {
           if (tinyxml2::XMLElement* width=wind->FirstChildElement("width")) { tdc->SetWindowWidth(atoi(width->GetText())); }
@@ -164,7 +169,15 @@ VMEReader::ReadXML(const char* filename)
         }
       } catch (Exception& e) { throw e; }
     }
-  }  
+  }
+  std::cout << "Global acquisition mode: " << fGlobalAcqMode << std::endl;
+  unsigned int run = GetRunNumber();
+  std::ifstream source(filename, ios::binary);
+  std::stringstream out_name; out_name << std::getenv("PPS_PATH") << "/config/config_run" << run << ".xml";
+  std::ofstream dest(out_name.str().c_str(), ios::binary);
+  dest << source.rdbuf();
+  if (fOnSocket) Client::Send(Exception(__PRETTY_FUNCTION__, "Ready to release veto!", Info));
+
   //doc.Print();
 }
 
@@ -324,4 +337,21 @@ VMEReader::BroadcastTriggerRate(unsigned int burst_id, unsigned long num_trigger
 {
   std::ostringstream os; os << burst_id << ":" << num_triggers;
   Client::Send(SocketMessage(NUM_TRIGGERS, os.str()));
+}
+
+void
+VMEReader::BroadcastHVStatus(unsigned short channel_id, const NIM::HVModuleN470ChannelValues& val) const
+{
+  std::ostringstream os; os << channel_id << ":" << val.ChannelStatus() << "," << val.Imon() << "," << val.Vmon();
+  Client::Send(SocketMessage(HV_STATUS, os.str()));
+}
+
+void
+VMEReader::LogHVValues(unsigned short channel_id, const NIM::HVModuleN470ChannelValues& val) const
+{
+  try {
+    OnlineDBHandler().SetHVConditions(channel_id, val.V0(), val.I0());
+  } catch (Exception& e) {
+    e.Dump();
+  }
 }

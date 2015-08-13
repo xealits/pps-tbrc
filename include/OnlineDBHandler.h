@@ -224,7 +224,7 @@ class OnlineDBHandler
       char* err = 0;
       std::ostringstream req;
       unsigned int current_run = GetLastRun();
-      req << "INSERT INTO hv_conditions (id, run_id, channel, v, i) VALUES (NULL, "
+      req << "INSERT INTO hv (id, run_id, channel, v, i) VALUES (NULL, "
           << current_run << ", "
           << channel_id << ", " << vmax << ", " << imax << ");";
       int rc = sqlite3_exec(fDB, req.str().c_str(), callback, 0, &err);
@@ -285,7 +285,7 @@ class OnlineDBHandler
         throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning, 60003);
       }
       // HV conditions table
-      req = "CREATE TABLE hv_conditions(" \
+      req = "CREATE TABLE hv(" \
             "id         INTEGER PRIMARY KEY AUTOINCREMENT," \
             "time       INTEGER DEFAULT (CAST(strftime('%s', 'now') AS INT))," \
             "run_id     INTEGER NOT NULL," \

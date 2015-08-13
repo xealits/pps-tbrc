@@ -56,11 +56,13 @@ class DQMReader:
         # Define counters and arrays for DQM plots
         self.ntriggers = [0]
         self.occupancy = []
+        self.baroccupancy = []
         self.toverthreshold = []
         k=0
         while k < self.nchannels:
             self.occupancy.append(0)
             self.toverthreshold.append(0)
+            self.baroccupancy.append(0)
             k=k+1
 
         self.nerrors = [0]
@@ -76,6 +78,8 @@ class DQMReader:
         self.eventsizelimiterrors = [0]
         self.triggerfifooverflowerrors = [0]
         self.internalchiperrors = [0]
+
+        self.channelmapping = {30:1, 26:2, 20:3, 12:4, 4:5, 28:6, 24:7, 16:8, 8:9, 0:10, 31:11, 27:12, 21:13, 13:14, 5:15, 29:16, 25:17, 17:18, 9:19, 1:20, 2:999, 3:999, 6:999, 7:999, 10:999, 11:999, 14:999, 15:999, 18:999, 19:999, 22:999, 23:999 }  
 
     def SetNChannelsToPlot(self,nchan):
         self.nchannels = nchan
@@ -171,7 +175,7 @@ class DQMReader:
                     while channelflag < self.nchannels:
                         tleading = channeltimemeasurements[channelflag,1] * 25./1024.
                         ttrailing = channeltimemeasurements[channelflag,2] * 25./1024.
-                        tdifference = (channeltimemeasurements[channelflag,2] - channeltimemeasurements[channelflag,1]) * 25./1024.
+                        tdifference = (channeltimemeasurements[channelflag,1] - channeltimemeasurements[channelflag,2]) * 25./1024.
                         self.toverthreshold[channelflag] = self.toverthreshold[channelflag] + tdifference
 
                         if(self.verbose == 1):
@@ -264,9 +268,17 @@ class DQMReader:
             if(self.occupancy[i]>0):
                 self.toverthreshold[i] = self.toverthreshold[i]/self.occupancy[i] # Before normalizing counts
             if(self.ntriggers[0]>0):
-                self.occupancy[i] = self.occupancy[i]/self.ntriggers[0]
-            i = i + 1
+                self.occupancy[i] = self.occupancy[i]/(1.0*self.ntriggers[0])
+                bar = self.channelmapping[i]
+#                print "Occupancy of channel " + str(i) + " is " + str(self.occupancy[i])
+#                print "Mapping channel " + str(i) + " to bar " + str(bar)
+                if(bar < 21):
+                    self.baroccupancy[bar] = self.occupancy[i]
+#                    print "Occupancy of bar " + str(bar) + " is " + str(self.baroccupancy[bar-1])
 
+            i = i + 1
+        
+        print self.baroccupancy
         mpl.rcParams['xtick.labelsize'] = 6
         mpl.rcParams['ytick.labelsize'] = 6
 
@@ -280,10 +292,15 @@ class DQMReader:
         plt.grid(True)
 
         plt.subplot(3, 3, 2)
-        plt.bar(range(0,self.nchannels),self.occupancy)
-        plt.xlabel('HPTDC Channel',fontsize=6)
+#        plt.bar(range(0,self.nchannels),self.occupancy)
+#        plt.xlabel('HPTDC Channel',fontsize=6)
+#        plt.ylabel('Occupancy',fontsize=6)
+#        plt.axis([0, self.nchannels, 0, max(self.occupancy)*2],fontsize=6)
+#        plt.grid(True)
+        plt.bar(range(0,self.nchannels),self.baroccupancy)
+        plt.xlabel('Quartic bar D_N',fontsize=6)
         plt.ylabel('Occupancy',fontsize=6)
-        plt.axis([0, self.nchannels, 0, max(self.occupancy)*1.5],fontsize=6)
+        plt.axis([0, self.nchannels, 0, max(self.baroccupancy)*1.2],fontsize=6)
         plt.grid(True)
 
         plt.subplot(3, 3, 3)
@@ -369,8 +386,8 @@ class DQMReader:
         outputtextfilehandle.close()
 
 if __name__ == '__main__':
-    reader = DQMReader("../../timing_data/events_92_0_1438878487_board0.dat")
-    reader.SetVerbosity(1)
+    reader = DQMReader("../../timing_data/events_285_2_1439153730_board1.dat")
+#    reader.SetVerbosity(1)
     reader.ProcessBinaryFile()
 #    reader.ReadFile()
 

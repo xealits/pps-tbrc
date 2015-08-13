@@ -11,6 +11,7 @@ from Plot import LinePlot
 
 class DAQgui:
   exc_rgx = re.compile(r'\[(.*)\] === (.*)\ === (.*)')
+  client_rgx = re.compile(r'(.*)\ \(type (.*)\)')
 
   def __init__(self):
     self.socket_handler = None
@@ -20,6 +21,8 @@ class DAQgui:
     self.current_run_id = -1
     self.previous_burst_time = -1.
     self.trigger_rate_data = [[0, 0.]]
+    self.time_start = time.time()
+    self.tot_trigger_data = [[self.time_start, 0]]
     self.dqm_enabled = True
     self.dqm_updated_plots = []
     self.dqm_updated_plots_images = []
@@ -31,7 +34,7 @@ class DAQgui:
 
     main = gtk.VBox(False, 10)
     top = gtk.HBox(False, 10)
-    bottom = gtk.HBox(False)
+    bottom = gtk.HBox(False, 10)
     buttons = gtk.VBox(False, 5)
     run = gtk.VBox(False, 5)
     top.pack_start(buttons, False)
@@ -49,7 +52,7 @@ class DAQgui:
     self.log_frame = gtk.ScrolledWindow()
     self.log_view = gtk.TextView()
     self.log_view.set_editable(False)
-    self.log_frame.set_size_request(50, 500)
+    self.log_frame.set_size_request(200, 400)
     #self.log = self.log_view.get_buffer()
     self.log = gtk.TextBuffer()
     self.log_view.set_buffer(self.log)
@@ -60,16 +63,60 @@ class DAQgui:
 
     #self.stat_frame = gtk.ScrolledWindow()
     self.stat_frame = gtk.VBox(False)
+    self.stat_frame.set_size_request(50, 400)
     bottom.pack_start(self.stat_frame)
+
+    self.tot_trigger = gtk.Label()
+    self.stat_frame.pack_start(self.tot_trigger)
+    self.tot_trigger.set_markup('Triggers number: ###')
+    self.tot_trigger.set_alignment(0, 0)
+    self.tot_trigger.show()
 
     self.trigger_rate = gtk.Label()
     self.stat_frame.pack_start(self.trigger_rate)
     self.trigger_rate.set_markup('Trigger rate: ###')
+    self.trigger_rate.set_alignment(0, 0)
     self.trigger_rate.show()
+
+    self.hv_imon0 = gtk.Label()
+    self.stat_frame.pack_start(self.hv_imon0)
+    self.hv_imon0.set_markup('I(GasToF):###')
+    self.hv_imon0.set_alignment(0, 0)
+    self.hv_imon0.show()
+
+    self.hv_vmon0 = gtk.Label()
+    self.stat_frame.pack_start(self.hv_vmon0)
+    self.hv_vmon0.set_markup('V(GasToF):###')
+    self.hv_vmon0.set_alignment(0, 0)
+    self.hv_vmon0.show()
+
+    self.hv_imon1 = gtk.Label()
+    self.stat_frame.pack_start(self.hv_imon1)
+    self.hv_imon1.set_markup('I(reference timing):###')
+    self.hv_imon1.set_alignment(0, 0)
+    self.hv_imon1.show()
+
+    self.hv_vmon1 = gtk.Label()
+    self.stat_frame.pack_start(self.hv_vmon1)
+    self.hv_vmon1.set_markup('V(reference timing):###')
+    self.hv_vmon1.set_alignment(0, 0)
+    self.hv_vmon1.show()
+    
+    self.plots_frame = gtk.HBox(False)
+    self.stat_frame.pack_start(self.plots_frame)
     self.trigger_rate_plot = LinePlot()
-    self.stat_frame.pack_start(self.trigger_rate_plot)
+    self.trigger_rate_plot.set_size_request(-1, 300)
+    self.plots_frame.pack_start(self.trigger_rate_plot)
     self.trigger_rate_plot.set_data(self.trigger_rate_data, 'Trigger rate')
     self.trigger_rate_plot.show()
+
+    self.tot_trigger_plot = LinePlot()
+    self.plots_frame.pack_start(self.tot_trigger_plot)
+    self.tot_trigger_plot.set_data(self.trigger_rate_data, 'Triggers number')
+    self.plots_frame.set_size_request(-1, 300)
+    self.tot_trigger_plot.show()
+
+    #self.plots_frame.show()
     self.stat_frame.show()
 
     self.window.connect('destroy', self.Close)
@@ -132,7 +179,8 @@ class DAQgui:
     main.pack_start(self.status_bar)
     self.status_bar.show()
 
-    self.window.maximize()
+    #self.window.maximize()
+    self.window.set_default_size(1024, 668)
     self.window.add(main)
     main.show()
     self.window.show()
@@ -161,7 +209,7 @@ class DAQgui:
       self.Log('Client connected with id: %d' % self.client_id)
       self.Update()
       if self.acquisition_started and not self.daq_loop_launched:
-        print "Launching the acquisition monitor loop."
+        #print "Launching the acquisition monitor loop."
         self.DAQLoop()
     except SocketHandler.SocketError:
       print "Failed to bind!"
@@ -188,7 +236,6 @@ class DAQgui:
 
   def Update(self, source=None, condition=None):
     if not self.socket_handler: return False
-    rgx = re.compile(r'(.*)\ \(type (.*)\)')
     #print "Getting clients..."
     self.socket_handler.Send('GET_CLIENTS', self.client_id)
     rcv = self.socket_handler.Receive()
@@ -197,7 +244,7 @@ class DAQgui:
       if ';' not in rcv[1]: return True
       clients_list = []
       for client in rcv[1].split(';'):
-        try: client_id, client_type = [int(v) for v in re.split(rgx, client)[1:3]]
+        try: client_id, client_type = [int(v) for v in re.split(self.client_rgx, client)[1:3]]
         except ValueError:
           print "Wrong value for client list:", client
           return True
@@ -207,7 +254,7 @@ class DAQgui:
     self.start_button.set_sensitive(not self.acquisition_started)
     self.stop_button.set_sensitive(self.acquisition_started)
     if self.acquisition_started and not self.daq_loop_launched:
-      print "Launching the acquisition monitor loop."
+      #print "Launching the acquisition monitor loop."
       self.DAQLoop()
     return True
 
@@ -231,7 +278,10 @@ class DAQgui:
     elif rcv[0]=='NUM_TRIGGERS':
       #return False
       burst_id, num_trig = [int(a) for a in rcv[1].split(':')]
+      self.tot_trigger.set_markup('Triggers number: <b>%d</b>' % num_trig)
       now = time.time()
+      self.tot_trigger_data.append([(now-self.time_start)*1e6, num_trig])
+      #self.tot_trigger_plot.set_data(self.tot_trigger_data)
       if self.previous_burst_time>0:
         rate = num_trig/(now-self.previous_burst_time)/1000.
         self.trigger_rate.set_markup('Trigger rate: <b>%.2f kHz</b>' % round(rate, 2))
@@ -247,9 +297,21 @@ class DAQgui:
         if not has_data:
           self.trigger_rate_data.append([burst_id, rate])
         #print now, "trigger rate: ", rate
-        self.trigger_rate_plot.set_data(self.trigger_rate_data, 'Trigger rate (kHz)')
+        #self.trigger_rate_plot.set_data(self.trigger_rate_data, 'Trigger rate (kHz)')
       self.previous_burst_time = now
+      return True
+    elif rcv[0]=='HV_STATUS':
+      channel, stat = rcv[1].split(':')
+      status, imon, vmon = [int(a) for a in stat.split(',')]
+      if channel=='0':
+        self.hv_imon0.set_markup('I(GasToF): <b>%d uA</b>' % imon)
+        self.hv_vmon0.set_markup('V(GasToF): <b>%d V</b>' % vmon)
+      elif channel=='3':
+        self.hv_imon1.set_markup('I(reference timing): <b>%d uA</b>' % imon)
+        self.hv_vmon1.set_markup('V(reference timing): <b>%d V</b>' % vmon)
+      return True
     elif rcv[0]=='UPDATED_DQM_PLOT':
+      return True
       if not self.dqm_enabled: return True
       i = 0
       for p in self.dqm_updated_plots:

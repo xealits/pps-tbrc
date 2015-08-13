@@ -34,7 +34,7 @@ main(int argc, char* argv[])
         if (!f.GetNextMeasurement(i, &m)) break;
         //cout << m.GetLeadingTime()-m.GetTrailingTime() << endl;
         for (unsigned int j=0; j<m.NumEvents(); j++) {
-          h[i]->Fill(m.GetToT(j)*25./1000.);
+          h[i]->Fill(m.GetToT(j)*25./1024.);
         }
         num_events += m.NumEvents();
       } catch (Exception& e) { /*e.Dump();*/ }
@@ -71,8 +71,8 @@ main(int argc, char* argv[])
     if (h[i]->Integral()!=0) {
       h[i]->Fit("gaus", "0");
       TF1* f = (TF1*)h[i]->GetFunction("gaus");
-      if (i<num_channels/2) leg1->AddEntry(h[i], Form("Channel %i  #mu=%.4g, #sigma=%.3g",i,f->GetParameter(1),f->GetParameter(2)), "l");
-      else                  leg2->AddEntry(h[i], Form("Channel %i  #mu=%.4g, #sigma=%.3g",i,f->GetParameter(1),f->GetParameter(2)), "l");
+      if (i<num_channels/2) leg1->AddEntry(h[i], Form("Channel %i N=%.1f, #mu=%.4g, #sigma=%.3g",i,h[i]->Integral(),f->GetParameter(1),f->GetParameter(2)), "l");
+      else                  leg2->AddEntry(h[i], Form("Channel %i N=%.1f, #mu=%.4g, #sigma=%.3g",i,h[i]->Integral(),f->GetParameter(1),f->GetParameter(2)), "l");
     }
     else {
       if (i<num_channels/2) leg1->AddEntry(h[i], Form("Channel %i",i), "l");
