@@ -26,5 +26,6 @@ if (ROOT_FOUND)
   add_test(reader_oneedge)
   add_test(errors)
   #add_test(reader_2boards)
+  add_test(write_tree_sorted)
 endif()
 
