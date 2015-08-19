@@ -83,13 +83,13 @@ int main(int argc, char* argv[]) {
 	    has_leading_per_trigger[i] = 0;
           }
           num_triggers++;
-	  fTriggerNumber = num_triggers;
 	  if(num_triggers % 1000 == 0)
 	    cout << "Triggers received: " << num_triggers << endl;
 	  fNumMeasurements = fNumErrors = 0;
           if (num_triggers>trigger_stop and trigger_stop>0) break;
           else if (num_triggers<trigger_start) continue;
 	  //	  cout << "GlobalHeader, trigger number " << fTriggerNumber << endl;
+	  fTriggerNumber = num_triggers;
         }
 
         else if (e.GetType()==VME::TDCEvent::TDCMeasurement) {
@@ -123,6 +123,8 @@ int main(int argc, char* argv[]) {
             if (num_channel_measurements[i]==0) continue;
 	    //	    cout << "GlobalTrailer: channel num. measurements " << i << ": " << num_channel_measurements[i] << endl;
           }
+          if (num_triggers>trigger_stop and trigger_stop>0) break;
+          else if (num_triggers<trigger_start) continue;
 	  t->Fill();
         }
       }
