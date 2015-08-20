@@ -114,11 +114,12 @@ int main(int argc, char* argv[]) {
           }
         }
         else if (e.GetType()==VME::TDCEvent::ETTT) {
-          fETTT = e.GetETTT();
+          fETTT = e.GetETTT()*32;
         }
 	
         else if (e.GetType()==VME::TDCEvent::GlobalTrailer) {
           //        cout << "GlobalTrailer, trigger number " << fTriggerNumber << endl;
+          fETTT += e.GetWord()&0x1f;
           for (unsigned int i=0; i<num_channels; i++) {
             if (num_channel_measurements[i]==0) continue;
 	    //	    cout << "GlobalTrailer: channel num. measurements " << i << ": " << num_channel_measurements[i] << endl;
