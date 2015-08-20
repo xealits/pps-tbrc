@@ -83,6 +83,7 @@ int main(int argc, char* argv[]) {
 	    has_leading_per_trigger[i] = 0;
           }
           num_triggers++;
+          fETTT = 0;
 	  if(num_triggers % 1000 == 0)
 	    cout << "Triggers received: " << num_triggers << endl;
 	  fNumMeasurements = fNumErrors = 0;
@@ -114,12 +115,12 @@ int main(int argc, char* argv[]) {
           }
         }
         else if (e.GetType()==VME::TDCEvent::ETTT) {
-          fETTT = e.GetETTT()*32;
+          fETTT = e.GetETTT()<<5;
         }
 	
         else if (e.GetType()==VME::TDCEvent::GlobalTrailer) {
           //        cout << "GlobalTrailer, trigger number " << fTriggerNumber << endl;
-          fETTT += e.GetWord()&0x1f;
+          fETTT += e.GetGeo();
           for (unsigned int i=0; i<num_channels; i++) {
             if (num_channel_measurements[i]==0) continue;
 	    //	    cout << "GlobalTrailer: channel num. measurements " << i << ": " << num_channel_measurements[i] << endl;
