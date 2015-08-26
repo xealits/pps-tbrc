@@ -35,7 +35,8 @@ namespace VME
     kV1495HWRevision1       = 0x8148,
     kV1495HWRevision0       = 0x814c,
     kV1495SerNum0           = 0x8180,
-    kV1495SerNum1           = 0x8184
+    kV1495SerNum1           = 0x8184,
+    kV1495ThresholdVoltage  = 0x8184
   };
 
   /**
@@ -170,6 +171,16 @@ namespace VME
        * \return Trigger period (in units of 50 ns)
        */
       uint32_t GetInternalTriggerPeriod() const;
+      /**
+       * \brief Retrieve the threshold voltage
+       * \return Threshold voltage (in units of 50 ns)
+       */
+      uint32_t GetThresholdVoltage() const;
+      /**
+       * \brief Set the threshold voltage
+       * \param[in] Threshold voltage (in units of 50 ns)
+       */
+      void SetThresholdVoltage(uint32_t voltage) const;
 
       uint32_t GetOutputPulser() const;
       void ClearOutputPulser() const;

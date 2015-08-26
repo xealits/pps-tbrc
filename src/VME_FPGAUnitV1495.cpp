@@ -376,4 +376,26 @@ namespace VME
     return value;
   }
 
+ uint32_t
+  FPGAUnitV1495::GetThresholdVoltage() const
+  {
+    uint32_t voltage = 0x0;
+    sleep(1);
+    try { ReadRegister(kV1495ThresholdVoltage, &voltage); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to retrieve the threshold voltage from FW", JustWarning);
+    }
+    return voltage;
+  }
+
+  void
+  FPGAUnitV1495::SetThresholdVoltage(uint32_t voltage) const
+  {
+    sleep(1);
+    try { WriteRegister(kV1495ThresholdVoltage, voltage); } catch (Exception& e) {
+      e.Dump();
+      throw Exception(__PRETTY_FUNCTION__, "Failed to set the threshold voltage to FW", JustWarning);
+    }
+  }
+
 }

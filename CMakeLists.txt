@@ -57,3 +57,7 @@ set_property(TARGET ppsFetch PROPERTY LINK_FLAGS "-lCAENVME -ltinyxml2 -lsqlite3
 add_executable(HVsettings change_hv_settings.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:det_lib> $<TARGET_OBJECTS:ws_lib>)
 target_link_libraries(HVsettings caen)
 set_property(TARGET HVsettings PROPERTY LINK_FLAGS "-lCAENVME -ltinyxml2 -lsqlite3")
+
+add_executable(NINOsettings change_nino_threshold_voltage.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:det_lib> $<TARGET_OBJECTS:ws_lib>)
+target_link_libraries(NINOsettings caen)
+set_property(TARGET NINOsettings PROPERTY LINK_FLAGS "-lCAENVME -ltinyxml2 -lsqlite3")
