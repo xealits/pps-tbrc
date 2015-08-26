@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
   bool with_socket = true;
 
   vme = new VMEReader("/dev/a2818_0", VME::CAEN_V2718, with_socket);
-  vme->AddFPGAUnit(address);
+  try { vme->AddFPGAUnit(address); } catch (Exception& e) { e.Dump(); }
   VME::FPGAUnitV1495* fpga = vme->GetFPGAUnit();
   const bool use_fpga = (fpga!=0);
 
