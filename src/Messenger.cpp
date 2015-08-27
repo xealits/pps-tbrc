@@ -70,26 +70,12 @@ Messenger::DisconnectClient(int sid, MessageKey key, bool force)
     return;
   }
   std::ostringstream o; o << "Disconnecting client # " << sid;
-  if (type==WEBSOCKET_CLIENT) o << " (web socket)";
   PrintInfo(o.str());
   
-  if (type==WEBSOCKET_CLIENT) {
-    try {
-      Send(SocketMessage(key, sid), sid);
-    } catch (Exception& e) {
-      e.Dump();
-      if (e.ErrorNumber()==10032 or force) {
-        fSocketsConnected.erase(std::pair<int,SocketType>(sid, type));
-        FD_CLR(sid, &fMaster);
-        return;
-      }
-    }
-  }
-  else {
-    Socket s;
-    s.SetSocketId(sid);
-    s.Stop();
-  }
+  Socket s;
+  s.SetSocketId(sid);
+  s.Stop();
+
   fSocketsConnected.erase(std::pair<int,SocketType>(sid, type));
   FD_CLR(sid, &fMaster);
 }
@@ -194,14 +180,12 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   else if (m.GetKey()==START_ACQUISITION) {
     try { StartAcquisition(); } catch (Exception& e) {
       e.Dump();
-      SendAll(WEBSOCKET_CLIENT, e);
       SendAll(DAQ, e);
     }
   }
   else if (m.GetKey()==STOP_ACQUISITION) {
     try { StopAcquisition(); } catch (Exception& e) {
       e.Dump();
-      SendAll(WEBSOCKET_CLIENT, e);
       SendAll(DAQ, e);
     }
   }
@@ -233,12 +217,10 @@ Messenger::ProcessMessage(SocketMessage m, int sid)
   else if (m.GetKey()==NEW_DQM_PLOT or m.GetKey()==UPDATED_DQM_PLOT) {
     try {
       SendAll(DAQ, m);
-      SendAll(WEBSOCKET_CLIENT, m);
     } catch (Exception& e) { e.Dump(); }
   }
   else if (m.GetKey()==EXCEPTION) {
     try {
-      SendAll(WEBSOCKET_CLIENT, m);
       SendAll(DAQ, m);
       std::cout << "--> " << m.GetValue() << std::endl;
     } catch (Exception& e) { e.Dump(); }
@@ -285,7 +267,6 @@ Messenger::StartAcquisition()
       default:
         break;
     }
-    SendAll(WEBSOCKET_CLIENT, SocketMessage(ACQUISITION_STARTED));
     SendAll(DAQ, SocketMessage(ACQUISITION_STARTED));
     
     // Send the run number to DQMonitors
@@ -308,7 +289,6 @@ Messenger::StopAcquisition()
        << "Return value: " << ret << " (errno=" << errno << ")";
     throw Exception(__PRETTY_FUNCTION__, os.str(), JustWarning);
   }
-  SendAll(WEBSOCKET_CLIENT, SocketMessage(ACQUISITION_STOPPED));
-  SendAll(DAQ, SocketMessage(ACQUISITION_STOPPED));
+  SendAll(DQM, SocketMessage(ACQUISITION_STOPPED));
   throw Exception(__PRETTY_FUNCTION__, "Acquisition stop signal sent!", Info, 30001);
 }
