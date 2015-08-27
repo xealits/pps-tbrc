@@ -27,10 +27,10 @@ namespace DQM
       enum Action { NewPlot = 0x0, UpdatedPlot = 0x1 };
 
       /// Run a DQM plotter making use of the board/output filename information
-      inline void Run(bool (*fcn)(unsigned int addr, std::string filename, vector<std::string>* outputs), const Action& act=NewPlot) {
+      inline void Run(bool (*fcn)(unsigned int addr, std::string filename, std::vector<std::string>* outputs), const Action& act=NewPlot) {
         bool status = false;
         uint32_t board_address; std::string filename;
-        std::vector<string> outputs;
+        std::vector<std::string> outputs;
         try {
           while (true) {
             outputs.clear();
@@ -39,24 +39,24 @@ namespace DQM
             // new raw file to process
             try { status = fcn(board_address, filename, &outputs); } catch (Exception& e) { Client::Send(e); continue; }
             if (!status) continue; // failed to produce plots
-            cout << "Produced " << outputs.size() << " plot(s) for board with address 0x" << hex << board_address << endl;
+            std::cout << "Produced " << outputs.size() << " plot(s) for board with address 0x" << std::hex << board_address << std::endl;
             MessageKey key = INVALID_KEY;
             switch (act) {
               case NewPlot: key = NEW_DQM_PLOT; break;
               case UpdatedPlot: key = UPDATED_DQM_PLOT; break;
             }
             //sleep(fOrder);
-            for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
+            for (std::vector<std::string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
               Client::Send(SocketMessage(key, *nm)); usleep(500);
             }
           }
         } catch (Exception& e) { /*Client::Send(e);*/ e.Dump(); }
       }
       /// Run a DQM plotter without any information on the board/output filename
-      inline void Run(bool (*fcn)(vector<std::string>* outputs), const Action& act=NewPlot) {
+      inline void Run(bool (*fcn)(std::vector<std::string>* outputs), const Action& act=NewPlot) {
         bool status = false;
         uint32_t board_address; std::string filename;
-        std::vector<string> outputs;
+        std::vector<std::string> outputs;
         try {
           while (true) {
             outputs.clear();
@@ -65,14 +65,14 @@ namespace DQM
             // new raw file to process
             try { status = fcn(&outputs); } catch (Exception& e) { Client::Send(e); continue; }
             if (!status) continue; // failed to produce plots
-            cout << "Produced " << outputs.size() << " plot(s)" << endl;
+            std::cout << "Produced " << outputs.size() << " plot(s)" << std::endl;
             MessageKey key = INVALID_KEY;
             switch (act) {
               case NewPlot: key = NEW_DQM_PLOT; break;
               case UpdatedPlot: key = UPDATED_DQM_PLOT; break;
             }
             //sleep(fOrder);
-            for (vector<string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
+            for (std::vector<std::string>::iterator nm=outputs.begin(); nm!=outputs.end(); nm++) {
               Client::Send(SocketMessage(key, *nm)); usleep(500);
             }
           } // end of infinite loop to fetch messages
