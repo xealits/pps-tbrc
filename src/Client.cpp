@@ -95,7 +95,7 @@ Client::Receive()
     Send(SocketMessage(CLIENT_TYPE, static_cast<int>(GetType())));
   } 
   else if (msg.GetKey()==PING_CLIENT) {
-    ostringstream os; os << "Pong. My name is " << GetSocketId() << " and I feel fine, thank you!";
+    std::ostringstream os; os << "Pong. My name is " << GetSocketId() << " and I feel fine, thank you!";
     Send(SocketMessage(PING_ANSWER, os.str()));
     PrintInfo("Got a ping, answering...");
   } 

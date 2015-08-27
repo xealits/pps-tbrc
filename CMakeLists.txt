@@ -23,13 +23,9 @@ set_property(TARGET src_lib PROPERTY LINK_FLAGS "-lsqlite3")
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
-# WebSocket
-add_subdirectory(${PROJECT_SOURCE_DIR}/external)
-include_directories("${PROJECT_SOURCE_DIR}/external")
-
-add_executable(ppsRun main.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
+add_executable(ppsRun main.cpp $<TARGET_OBJECTS:src_lib>)
 set_property(TARGET ppsRun PROPERTY LINK_FLAGS "-lsqlite3")
-add_executable(listener listener.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
+add_executable(listener listener.cpp $<TARGET_OBJECTS:src_lib>)
 set_property(TARGET listener PROPERTY LINK_FLAGS "-lsqlite3")
 
 # Here have tests
@@ -50,14 +46,14 @@ endforeach()
 
 set(CMAKE_CXX_FLAGS "-DLINUX")
 
-add_executable(ppsFetch fetch_vme.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:det_lib> $<TARGET_OBJECTS:ws_lib>)
+add_executable(ppsFetch fetch_vme.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:det_lib>)
 target_link_libraries(ppsFetch caen)
 set_property(TARGET ppsFetch PROPERTY LINK_FLAGS "-lCAENVME -ltinyxml2 -lsqlite3")
 
-add_executable(HVsettings change_hv_settings.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:det_lib> $<TARGET_OBJECTS:ws_lib>)
+add_executable(HVsettings change_hv_settings.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:det_lib>)
 target_link_libraries(HVsettings caen)
 set_property(TARGET HVsettings PROPERTY LINK_FLAGS "-lCAENVME -ltinyxml2 -lsqlite3")
 
-add_executable(NINOsettings change_nino_threshold_voltage.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:det_lib> $<TARGET_OBJECTS:ws_lib>)
+add_executable(NINOsettings change_nino_threshold_voltage.cpp $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:det_lib>)
 target_link_libraries(NINOsettings caen)
 set_property(TARGET NINOsettings PROPERTY LINK_FLAGS "-lCAENVME -ltinyxml2 -lsqlite3")

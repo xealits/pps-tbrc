@@ -2,6 +2,7 @@
 #define Client_h
 
 #include <string>
+#include <sstream>
 
 #include "Socket.h"
 

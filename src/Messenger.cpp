@@ -1,20 +1,18 @@
 #include "Messenger.h"
 
 Messenger::Messenger() :
-  Socket(-1), fWS(0), fNumAttempts(0), fPID(-1)
+  Socket(-1), fNumAttempts(0), fPID(-1)
 {}
 
 Messenger::Messenger(int port) :
-  Socket(port), fWS(0), fNumAttempts(0), fPID(-1)
+  Socket(port), fNumAttempts(0), fPID(-1)
 {
   std::cout << __PRETTY_FUNCTION__ << " new Messenger at port " << GetPort() << std::endl;
-  fWS = new WebSocket;
 }
 
 Messenger::~Messenger()
 {
   Disconnect();
-  if (fWS) delete fWS;
 }
 
 bool
@@ -51,20 +49,10 @@ Messenger::AddClient()
   try {
     AcceptConnections(s);
     Message message = FetchMessage(s.GetSocketId());
-    if (message.IsFromWeb()) {
-      // Feed the handshake to the WebSocket object
-      fWS->parseHandshake((unsigned char*)message.GetString().c_str(), message.GetString().size());
-      Send(Message(fWS->answerHandshake()), s.GetSocketId());
-      // From now on handle a WebSocket connection
-      SwitchClientType(s.GetSocketId(), WEBSOCKET_CLIENT);
-    }
-    else {
-      // if not a WebSocket connection
-      SocketMessage m(message);
-      if (m.GetKey()==ADD_CLIENT) {
-        SocketType type = static_cast<SocketType>(m.GetIntValue());
-        if (type!=CLIENT) SwitchClientType(s.GetSocketId(), type);
-      }
+    SocketMessage m(message);
+    if (m.GetKey()==ADD_CLIENT) {
+      SocketType type = static_cast<SocketType>(m.GetIntValue());
+      if (type!=CLIENT) SwitchClientType(s.GetSocketId(), type);
     }
     // Send the client's unique identifier
     Send(SocketMessage(SET_CLIENT_ID, s.GetSocketId()), s.GetSocketId());
@@ -119,12 +107,7 @@ void
 Messenger::Send(const Message& m, int sid) const
 {
   try {
-    if (IsWebSocket(sid)) {
-      usleep(100000);
-      SendMessage(HTTPMessage(fWS, m, EncodeMessage), sid);
-      usleep(100000);
-    }
-    else SendMessage(m, sid);
+    SendMessage(m, sid);
   } catch (Exception& e) { e.Dump(); }
 }
 
@@ -156,11 +139,7 @@ Messenger::Receive()
       e.Dump();
       if (e.ErrorNumber()==11000) { DisconnectClient(s->first, THIS_CLIENT_DELETED); return; }
     }
-    if (s->second==WEBSOCKET_CLIENT) {
-      HTTPMessage h_msg(fWS, msg, DecodeMessage);
-      try { m = SocketMessage(h_msg); } catch (Exception& e) {;}
-    }
-    else m = SocketMessage(msg.GetString());
+    m = SocketMessage(msg.GetString());
     // Message was successfully decoded
     fNumAttempts = 0;
     

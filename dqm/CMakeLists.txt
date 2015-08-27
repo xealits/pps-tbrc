@@ -16,7 +16,7 @@ if (ROOT_FOUND)
 endif()
 
 function(ADD_DQM exec)
-  add_executable(${exec} ${PROJECT_SOURCE_DIR}/${exec}.cpp $<TARGET_OBJECTS:reader_lib> $<TARGET_OBJECTS:src_lib> $<TARGET_OBJECTS:ws_lib>)
+  add_executable(${exec} ${PROJECT_SOURCE_DIR}/${exec}.cpp $<TARGET_OBJECTS:reader_lib> $<TARGET_OBJECTS:src_lib>)
   target_link_libraries(${exec} ${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRARIES})
   #set_property(TARGET ${exec} PROPERTY EXCLUDE_FROM_ALL true)
   set_property(TARGET ${exec} PROPERTY LINK_FLAGS "-lsqlite3")

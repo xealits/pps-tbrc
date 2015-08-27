@@ -91,7 +91,6 @@ class Messenger : public Socket
      * \param[in] Unique identifier of the client sending the message
      */
     void ProcessMessage(SocketMessage m, int sid);
-    WebSocket* fWS;
     int fNumAttempts;
     pid_t fPID;
     
