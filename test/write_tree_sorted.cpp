@@ -22,9 +22,9 @@ int main(int argc, char* argv[]) {
 
   int fNumMeasurements, fNumErrors;
   int fRunId, fBurstId;
-  int fETTT, fTriggerNumber;
+  uint fETTT, fTriggerNumber; // uint should be 32 bits
   int fChannelId[MAX_MEAS];
-  double fLeadingEdge[MAX_MEAS], fTrailingEdge[MAX_MEAS], fToT[MAX_MEAS];
+  uint fLeadingEdge[MAX_MEAS], fTrailingEdge[MAX_MEAS], fToT[MAX_MEAS]; // these are 21-bit wise
 
   TFile* f = new TFile(output.c_str(), "recreate");
   TTree* t = new TTree("tdc", "List of TDC measurements");
@@ -33,11 +33,11 @@ int main(int argc, char* argv[]) {
   t->Branch("run_id", &fRunId, "run_id/I");
   //t->Branch("burst_id", &fBurstId, "burst_id/I"); // need to be clever for this...
   t->Branch("channel_id", fChannelId, "channel_id[num_measurements]/I");
-  t->Branch("leading_edge", fLeadingEdge, "leading_edge[num_measurements]/D");
-  t->Branch("trailing_edge", fTrailingEdge, "trailing_edge[num_measurements]/D");
-  t->Branch("tot", fToT, "tot[num_measurements]/D");
-  t->Branch("ettt", &fETTT, "ettt/I");
-  t->Branch("trigger_number",&fTriggerNumber,"trigger_number/I");
+  t->Branch("leading_edge", fLeadingEdge, "leading_edge[num_measurements]/i"); // i means unsigned 32bit integer
+  t->Branch("trailing_edge", fTrailingEdge, "trailing_edge[num_measurements]/i");
+  t->Branch("tot", fToT, "tot[num_measurements]/i");
+  t->Branch("ettt", &fETTT, "ettt/i");
+  t->Branch("trigger_number",&fTriggerNumber,"trigger_number/i");
   
   ostringstream search1, search2, file;
   search2 << "_board" << board_id << ".dat";
